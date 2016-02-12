@@ -4,12 +4,17 @@ class PrintToFile {
    PrintWriter debugOutput;
    PrintWriter infoOutput;
    boolean okFlag;
+   boolean initDone;
     
      // constructor/initialise fields
     public PrintToFile()
     {
         okFlag = true;
-        
+        initDone = false;
+    }
+    
+    public boolean initPrintToFile()
+    {       
         // Open output file
         try
         {
@@ -19,7 +24,7 @@ class PrintToFile {
         {
             println(e);
             println("Failed to open output file ", configInfo.readOutputFilename());
-            okFlag = false;
+            return false;
         }
         
         // Open debug file
@@ -34,19 +39,27 @@ class PrintToFile {
             {
                 println(e);
                 println("Failed to open debug file");
-                okFlag = false;
+                return false;
             }
         }
         else
         {
             println("Debug file not opened as debugLevel is 0");
         }
+        
+        initDone = true;
+        return true;
     }
  
     // Used to just print debug information - so can filter out minor messages
     // if not needed
     public void printDebugLine(String lineToWrite, int severity)
     {
+        // Do nothing if not yet initialised this object
+        if (!initDone)
+        {
+            return;
+        }
        
         // Do nothing if not collecting debug info
         if (debugLevel == 0)
@@ -72,10 +85,17 @@ class PrintToFile {
     // prints out line to file which tells the user what the tool actually did/found
     public void printOutputLine(String lineToWrite)
     {
+               
         // Do we need to print this line to the console
         if (debugToConsole)
         {
             println(lineToWrite);
+        }
+        
+        // Do nothing if not yet initialised this object
+        if (!initDone)
+        {
+            return;
         }
         
         // Output line 

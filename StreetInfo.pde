@@ -9,11 +9,14 @@ class StreetInfo
     // Read in from L* file
     JSONArray streetItems;
     String streetName;
-
+    
+    // list of street snaps and associated images
+    ArrayList<PNGFile> streetSnapArray;
+    int streetSnapBeingUsed;
     
     // Data read in from each I* file
     int itemBeingProcessed;
-    ArrayList<ItemInfo> itemInfoArray = new ArrayList<ItemInfo>();
+    ArrayList<ItemInfo> itemInfoArray;
     
     // constructor/initialise fields
     public StreetInfo(String tsid)
@@ -22,11 +25,11 @@ class StreetInfo
         streetFinished = false;
         streetTSID = tsid;
         itemBeingProcessed = 0;
+        streetSnapBeingUsed = 0;
+        
+        itemInfoArray = new ArrayList<ItemInfo>();
+        streetSnapArray = new ArrayList<PNGFile>();
     }
-    
-    
-    
-    
 
     boolean readStreetData()
     {
@@ -128,6 +131,59 @@ class StreetInfo
         return true;
     }
     
+    boolean loadArchiveStreetSnaps()
+    {
+        // Using the street name, loads up all the street snaps from the QA snap directory
+        // NB Need to makes sure these are all the same size - if not, then bomb out with error message
+        
+        // Work out how many street snaps exist
+        String [] archiveSnapFilenames = Utils.loadFilenames(configInfo.readStreetSnapPath(), streetName);
+
+        if (archiveSnapFilenames.length == 0)
+        {
+            printToFile.printDebugLine("No files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
+            return false;
+        }
+       
+        int imageWidth = 0;
+        int imageHeight = 0;
+        int i;
+        // Now load up each of the snaps
+        for (i = 0; i < archiveSnapFilenames.length; i++) 
+        {
+            // This currently never returns an error
+            streetSnapArray.add(new PNGFile(configInfo.readStreetSnapPath() + "/" + archiveSnapFilenames[i]));
+            
+            // load up the image
+            if (!streetSnapArray.get(i).loadPNGImage())
+            {
+                printToFile.printDebugLine("Failed to load up image " + archiveSnapFilenames[i], 3);
+                return false;
+            }
+            
+            if (imageWidth == 0)
+            {
+                // first time through
+                imageWidth = streetSnapArray.get(i).PNGImageWidth;
+                imageHeight = streetSnapArray.get(i).PNGImageHeight;
+            }
+            else if ((imageWidth != streetSnapArray.get(i).PNGImageWidth) || (imageHeight != streetSnapArray.get(i).PNGImageHeight))
+            {
+                printToFile.printDebugLine("Archive snaps are of different sizes - please remove snaps which do not match cleops/zoi in size ", 3);
+                return false;
+            }                       
+        }
+
+ 
+        // Everything OK
+        for (i = 0; i < archiveSnapFilenames.length; i++) 
+        {
+            printToFile.printDebugLine("Loaded archive snap image " + archiveSnapFilenames[i], 2);
+        }
+ 
+        return true;
+    }
+    
     public boolean initialiseStreetData()
     {
         // Read in street data - list of item TSIDs 
@@ -140,6 +196,12 @@ class StreetInfo
         if (!readStreetItemData())
         {
             printToFile.printDebugLine("Error in readStreetItemData", 3);
+            okFlag = false;
+            return false;
+        }
+        if (!loadArchiveStreetSnaps())
+        {
+            printToFile.printDebugLine("Error loading up street snaps for " + streetName, 3);
             okFlag = false;
             return false;
         }

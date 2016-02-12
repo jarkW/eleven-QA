@@ -77,8 +77,6 @@
 //  Need to read in street region - to know if black/white or AL (changes the quoin settings). 
 // And other different quoin regions (party?)
 //
-// Need to check using same size snaps - could confirm against found _zoi or _cleops? Or could bomb
-// out if the street snaps vary in size and leave to user to sort out (if no _zoi/cleops).
 //
 // When reading in list of snaps need to make sure don't pick up subway snap when searching for GFJ
 // So search for 'Subway' in street name - if absent, make sure don't pick up any by accident 
@@ -140,6 +138,14 @@ public void setup()
     // Set size of Processing window
     size(750,550);
     
+    printToFile = new PrintToFile();
+    if (!printToFile.readOkFlag())
+    {
+        println("Error setting up printToFile object");
+        failNow = true;
+        return;
+    }
+    
     // Set up config data
     configInfo = new ConfigInfo();
     if (!configInfo.readOkFlag())
@@ -149,8 +155,7 @@ public void setup()
     }
     
     // Set up debug info dump file and output file
-    printToFile = new PrintToFile();
-    if (!printToFile.readOkFlag())
+    if (!printToFile.initPrintToFile())
     {
         println("Error opening output files");
         failNow = true;

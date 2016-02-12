@@ -1,0 +1,370 @@
+{"fragments": [
+  {
+    "class_tsid": "marker_qurazy",
+    "width": 15,
+    "offset_x": -4,
+    "offset_y": -16,
+    "info": "",
+    "height": 15
+  },
+  {
+    "class_tsid": "quoin",
+    "width": 10,
+    "offset_x": -3,
+    "offset_y": -12,
+    "info": "currants",
+    "height": 10
+  },
+  {
+    "class_tsid": "quoin",
+    "width": 12,
+    "offset_x": -5,
+    "offset_y": -21,
+    "info": "mood",
+    "height": 12
+  },
+  {
+    "class_tsid": "quoin",
+    "width": 10,
+    "offset_x": -4,
+    "offset_y": -21,
+    "info": "xp",
+    "height": 14
+  },
+  {
+    "class_tsid": "quoin",
+    "width": 11,
+    "offset_x": -4,
+    "offset_y": -21,
+    "info": "time",
+    "height": 11
+  },
+  {
+    "class_tsid": "quoin",
+    "width": 10,
+    "offset_x": -2,
+    "offset_y": -21,
+    "info": "mystery",
+    "height": 10
+  },
+  {
+    "class_tsid": "quoin",
+    "width": 10,
+    "offset_x": -4,
+    "offset_y": -15,
+    "info": "energy",
+    "height": 10
+  },
+  {
+    "class_tsid": "quoin",
+    "width": 10,
+    "offset_x": -4,
+    "offset_y": -16,
+    "info": "favor",
+    "height": 10
+  },
+  {
+    "class_tsid": "rock_beryl_1",
+    "width": 34,
+    "offset_x": -4,
+    "offset_y": -29,
+    "info": "",
+    "height": 12
+  },
+  {
+    "class_tsid": "rock_beryl_2",
+    "width": 40,
+    "offset_x": -11,
+    "offset_y": -42,
+    "info": "",
+    "height": 19
+  },
+  {
+    "class_tsid": "rock_beryl_3",
+    "width": 36,
+    "offset_x": -63,
+    "offset_y": -66,
+    "info": "",
+    "height": 17
+  },
+  {
+    "class_tsid": "rock_dullite_1",
+    "width": 19,
+    "offset_x": 2,
+    "offset_y": -59,
+    "info": "",
+    "height": 25
+  },
+  {
+    "class_tsid": "rock_dullite_2",
+    "width": 18,
+    "offset_x": -1,
+    "offset_y": -46,
+    "info": "",
+    "height": 29
+  },
+  {
+    "class_tsid": "rock_dullite_3",
+    "width": 30,
+    "offset_x": 9,
+    "offset_y": -43,
+    "info": "",
+    "height": 15
+  },
+  {
+    "class_tsid": "rock_sparkly_1",
+    "width": 15,
+    "offset_x": -41,
+    "offset_y": -59,
+    "info": "",
+    "height": 26
+  },
+  {
+    "class_tsid": "rock_sparkly_2",
+    "width": 16,
+    "offset_x": 16,
+    "offset_y": -35,
+    "info": "",
+    "height": 20
+  },
+  {
+    "class_tsid": "rock_sparkly_3",
+    "width": 34,
+    "offset_x": 11,
+    "offset_y": -47,
+    "info": "",
+    "height": 16
+  },
+  {
+    "class_tsid": "rock_metal_1",
+    "width": 16,
+    "offset_x": -18,
+    "offset_y": -62,
+    "info": "",
+    "height": 16
+  },
+  {
+    "class_tsid": "rock_metal_2",
+    "width": 19,
+    "offset_x": -24,
+    "offset_y": -54,
+    "info": "",
+    "height": 20
+  },
+  {
+    "class_tsid": "rock_metal_3",
+    "width": 33,
+    "offset_x": 1,
+    "offset_y": -59,
+    "info": "",
+    "height": 15
+  },
+  {
+    "class_tsid": "visiting_stone",
+    "width": 18,
+    "offset_x": 15,
+    "offset_y": -132,
+    "info": "right",
+    "height": 20
+  },
+  {
+    "class_tsid": "visiting_stone",
+    "width": 18,
+    "offset_x": -35,
+    "offset_y": -134,
+    "info": "left",
+    "height": 17
+  },
+  {
+    "class_tsid": "npc_mailbox",
+    "width": 17,
+    "offset_x": -13,
+    "offset_y": -119,
+    "info": "mailboxRight",
+    "height": 10
+  },
+  {
+    "class_tsid": "npc_mailbox",
+    "width": 19,
+    "offset_x": -6,
+    "offset_y": -121,
+    "info": "mailboxLeft",
+    "height": 12
+  },
+  {
+    "class_tsid": "npc_shrine_alph",
+    "width": 24,
+    "offset_x": -10,
+    "offset_y": -44,
+    "info": "right",
+    "height": 25
+  },
+  {
+    "class_tsid": "npc_shrine_cosma",
+    "width": 28,
+    "offset_x": -10,
+    "offset_y": -32,
+    "info": "right",
+    "height": 15
+  },
+  {
+    "class_tsid": "npc_shrine_friendly",
+    "width": 23,
+    "offset_x": -10,
+    "offset_y": -40,
+    "info": "right",
+    "height": 20
+  },
+  {
+    "class_tsid": "npc_shrine_grendaline",
+    "width": 18,
+    "offset_x": -10,
+    "offset_y": -41,
+    "info": "right",
+    "height": 20
+  },
+  {
+    "class_tsid": "npc_shrine_humbaba",
+    "width": 30,
+    "offset_x": -11,
+    "offset_y": -32,
+    "info": "right",
+    "height": 14
+  },
+  {
+    "class_tsid": "npc_shrine_lem",
+    "width": 25,
+    "offset_x": -8,
+    "offset_y": -39,
+    "info": "right",
+    "height": 21
+  },
+  {
+    "class_tsid": "npc_shrine_mab",
+    "width": 23,
+    "offset_x": -1,
+    "offset_y": -42,
+    "info": "right",
+    "height": 19
+  },
+  {
+    "class_tsid": "npc_shrine_pot",
+    "width": 20,
+    "offset_x": -8,
+    "offset_y": -40,
+    "info": "right",
+    "height": 22
+  },
+  {
+    "class_tsid": "npc_shrine_spriggan",
+    "width": 23,
+    "offset_x": -9,
+    "offset_y": -39,
+    "info": "right",
+    "height": 21
+  },
+  {
+    "class_tsid": "npc_shrine_ti",
+    "width": 27,
+    "offset_x": -10,
+    "offset_y": -34,
+    "info": "right",
+    "height": 14
+  },
+  {
+    "class_tsid": "npc_shrine_zille",
+    "width": 32,
+    "offset_x": -13,
+    "offset_y": -38,
+    "info": "right",
+    "height": 18
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 14,
+    "offset_x": -26,
+    "offset_y": -82,
+    "info": "",
+    "height": 62
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 15,
+    "offset_x": -17,
+    "offset_y": -50,
+    "info": "",
+    "height": 35
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 10,
+    "offset_x": -5,
+    "offset_y": -53,
+    "info": "",
+    "height": 33
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 16,
+    "offset_x": -11,
+    "offset_y": -70,
+    "info": "1",
+    "height": 26
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 18,
+    "offset_x": -13,
+    "offset_y": -41,
+    "info": "2",
+    "height": 30
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 14,
+    "offset_x": -3,
+    "offset_y": -46,
+    "info": "3",
+    "height": 29
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 14,
+    "offset_x": -9,
+    "offset_y": -50,
+    "info": "4",
+    "height": 29
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 18,
+    "offset_x": -1,
+    "offset_y": -41,
+    "info": "",
+    "height": 28
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 37,
+    "offset_x": -38,
+    "offset_y": -35,
+    "info": "",
+    "height": 25
+  },
+  {
+    "class_tsid": "paper_tree",
+    "width": 13,
+    "offset_x": 1,
+    "offset_y": -49,
+    "info": "",
+    "height": 34
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 11,
+    "offset_x": -1,
+    "offset_y": -48,
+    "info": "",
+    "height": 33
+  }
+]}
