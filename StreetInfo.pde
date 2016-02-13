@@ -121,6 +121,7 @@ class StreetInfo
         {                                  
             if (!itemInfoArray.get(i).initialiseItemInfo())
             {
+                // actual error
                 printToFile.printDebugLine("Error reading in additional information for item from I* file", 3);
                 return false;
             }
@@ -204,6 +205,12 @@ class StreetInfo
             printToFile.printDebugLine("Error loading up street snaps for " + streetName, 3);
             okFlag = false;
             return false;
+        }
+        
+        // print out street images that have been loaded
+        for (int i = 0; i < streetSnapArray.size(); i++)
+        {
+            printToFile.printDebugLine("Loaded street image for street " + streetName + " " + streetSnapArray.get(i).PNGImageName, 1);
         }
 
         return true;

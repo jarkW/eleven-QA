@@ -1,7 +1,7 @@
 class PNGFile
 {
     // Used for both street snaps and item images
-    String PNGImageName;
+    String PNGImageName;  // includes path and filename
     PImage PNGImage;
     int PNGImageHeight;
     int PNGImageWidth;

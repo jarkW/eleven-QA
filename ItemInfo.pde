@@ -2,6 +2,7 @@ class ItemInfo
 {
     boolean okFlag;
     boolean itemFinished;
+    boolean skipThisItem;
     
     // Read in from I* file
     JSONObject itemJSON;
@@ -31,7 +32,9 @@ class ItemInfo
     public ItemInfo(JSONObject item)
     {
         okFlag = true;
+        
         itemFinished = false;
+        skipThisItem = false;
         itemJSON = null;
         itemInfo = "";
         itemImageBeingUsed = 0;
@@ -78,8 +81,17 @@ class ItemInfo
         origItemX = itemJSON.getInt("x");
         origItemY = itemJSON.getInt("y");
         itemClassTSID = itemJSON.getString("class_tsid");
-                     
-              
+        
+        // Before proceeding any further need to check if this is an item we are
+        // scanning for - skip if not
+        if (!validItemToCheckFor())
+        {
+            // NB - safer to keep it in the item array, and check this flag
+            // before doing any actual checking/writing
+            skipThisItem = true;
+            return true;
+        }
+                          
         // Populate the info field for some items e.g. quoins, dirt etc
         if (!extractItemInfoFromJson())
         {
@@ -111,90 +123,190 @@ class ItemInfo
         {
             printToFile.printDebugLine("class_tsid " + itemClassTSID + " with x,y " + str(origItemX) + "," + str(origItemY), 2); 
         }
-        
-        
+        // print out item images that have been loaded
+        for (int i = 0; i < itemImageArray.size(); i++)
+        {
+            printToFile.printDebugLine("Loaded item image " + itemImageArray.get(i).PNGImageName, 1);
+        }
+ 
         return true;
     } 
+    
+    boolean validItemToCheckFor()
+    {        
+        // Returns true if this an item we expect to be scanning for on a snap
+        if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
+            (itemClassTSID.indexOf("trant_", 0) == 0) ||
+            (itemClassTSID.indexOf("rock_", 0) == 0) ||
+            (itemClassTSID.indexOf("peat_", 0) == 0))
+        {
+            return true;
+        }
+        
+        switch (itemClassTSID)
+        {
+            case "quoin":
+            case "marker_qurazy":
+            case "wood_tree":
+            case "paper_tree":
+            case "npc_mailbox":
+            case "dirt_pile":
+            case "mortar_barnacle":
+            case "jellisac":
+            case "ice_knob":
+            case "dust_trap":
+            case "wall_button":
+            case "visiting_stone":              
+            case "npc_sloth":
+            case "sloth_knocker":
+            case "patch":
+            case "patch_dark":
+            case "party_atm":
+            case "race_ticket_dispenser":
+                return true;
+                
+            default:
+                // Unexpected class tsid - so skip the item
+                printToFile.printDebugLine("Skipping item " + itemTSID + " class tsid " + itemClassTSID, 2);
+                return false;
+         }
+    }
     
     boolean loadItemImages()
     {
         // Using the item class_tsid and info field, load up all the images for this item
-        // NB Need to tweak the order of items
-        // For quoins - load up images so most common first
-        // For trees - load up the correct image from the item JSON and then the rest (most common first)
+        // Depending on the item might need to tweak the order of items
         
-        /*
-        Trees have no direction
-Spice Plant:trant_spice
-Bean Tree:trant_bean
-Egg Plant:trant_egg
-Bubble Tree:trant_bubble
-Fruit Tree:trant_fruit
-Gas Plant:trant_gas
-Wood Tree:wood_tree (
-Paper Tree:paper_tree (will always be this sort, not plantable)
-*/
-        
-        
-        // BUT paper tree can only ever be a paper tree (cannot be planted)
-        // For visiting stones - load up the correct image using the item JSON x,y to know what is expected
-        // For shrines - always 'right'
-        
-        
-        // visiting stones:
-        //"dir" = left/right. So can check to see if they both exist, and if not, then add/set
-        //NB The RHS one is set to 'left' and the LHS one is set to 'right'
-        
-        // ERR: Sloth:npc_sloth (branch) instanceProps.dir = right/left (which also then sets dir=right/left
-        // Wall Button:wall_button - dir = left/right (use def value first) i.e. which one matches all pictures
-
-        
-        // Work out how many street snaps exist
-        Utils utils = new Utils();
-        String [] archiveSnapFilenames = utils.loadFilenames(configInfo.readStreetSnapPath(), streetName);
-
-        if (archiveSnapFilenames.length == 0)
-        {
-            printToFile.printDebugLine("No files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
-            return false;
-        }
-       
-        int imageWidth = 0;
-        int imageHeight = 0;
+        String itemFragmentPNGName;
+        PNGFile itemPNG;
         int i;
-        // Now load up each of the snaps
-        for (i = 0; i < archiveSnapFilenames.length; i++) 
-        {
-            // This currently never returns an error
-            streetSnapArray.add(new PNGFile(configInfo.readStreetSnapPath() + "/" + archiveSnapFilenames[i]));
-            
-            // load up the image
-            if (!streetSnapArray.get(i).loadPNGImage())
-            {
-                printToFile.printDebugLine("Failed to load up image " + archiveSnapFilenames[i], 3);
-                return false;
-            }
-            
-            if (imageWidth == 0)
-            {
-                // first time through
-                imageWidth = streetSnapArray.get(i).PNGImageWidth;
-                imageHeight = streetSnapArray.get(i).PNGImageHeight;
-            }
-            else if ((imageWidth != streetSnapArray.get(i).PNGImageWidth) || (imageHeight != streetSnapArray.get(i).PNGImageHeight))
-            {
-                printToFile.printDebugLine("Archive snaps are of different sizes - please remove snaps which do not match cleops/zoi in size ", 3);
-                return false;
-            }                       
-        }
 
- 
-        // Everything OK
-        for (i = 0; i < archiveSnapFilenames.length; i++) 
+        if (itemClassTSID.indexOf("visiting_stone", 0) == 0)
         {
-            printToFile.printDebugLine("Loaded archive snap image " + archiveSnapFilenames[i], 2);
+            // For visiting stones - load up the correct image using the item JSON x,y to know what is expected
+            if (origItemX < 0)
+            {
+                // visiting stone is on LHS of page - so load up the 'right' image
+                itemFragmentPNGName = itemClassTSID + "_right.png";
+            }
+            else
+            {
+                // visiting stone is on RHS of page - so load up the 'left' image
+                itemFragmentPNGName = itemClassTSID + "_left.png";
+            }
+            itemImageArray.add(new PNGFile(dataPath(itemFragmentPNGName)));
         }
- 
+        else if (itemClassTSID.indexOf("wall_button", 0) == 0)
+        {
+            // assume left-facing button to start with
+            itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_left.png")));
+            itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_right.png")));
+        }
+        else if (itemClassTSID.indexOf("quoin", 0) == 0)
+        {
+            // As we are setting quoins from the snap, load up the most common quoins first
+            itemImageArray.add(new PNGFile(dataPath("quoin_xp.png")));
+            itemImageArray.add(new PNGFile(dataPath("quoin_energy.png")));
+            itemImageArray.add(new PNGFile(dataPath("quoin_mood.png")));
+            itemImageArray.add(new PNGFile(dataPath("quoin_currants.png")));
+            itemImageArray.add(new PNGFile(dataPath("quoin_favor.png")));
+            itemImageArray.add(new PNGFile(dataPath("quoin_time.png")));
+        }
+        else if ((itemClassTSID.indexOf("wood_tree", 0) == 0) || (itemClassTSID.indexOf("trant_", 0) == 0))
+        {
+            // Are dealing with a tree. First load the existing tree image and then load the other tree images
+            // Finally prune out the duplicate - rather than keep doing if statements
+            itemFragmentPNGName = itemClassTSID;
+            if (itemInfo.length() > 0)
+            {
+                itemFragmentPNGName = itemFragmentPNGName + "_" + itemInfo;
+            }
+            // Add this item image
+            itemImageArray.add(new PNGFile(dataPath(itemFragmentPNGName + ".png")));
+            // Now add all the trees
+            itemImageArray.add(new PNGFile(dataPath("trant_bean.png")));
+            itemImageArray.add(new PNGFile(dataPath("trant_fruit.png")));
+            itemImageArray.add(new PNGFile(dataPath("trant_bubble.png")));
+            itemImageArray.add(new PNGFile(dataPath("trant_spice.png")));
+            itemImageArray.add(new PNGFile(dataPath("trant_gas.png")));
+            itemImageArray.add(new PNGFile(dataPath("trant_egg.png")));
+            itemImageArray.add(new PNGFile(dataPath("wood_tree_1.png")));    
+            itemImageArray.add(new PNGFile(dataPath("wood_tree_2.png")));  
+            itemImageArray.add(new PNGFile(dataPath("wood_tree_3.png")));  
+            itemImageArray.add(new PNGFile(dataPath("wood_tree_4.png")));  
+            
+            // Now remove the duplicate item image - skip past first image
+            boolean duplicateFound = false;
+            for (i = 1; i < itemImageArray.size() && !duplicateFound; i++)
+            {
+                println("this item is ", dataPath(itemFragmentPNGName + ".png"), " array [", i, "] is ",itemImageArray.get(i).PNGImageName);
+                if (itemImageArray.get(i).PNGImageName.equals(dataPath(itemFragmentPNGName + ".png")))
+                {
+                    itemImageArray.remove(i);
+                    duplicateFound = true;
+                }
+            }
+            if (!duplicateFound)
+            {
+                // Should never happen
+                printToFile.printDebugLine("Failed to remove duplicate tree item image ", 3);
+                return false;
+            }            
+        }
+        else
+        {
+            // Can search for images based on the class_tsid and info fields
+            // npc_shrine_*
+            // npc_sloth
+            // sloth_knocker
+            // patch
+            // patch_dark
+            // party_atm
+            // race_ticket_dispenser
+            // rock_*
+            // peat_*
+            // marker_qurazy
+            // paper_tree (as can only ever be a paper tree/not planted by player)
+            // npc_mailbox
+            // dirt_pile
+            // mortar_barnacle
+            // jellisac
+            // ice_knob
+            // dust_trap
+            itemFragmentPNGName = itemClassTSID;
+            if (itemInfo.length() > 0)
+            {
+                itemFragmentPNGName = itemFragmentPNGName + "_" + itemInfo;
+            }
+            
+            // Work out how many item images exist
+            String [] imageFilenames = null;
+            imageFilenames = Utils.loadFilenames(dataPath(""), itemFragmentPNGName);
+
+            if ((imageFilenames == null) || (imageFilenames.length == 0))
+            {
+                printToFile.printDebugLine("No files found in " + dataPath("") + " for item/info " + itemFragmentPNGName, 3);
+                return false;
+            }
+       
+            // Now create am entry for each of the snaps
+            for (i = 0; i < imageFilenames.length; i++) 
+            {
+                // This currently never returns an error
+                itemImageArray.add(new PNGFile(dataPath(imageFilenames[i])));
+            } 
+        }
+        
+        // Now load up the actual item images
+        for (i = 0; i < itemImageArray.size(); i++)
+        {
+            if (!itemImageArray.get(i).loadPNGImage())
+            {
+                printToFile.printDebugLine("Failed to load up item image " + itemImageArray.get(i).PNGImageName, 3);
+                return false;
+            }
+        }
+        
         return true;
     }
     
@@ -238,7 +350,11 @@ Paper Tree:paper_tree (will always be this sort, not plantable)
             case "wood_tree":
             case "npc_mailbox":
             case "dirt_pile":
-                // Read in the instanceProps array to get the quoin type
+            case "mortar_barnacle":
+            case "jellisac":
+            case "ice_knob":
+            case "dust_trap":
+                // Read in the instanceProps array 
                 instanceProps = null;
                 try
                 {
@@ -441,6 +557,11 @@ Paper Tree:paper_tree (will always be this sort, not plantable)
     public boolean readItemFinished()
     {
         return itemFinished;
+    }
+    
+    public boolean readSkipThisItem()
+    {
+        return skipThisItem;
     }
     
     public boolean readOkFlag()
