@@ -25,13 +25,16 @@ class PNGFile
         }
         
         PNGImage = loadImage(PNGImageName, "png");
-        printToFile.printDebugLine("Loading image from " + PNGImageName, 2);
+        
         
         // appropriate to do this now???
         PNGImage.loadPixels();
         
         PNGImageWidth = PNGImage.width;
         PNGImageHeight = PNGImage.height;
+        
+        printToFile.printDebugLine("Loading image from " + PNGImageName + " with width " + PNGImageHeight + " height " + PNGImageWidth, 1);
+        
         
         return true;
     }

@@ -22,11 +22,12 @@
  * The tool will eventually be able to write to either the server/vagrant depending on 
  * where the QA person is working. 
  *
+ * NB It is up to the user to ensure that snaps are correctly labelled with the street 
+ * name as it appears in the game. And that they are all the same size - like zoi/cleops
+ *
  */
 
 // TO DO
-// Read in config from json file
-
 // Use SearchMgr class which does the actual image stuff. 
 // Street -> item -> do image stuff (so store loop counting, current image x,y as vars
 // in this class rather than as globals. Depending on flag, can do all the loop (don't
@@ -73,19 +74,13 @@
 // class_name = "placement tester" (type = "mystery")
 //
 // adding keys to visiting stone (so can count diff expected?)
+// adding keys (dir) to shrines if not read in 'dir'
 //
 //  Need to read in street region - to know if black/white or AL (changes the quoin settings). 
 // And other different quoin regions (party?)
 //
 //
-// When reading in list of snaps need to make sure don't pick up subway snap when searching for GFJ
-// So search for 'Subway' in street name - if absent, make sure don't pick up any by accident 
-// Sabudana Drama (Aranna) - Towers/Towers Basement/Towers Floor 1-4 (need to separate Sabudana Drama and Sabudana Drama Towers out)
-// Besara - Egret Taun - Towers/Towers Basement/Towers Floor 1-3 (need to separate Egret Taun and Egret Taun Towers out)
-// Bortola - Hauki Seeks - Manor/Manor Basement/Manor Floor 1-3 (need to separate Hauki Seeks and Hauki Seeks Manor out)
-// GM - Gregarious Towers/Towers Basement/Towers Floor 1-3 (need to separate Gregarious Towers out)
-// Muufo - Hakusan Heaps - Towers/Towers Basement/Towers Floor 1-2 (need to separate Hakusan Heaps and Hakusan Heaps Towers out)
-// May be have an option which says 'use all snaps in directory' so if name not work, can force it
+
 
 //
 // Update files in vagrant or on server (need to update sftp library to 'put'
@@ -122,6 +117,9 @@ StreetInfo thisStreetInfo;
 // Keep track of which street we are on in the list from the config.json file
 int streetNumberBeingProcessed;
 
+// Handles all output to screen
+DisplayMgr display;
+
 // Differentiate between error/normal endings
 boolean failNow = false;
 boolean exitNow = false;
@@ -130,13 +128,17 @@ boolean exitNow = false;
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 1;
+int debugLevel = 3;
 boolean debugToConsole = true;
 
 public void setup() 
 {
     // Set size of Processing window
+    // width, height
     size(750,550);
+    
+    // Start up display manager
+    display = new DisplayMgr();
     
     printToFile = new PrintToFile();
     if (!printToFile.readOkFlag())
@@ -170,7 +172,7 @@ public void setup()
         return;
     }
     
-    // Start setting up the first street to be processed
+    // Start setting up the first street to be processed   
     streetNumberBeingProcessed = 0;
     thisStreetInfo = new StreetInfo(configInfo.readStreetTSID(streetNumberBeingProcessed));
     printToFile.printDebugLine("Read street data for TSID " + configInfo.readStreetTSID(streetNumberBeingProcessed), 2); 

@@ -11,6 +11,8 @@ class ItemInfo
     String itemInfo;  // additional info needed for some items
     int    origItemX;
     int    origItemY;
+    int    newItemX;
+    int    newItemY;
     
     // defaults for fragment
     // Offset from the actual x,y of the item for this fragment
@@ -19,10 +21,22 @@ class ItemInfo
     int fragHeight;
     int fragWidth;
     
+    FragmentSearch fragSearch;
+    
     // Contains the item fragments used to search the snap
     ArrayList<PNGFile> itemImageArray;
-    int itemImageBeingUsed;
     
+    // ARE THESE EVER USED HERE?
+    int itemImageBeingUsed;
+    int streetImageBeingUsed;
+    
+    // Info used to compare size of input/output JSON files
+    int sizeOfOriginalJSON;
+    int sizeOfFinalJSON;
+    int sizeDiffJSONCalc; // calculated 
+    
+    // missing item co-ordinates
+    final int missCoOrds = 32700;
     
     
     // Need to save k i.e. count of how many times move fragment before initiating
@@ -37,8 +51,16 @@ class ItemInfo
         skipThisItem = false;
         itemJSON = null;
         itemInfo = "";
+        origItemX = 0;
+        origItemY = 0;
+        newItemX = missCoOrds;
+        newItemY = missCoOrds;
         itemImageBeingUsed = 0;
         itemImageArray = new ArrayList<PNGFile>();
+        sizeOfOriginalJSON = 0;
+        sizeOfFinalJSON = 0;
+        sizeDiffJSONCalc = 0;
+        fragSearch = null;
         
         itemTSID = item.getString("tsid");
         printToFile.printDebugLine("item tsid is " + itemTSID + "(" + item.getString("label") + ")", 2); 
@@ -60,8 +82,9 @@ class ItemInfo
                 return false;
             }
         } 
-        
-        printToFile.printDebugLine("Item file name is " + itemFileName, 2); 
+                
+        sizeOfOriginalJSON = sizeOfJSONFile(itemFileName);
+        printToFile.printDebugLine("Item file name is " + itemFileName + " size " + sizeOfOriginalJSON, 2); 
 
         // Now read the item JSON file
         itemJSON = null;
@@ -128,6 +151,11 @@ class ItemInfo
         {
             printToFile.printDebugLine("Loaded item image " + itemImageArray.get(i).PNGImageName, 1);
         }
+        
+        // Initialise for the item to be searched for
+        itemImageBeingUsed = 0;
+        // 
+        fragSearch = new FragmentSearch(itemImageArray, fragOffsetX, fragOffsetY);
  
         return true;
     } 
@@ -202,6 +230,24 @@ class ItemInfo
             itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_left.png")));
             itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_right.png")));
         }
+        else if (itemClassTSID.indexOf("npc_mailbox", 0) == 0)
+        {
+            if (itemInfo.equals("mailboxRight"))
+            {
+                itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_mailboxRight.png")));
+                itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_mailboxLeft.png")));
+            }
+            else
+            {
+                itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_mailboxLeft.png")));
+                itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_mailboxRight.png")));
+            }
+        } 
+        else if (itemClassTSID.indexOf("npc_sloth", 0) == 0)
+        {
+            printToFile.printDebugLine("NEED TO CONFIGURE SLOTH in loadItemImages ", 3);
+            return false;
+        }
         else if (itemClassTSID.indexOf("quoin", 0) == 0)
         {
             // As we are setting quoins from the snap, load up the most common quoins first
@@ -256,8 +302,8 @@ class ItemInfo
         else
         {
             // Can search for images based on the class_tsid and info fields
-            // npc_shrine_*
-            // npc_sloth
+            // Rest of items do not have a dir field (or in case of shrines, only ever set to right, so only one image to load
+            // npc_shrine_* (will only ever be _right variety)
             // sloth_knocker
             // patch
             // patch_dark
@@ -267,7 +313,6 @@ class ItemInfo
             // peat_*
             // marker_qurazy
             // paper_tree (as can only ever be a paper tree/not planted by player)
-            // npc_mailbox
             // dirt_pile
             // mortar_barnacle
             // jellisac
@@ -328,9 +373,13 @@ class ItemInfo
             }
             catch(Exception e)
             {
-                println(e);
-                printToFile.printDebugLine("Failed to read dir field from item JSON file " + itemTSID, 3);
-                return false;
+                printToFile.printDebugLine("Failed to read dir field from item JSON file " + itemTSID, 2);
+                itemJSON.setString("dir", "right");
+                itemInfo = "right";
+                // As have just added in a new key - keep track of this expected change to file length
+                String str = "'dir': 'right',";
+                sizeDiffJSONCalc += str.length() + 1;
+                printToFile.printDebugLine("Updated JSON file size difference is " + sizeDiffJSONCalc, 1);
             }
             
             // Currently all shrines are set to 'right' so flag up error if that isn't true
@@ -442,6 +491,11 @@ class ItemInfo
                     // The dir field is often missing - so just insert now
                     printToFile.printDebugLine("Failed to read dir field from item JSON file - so insert " + itemTSID, 3);
                     itemJSON.setString("dir", itemInfo);
+                    // As have just added in a new key - keep track of this expected change to file length
+                    String str = "'dir': 'right',";
+                    sizeDiffJSONCalc += str.length() + 1;
+                    printToFile.printDebugLine("Updated JSON file size difference is " + sizeDiffJSONCalc, 1);
+
                     // Check that also have state field set
                     try
                     {
@@ -451,6 +505,10 @@ class ItemInfo
                     {
                         printToFile.printDebugLine("Failed to read STATE field from item JSON file - so insert set to 1 " + itemTSID, 3);
                         itemJSON.setString("state", "1");
+                        // As have just added in a new key - keep track of this expected change to file length
+                        str = "'state': '1',";
+                        sizeDiffJSONCalc += str.length() + 1;
+                        printToFile.printDebugLine("Updated JSON file size difference is " + sizeDiffJSONCalc, 1);
                     }
 
                 }               
@@ -533,10 +591,46 @@ class ItemInfo
         return readString;
     }
     
+    int sizeOfJSONFile (String fname)
+    {
+        String lines[] = loadStrings(fname);
+        int fnameLength = 0;
+        
+        for (int i = 0 ; i < lines.length; i++) 
+        {
+            fnameLength += lines[i].length();
+        }
+        return fnameLength;
+    }
+    
     public void searchUsingReference()
     {
         // Does the actual matching of images/snap?
         //printToFile.printDebugLine("unimplemented searchUsingReference()", 3);
+  /*      
+        // Display 
+        // initiate fragment search - which will search through all the images for this item, over all street snaps
+        set up fragSearch with correct co-ords (i.e. done offset from x,y)
+        when search is done, return new offset? So fragsearch offset is 0 to start with?
+        if (fragSearch.readSearchDone())
+        {
+            // Search has completed
+            String matchedImage = fragSearch.readItemImageThatMatched();
+            if (matchedImage.length > 0)
+            {
+                // Search finished successfully
+                // If classtsid is quoin, then need to read in new kind of quoin and set up
+                .. And other things such as dirt - antyhing with an 'info' field
+                Use readOffsetX()/readOffsetY() to correct the x,y
+            }
+        }
+        else
+        {
+            fragSearch.showFragment();
+            ???? 
+        }
+        
+  */      
         if (itemInfo.length() > 0)
         {
             printToFile.printDebugLine("Searching item class_tsid " + itemClassTSID + " info = <" + itemInfo + "> with x,y " + str(origItemX) + "," + str(origItemY) + //
