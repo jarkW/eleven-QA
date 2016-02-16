@@ -1,30 +1,43 @@
 class PNGFile
 {
     // Used for both street snaps and item images
-    String PNGImageName;  // includes path and filename
+    String PNGImageName;  
     PImage PNGImage;
     int PNGImageHeight;
     int PNGImageWidth;
-    boolean okFlag;
     
-    public PNGFile(String fname)
+    boolean okFlag;
+    boolean isStreetSnapFlag;
+    
+    public PNGFile(String fname, boolean isStreetSnap)
     {
         okFlag = true;
-        // Includes path as well as fname
+         
         PNGImageName = fname;
+        isStreetSnapFlag = isStreetSnap;
     }
     
     public boolean loadPNGImage()
     {
         // Load up this snap/item image
-        File file = new File(PNGImageName);
+        String fullFileName;
+        
+        if (isStreetSnapFlag)
+        {
+            fullFileName = configInfo.readStreetSnapPath() + "/" + PNGImageName;
+        }
+        else
+        {
+            fullFileName = dataPath(PNGImageName);
+        }
+        File file = new File(fullFileName);
         if (!file.exists())
         {
-            printToFile.printDebugLine("Missing file - " + PNGImageName, 3);
+            printToFile.printDebugLine("Missing file - " + fullFileName, 3);
             return false;
         }
         
-        PNGImage = loadImage(PNGImageName, "png");
+        PNGImage = loadImage(fullFileName, "png");
         
         
         // appropriate to do this now???
@@ -33,7 +46,7 @@ class PNGFile
         PNGImageWidth = PNGImage.width;
         PNGImageHeight = PNGImage.height;
         
-        printToFile.printDebugLine("Loading image from " + PNGImageName + " with width " + PNGImageHeight + " height " + PNGImageWidth, 1);
+        printToFile.printDebugLine("Loading image from " + fullFileName + " with width " + PNGImageHeight + " height " + PNGImageWidth, 1);
         
         
         return true;
@@ -43,4 +56,25 @@ class PNGFile
     {
         return okFlag;
     }
+    
+    public String readPNGImageName()
+    {
+        return PNGImageName;
+    }
+    
+    public PImage readPNGImage()
+    {
+        return PNGImage;
+    }   
+    
+    public int readPNGImageHeight()
+    {
+        return PNGImageHeight;
+    }
+    
+    public int readPNGImageWidth()
+    {
+        return PNGImageWidth;
+    }
+
 }

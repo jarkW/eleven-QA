@@ -46,8 +46,9 @@ class StreetInfo
             if (!file.exists())
             {
                 printToFile.printDebugLine("SKIPPING MISSING street location file - " + locFileName, 3);
+                display.setSkippedStreetsMsg("Skipping street - Missing location JSON file for TSID " + streetTSID);
                 streetFinished = true;
-                return true;
+                return false;
             }
         } 
                 
@@ -143,12 +144,13 @@ class StreetInfo
 
         if (SnapFilenames.length == 0)
         {
-            printToFile.printDebugLine("No files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
+            printToFile.printDebugLine("SKIPPING STREET - No street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
+            display.setSkippedStreetsMsg("Skipping street " + streetName + ": No street snaps found");
+            streetFinished = true;
             return false;
         }
        
-        int imageWidth = 0;
-        int imageHeight = 0;
+
         int i;
         StringList archiveSnapFilenames = new StringList();
  
@@ -211,10 +213,12 @@ class StreetInfo
         } 
         
         // Now load up each of the snaps
+        int maxImageWidth = 0;
+        int maxImageHeight = 0;
         for (i = 0; i < archiveSnapFilenames.size(); i++) 
         {
             // This currently never returns an error
-            streetSnapArray.add(new PNGFile(configInfo.readStreetSnapPath() + "/" + archiveSnapFilenames.get(i)));
+            streetSnapArray.add(new PNGFile(archiveSnapFilenames.get(i), true));
             
             // load up the image
             if (!streetSnapArray.get(i).loadPNGImage())
@@ -222,21 +226,29 @@ class StreetInfo
                 printToFile.printDebugLine("Failed to load up image " + archiveSnapFilenames.get(i), 3);
                 return false;
             }
-                      
-            if (imageWidth == 0)
+            
+            // Keep track of the largest snap size - most likely to be the FSS e.g. zoi/cleops
+            if (streetSnapArray.get(i).readPNGImageWidth() > maxImageWidth)
             {
-                // first time through
-                imageWidth = streetSnapArray.get(i).PNGImageWidth;
-                imageHeight = streetSnapArray.get(i).PNGImageHeight;
+                maxImageWidth = streetSnapArray.get(i).PNGImageWidth;
             }
-            else if ((imageWidth != streetSnapArray.get(i).PNGImageWidth) || (imageHeight != streetSnapArray.get(i).PNGImageHeight))
+            if (streetSnapArray.get(i).readPNGImageHeight() > maxImageHeight)
             {
-                printToFile.printDebugLine("Archive snaps for " + streetName + " are of different sizes - please remove snaps which do not match cleops/zoi in size ", 3);
-                return false;
-            }                       
+                maxImageHeight = streetSnapArray.get(i).PNGImageHeight;
+            } 
         }
-
- 
+        
+        // Work backwards so always removing from the end, not the top
+        for (i = streetSnapArray.size()-1; i >= 0; i--)
+        {
+            if ((streetSnapArray.get(i).readPNGImageWidth() != maxImageWidth) || (streetSnapArray.get(i).readPNGImageHeight() != maxImageHeight))
+            {
+                printToFile.printDebugLine("Skipping street snap " + streetSnapArray.get(i).readPNGImageName() + " because resolution is smaller than " + 
+                maxImageWidth + "x" + maxImageHeight + "pixels", 3);
+                streetSnapArray.remove(i);
+            }
+        }
+        
         // Everything OK
         return true;
     }
@@ -247,28 +259,44 @@ class StreetInfo
         // Read in street data - list of item TSIDs 
         if (!readStreetData())
         {
-            printToFile.printDebugLine("Error in readStreetData", 3);
-            okFlag = false;
-            return false;
+            if (streetFinished)
+            {
+                // i.e. need to skip this street as location information not available
+                printToFile.printDebugLine("Skipping missing location JSON file", 3);
+                return true; // continue
+            }
+            else
+            {
+                // error - need to stop
+                printToFile.printDebugLine("Error in readStreetData", 3);
+                okFlag = false;
+                return false;
+            }
         }
-        if (streetFinished)
-        {
-            // i.e. need to skip this street as location information not available
-            printToFile.printDebugLine("Skipping missing location JSON file", 3);
-            return true;
-        }
-        
+
         display.setStreetName(streetName, streetTSID, streetNumberBeingProcessed + 1, configInfo.readTotalStreetCount());
         
+        if (!loadArchiveStreetSnaps())
+        {
+            if (streetFinished)
+            {
+                // i.e. need to skip this street as missing street snaps for street
+                printToFile.printDebugLine("Skipping street - missing/invalid street snaps", 3);
+                display.setSkippedStreetsMsg("Skipping street " + streetName + ": Missing/invalid location JSON file for TSID " + streetTSID);
+                return true; // continue
+            }
+            else
+            {
+                // error - need to stop
+                printToFile.printDebugLine("Error loading up street snaps for " + streetName, 3);
+                okFlag = false;
+                return false;
+            }
+        }
+
         if (!readStreetItemData())
         {
             printToFile.printDebugLine("Error in readStreetItemData", 3);
-            okFlag = false;
-            return false;
-        }
-        if (!loadArchiveStreetSnaps())
-        {
-            printToFile.printDebugLine("Error loading up street snaps for " + streetName, 3);
             okFlag = false;
             return false;
         }
@@ -322,11 +350,9 @@ class StreetInfo
         return streetTSID;
     }
     
-    
-    // IS THIS USED?
-    public PNGFile readCurrentStreetSnap()
+    public PNGFile readStreetSnap(int n)
     {
-        return streetSnapArray.get(streetSnapBeingUsed);
+        return streetSnapArray.get(n);
     }
   
     // IS THIS USED?

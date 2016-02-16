@@ -79,7 +79,7 @@
 //  Need to read in street region - to know if black/white or AL (changes the quoin settings). 
 // And other different quoin regions (party?)
 //
-//
+//NEED TO CHECK USING ALL FUNCTION CALLS - I.E. READ/SET ONES
 
 
 //
@@ -120,9 +120,13 @@ int streetNumberBeingProcessed;
 // Handles all output to screen
 DisplayMgr display;
 
+// missing item co-ordinates - if set to this, know not found
+final int missCoOrds = 32700;
+
 // Differentiate between error/normal endings
 boolean failNow = false;
 boolean exitNow = false;
+boolean doNothing = false;
 
 // Contains both debug and user input information output files
 PrintToFile printToFile;
@@ -200,12 +204,13 @@ public void draw()
         printToFile.printDebugLine("failNow flag set - exiting with errors", 3);
         exit();
     }
-    else if (exitNow)
+    else if (exitNow && !doNothing)
     {
-        println("Exit now - all work completed");
-        printToFile.printOutputLine("Exit now - all work completed");
-        printToFile.printDebugLine("Exit now - all work completed", 3);
-        exit();
+        display.showSkippedStreetsMsg();
+        printToFile.printOutputLine("All processing completed");
+        printToFile.printDebugLine("Exit now - All processing completed", 3);
+        doNothing = true;
+        //exit();
     }
     else
     {

@@ -18,10 +18,12 @@ class ItemInfo
     // Offset from the actual x,y of the item for this fragment
     int fragOffsetX;
     int fragOffsetY;
+    
+    // MIGHT NOT BE NEEDED - can work out from the image png file
     int fragHeight;
     int fragWidth;
     
-    FragmentSearch fragSearch;
+    FragmentFind fragFind;
     
     // Contains the item fragments used to search the snap
     ArrayList<PNGFile> itemImageArray;
@@ -34,10 +36,7 @@ class ItemInfo
     int sizeOfOriginalJSON;
     int sizeOfFinalJSON;
     int sizeDiffJSONCalc; // calculated 
-    
-    // missing item co-ordinates
-    final int missCoOrds = 32700;
-    
+      
     
     // Need to save k i.e. count of how many times move fragment before initiating
     // search. So can see how small k can be to actually work
@@ -60,7 +59,7 @@ class ItemInfo
         sizeOfOriginalJSON = 0;
         sizeOfFinalJSON = 0;
         sizeDiffJSONCalc = 0;
-        fragSearch = null;
+        fragFind = null;
         
         itemTSID = item.getString("tsid");
         printToFile.printDebugLine("item tsid is " + itemTSID + "(" + item.getString("label") + ")", 2); 
@@ -135,8 +134,7 @@ class ItemInfo
         {
             printToFile.printDebugLine("Error loading item images for class_tsid " + itemClassTSID, 3); 
             return false;
-        }
-        
+        }      
         
         if (itemInfo.length() > 0)
         {
@@ -154,8 +152,7 @@ class ItemInfo
         
         // Initialise for the item to be searched for
         itemImageBeingUsed = 0;
-        // 
-        fragSearch = new FragmentSearch(itemImageArray, fragOffsetX, fragOffsetY);
+        fragFind = new FragmentFind(this);
  
         return true;
     } 
@@ -222,25 +219,25 @@ class ItemInfo
                 // visiting stone is on RHS of page - so load up the 'left' image
                 itemFragmentPNGName = itemClassTSID + "_left.png";
             }
-            itemImageArray.add(new PNGFile(dataPath(itemFragmentPNGName)));
+            itemImageArray.add(new PNGFile(itemFragmentPNGName, false));
         }
         else if (itemClassTSID.indexOf("wall_button", 0) == 0)
         {
             // assume left-facing button to start with
-            itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_left.png")));
-            itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_right.png")));
+            itemImageArray.add(new PNGFile(itemClassTSID + "_left.png", false));
+            itemImageArray.add(new PNGFile(itemClassTSID + "_right.png", false));
         }
         else if (itemClassTSID.indexOf("npc_mailbox", 0) == 0)
         {
             if (itemInfo.equals("mailboxRight"))
             {
-                itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_mailboxRight.png")));
-                itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_mailboxLeft.png")));
+                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxRight.png", false));
+                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxLeft.png", false));
             }
             else
             {
-                itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_mailboxLeft.png")));
-                itemImageArray.add(new PNGFile(dataPath(itemClassTSID + "_mailboxRight.png")));
+                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxLeft.png", false));
+                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxRight.png", false));
             }
         } 
         else if (itemClassTSID.indexOf("npc_sloth", 0) == 0)
@@ -251,12 +248,12 @@ class ItemInfo
         else if (itemClassTSID.indexOf("quoin", 0) == 0)
         {
             // As we are setting quoins from the snap, load up the most common quoins first
-            itemImageArray.add(new PNGFile(dataPath("quoin_xp.png")));
-            itemImageArray.add(new PNGFile(dataPath("quoin_energy.png")));
-            itemImageArray.add(new PNGFile(dataPath("quoin_mood.png")));
-            itemImageArray.add(new PNGFile(dataPath("quoin_currants.png")));
-            itemImageArray.add(new PNGFile(dataPath("quoin_favor.png")));
-            itemImageArray.add(new PNGFile(dataPath("quoin_time.png")));
+            itemImageArray.add(new PNGFile("quoin_xp.png", false));
+            itemImageArray.add(new PNGFile("quoin_energy.png", false));
+            itemImageArray.add(new PNGFile("quoin_mood.png", false));
+            itemImageArray.add(new PNGFile("quoin_currants.png", false));
+            itemImageArray.add(new PNGFile("quoin_favor.png", false));
+            itemImageArray.add(new PNGFile("quoin_time.png", false));
         }
         else if ((itemClassTSID.indexOf("wood_tree", 0) == 0) || (itemClassTSID.indexOf("trant_", 0) == 0))
         {
@@ -268,25 +265,24 @@ class ItemInfo
                 itemFragmentPNGName = itemFragmentPNGName + "_" + itemInfo;
             }
             // Add this item image
-            itemImageArray.add(new PNGFile(dataPath(itemFragmentPNGName + ".png")));
+            itemImageArray.add(new PNGFile(itemFragmentPNGName + ".png", false));
             // Now add all the trees
-            itemImageArray.add(new PNGFile(dataPath("trant_bean.png")));
-            itemImageArray.add(new PNGFile(dataPath("trant_fruit.png")));
-            itemImageArray.add(new PNGFile(dataPath("trant_bubble.png")));
-            itemImageArray.add(new PNGFile(dataPath("trant_spice.png")));
-            itemImageArray.add(new PNGFile(dataPath("trant_gas.png")));
-            itemImageArray.add(new PNGFile(dataPath("trant_egg.png")));
-            itemImageArray.add(new PNGFile(dataPath("wood_tree_1.png")));    
-            itemImageArray.add(new PNGFile(dataPath("wood_tree_2.png")));  
-            itemImageArray.add(new PNGFile(dataPath("wood_tree_3.png")));  
-            itemImageArray.add(new PNGFile(dataPath("wood_tree_4.png")));  
+            itemImageArray.add(new PNGFile("trant_bean.png", false));
+            itemImageArray.add(new PNGFile("trant_fruit.png", false));
+            itemImageArray.add(new PNGFile("trant_bubble.png", false));
+            itemImageArray.add(new PNGFile("trant_spice.png", false));
+            itemImageArray.add(new PNGFile("trant_gas.png", false));
+            itemImageArray.add(new PNGFile("trant_egg.png", false));
+            itemImageArray.add(new PNGFile("wood_tree_1.png", false));    
+            itemImageArray.add(new PNGFile("wood_tree_2.png", false));  
+            itemImageArray.add(new PNGFile("wood_tree_3.png", false));  
+            itemImageArray.add(new PNGFile("wood_tree_4.png", false));  
             
             // Now remove the duplicate item image - skip past first image
             boolean duplicateFound = false;
             for (i = 1; i < itemImageArray.size() && !duplicateFound; i++)
             {
-                println("this item is ", dataPath(itemFragmentPNGName + ".png"), " array [", i, "] is ",itemImageArray.get(i).PNGImageName);
-                if (itemImageArray.get(i).PNGImageName.equals(dataPath(itemFragmentPNGName + ".png")))
+                if (itemImageArray.get(i).PNGImageName.equals(itemFragmentPNGName + ".png"))
                 {
                     itemImageArray.remove(i);
                     duplicateFound = true;
@@ -338,7 +334,7 @@ class ItemInfo
             for (i = 0; i < imageFilenames.length; i++) 
             {
                 // This currently never returns an error
-                itemImageArray.add(new PNGFile(dataPath(imageFilenames[i])));
+                itemImageArray.add(new PNGFile(imageFilenames[i], false));
             } 
         }
         
@@ -396,6 +392,10 @@ class ItemInfo
         switch (itemClassTSID)
         {
             case "quoin":
+                // Just default to 'mystery' as will be determining the type of quoin from snaps only
+                itemInfo = "mystery";
+                break;
+                
             case "wood_tree":
             case "npc_mailbox":
             case "dirt_pile":
@@ -418,11 +418,18 @@ class ItemInfo
                 if (itemClassTSID.equals("quoin"))
                 {
                     itemInfo = readJSONString(instanceProps, "type");
+                    // But could just default this to be "mystery" as never use it again until do search
                 }
                 else if ((itemClassTSID.equals("wood_tree")) || (itemClassTSID.equals("npc_mailbox")) || (itemClassTSID.equals("dirt_pile")))
                 {
                     itemInfo = readJSONString(instanceProps, "variant");
                 }
+                /*
+                else if (itemClassTSID.equals("quoin"))
+                {
+                    itemInfo = readJSONString(instanceProps, "type");
+                }
+                */
                 else if ((itemClassTSID.equals("mortar_barnacle")) || (itemClassTSID.equals("jellisac")))
                 {
                     itemInfo = readJSONString(instanceProps, "blister");
@@ -612,25 +619,32 @@ class ItemInfo
         // initiate fragment search - which will search through all the images for this item, over all street snaps
         set up fragSearch with correct co-ords (i.e. done offset from x,y)
         when search is done, return new offset? So fragsearch offset is 0 to start with?
-        if (fragSearch.readSearchDone())
+        */
+        if (fragFind.readSearchDone())
         {
             // Search has completed
-            String matchedImage = fragSearch.readItemImageThatMatched();
-            if (matchedImage.length > 0)
+            String matchedImage = fragFind.readItemImageThatMatched();
+            if (matchedImage.length() > 0)
             {
                 // Search finished successfully
                 // If classtsid is quoin, then need to read in new kind of quoin and set up
+                println("Matched image is ", matchedImage);
+                /*
                 .. And other things such as dirt - antyhing with an 'info' field
                 Use readOffsetX()/readOffsetY() to correct the x,y
+                */
+            }
+            else
+            {
+                // Search failed so move onto next item
+                
             }
         }
         else
         {
-            fragSearch.showFragment();
-            ???? 
+            fragFind.showFragment();
         }
-        
-  */      
+     
         if (itemInfo.length() > 0)
         {
             printToFile.printDebugLine("Searching item class_tsid " + itemClassTSID + " info = <" + itemInfo + "> with x,y " + str(origItemX) + "," + str(origItemY) + //
@@ -653,6 +667,41 @@ class ItemInfo
         return itemFinished;
     }
     
+    public ArrayList<PNGFile> readItemImageArray()
+    {
+        return itemImageArray;
+    }
+    
+    public PNGFile readItemImage(int n)
+    {
+        if (n < itemImageArray.size())
+        {
+            return itemImageArray.get(n);
+        }
+        else
+        {
+            return null;
+        }
+        
+    }
+    
+    public int readOrigItemX()
+    {
+        return origItemX;
+    }
+    public int readOrigItemY()
+    {
+        return origItemY;
+    }
+    public int readFragOffsetX()
+    {
+        return fragOffsetX;
+    }
+    public int readFragOffsetY()
+    {
+        return fragOffsetY;
+    }
+   
     public boolean readSkipThisItem()
     {
         return skipThisItem;
