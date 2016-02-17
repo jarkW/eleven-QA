@@ -19,6 +19,9 @@ class FragmentFind
     int streetImageBeingUsed;
     int itemImageThatMatched; // will be used to set the info field from the fname
     
+    ArrayList<PNGFile> itemImageArray;
+    ArrayList<PNGFile> streetSnapArray; 
+    
   
     // constructor
     public FragmentFind(ItemInfo itemInfo)
@@ -33,14 +36,19 @@ class FragmentFind
         // NB Don't need to save if never used again
         thisItemInfo = itemInfo;
         
+        itemImageArray = itemInfo.readItemImageArray();
+        streetSnapArray = streetInfoArray.get(streetBeingProcessed).getStreetImageArray();
+        println("Size of street snap array is ", streetInfoArray.get(streetBeingProcessed).streetSnapArray.size()); 
+                
+
         // Need to convert the JSON x,y to relate to the street snap - use the first loaded street snap
-        startX = thisItemInfo.readOrigItemX() + thisStreetInfo.readStreetSnap(0).PNGImage.width/2 + thisItemInfo.readFragOffsetX();
-        startY = thisItemInfo.readOrigItemY() + thisStreetInfo.readStreetSnap(0).PNGImage.height + thisItemInfo.readFragOffsetY();
+        startX = thisItemInfo.readOrigItemX() + streetInfoArray.get(streetBeingProcessed).readStreetSnap(0).PNGImage.width/2 + thisItemInfo.readFragOffsetX();
+        startY = thisItemInfo.readOrigItemY() + streetInfoArray.get(streetBeingProcessed).readStreetSnap(0).PNGImage.height + thisItemInfo.readFragOffsetY();
         foundX = startX;
         foundY = startY;
         
         spiralSearch = new SpiralSearch(thisItemInfo.readItemImage(itemImageBeingUsed).readPNGImage(), 
-                                        thisStreetInfo.readStreetSnap(streetImageBeingUsed).readPNGImage(), startX, startY);
+                                        streetInfoArray.get(streetBeingProcessed).readStreetSnap(streetImageBeingUsed).readPNGImage(), startX, startY);
         
         printToFile.printDebugLine("Starting search for item " + thisItemInfo.itemClassTSID + " (" + thisItemInfo.itemTSID + ") with x,y " + str(startX) + "," + str(startY), 2);
     }
@@ -51,7 +59,7 @@ class FragmentFind
         display.showStreetName();
         
         display.showItemImage(thisItemInfo.readItemImage(itemImageBeingUsed).readPNGImage(), thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY());
-        display.showStreetImage(thisItemInfo.readItemImage(itemImageBeingUsed).readPNGImage(), thisStreetInfo.readStreetSnap(streetImageBeingUsed).readPNGImage(), startX, startY);
+        display.showStreetImage(thisItemInfo.readItemImage(itemImageBeingUsed).readPNGImage(), streetInfoArray.get(streetBeingProcessed).readStreetSnap(streetImageBeingUsed).readPNGImage(), startX, startY);
         
         exitNow=true;
         

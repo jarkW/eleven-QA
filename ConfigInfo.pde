@@ -175,7 +175,7 @@ class ConfigInfo {
         }
     }
     
-    public int readTotalStreetCount()
+    public int readTotalJSONStreetCount()
     {
         return streetTSIDArray.size();
     }

@@ -18,7 +18,7 @@ class DisplayMgr
         failedStreets = new StringList();
     }
     
-    public void setInfoMsg(String info)
+    public void showInfoMsg(String info)
     {
         fill(50);
         textSize(14);
@@ -107,6 +107,7 @@ class DisplayMgr
     {
         failedStreets.append(msg);
     }
+    
     public void showSkippedStreetsMsg()
     {
         if (failedStreets.size() == 0)
@@ -121,5 +122,14 @@ class DisplayMgr
             text(failedStreets.get(i), 10, 120 + (i * 20), width-10, 80);
         }
         
+    }
+    
+    public boolean checkIfFailedStreetsMsg()
+    {
+        if (failedStreets.size() == 0)
+        {
+            return false;
+        }
+        return true;
     }
 }

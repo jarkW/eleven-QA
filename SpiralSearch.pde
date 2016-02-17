@@ -7,7 +7,6 @@ class SpiralSearch
     
     PImage thisItemImage;
     PImage thisStreetImage;
-    PImage streetFragment;
     int startX;
     int startY;
     
@@ -17,34 +16,34 @@ class SpiralSearch
     int di;
     int dj;
     // length of current segment
-    int segment_length;
+    int segmentLength;
 
     // current position (i, j) and how much of current segment we passed
     int i;
     int j;
-    int segment_passed;
+    int segmentPassed;
 
     // loop for QA archive fragment to be read from archive snap
     int k; // spiralCount
 
     // Variables for keeping track of lowest rgb differences
-    float sum_total_rgb_diff;
-    float lowest_total_rgb_diff;
-    int lowest_total_rgb_diff_i;
-    int lowest_total_rgb_diff_j;
+    float sumTotalRGBDiff;
+    float lowestTotalRGBDiff;
+    int lowestTotalRGBDiff_i;
+    int lowestTotalRGBDiff_j;
 
-    boolean match_found;
-    boolean no_more_valid_fragments;
+    boolean matchFound;
+    boolean noMoreValidFragments;
 
     // The smaller this value, the more exacting the match test
     // but then it takes much longer to run. 
     // Too big - risk false positives
     // NB QQ change shape as bounces, so need to be more generous
-    final float good_enough_total_rgb = 5000;
-    //final float good_enough_total_rgb = 1000;
+    final float goodEnoughTotalRGB = 5000;
+    //final float goodEnoughTotalRGB = 1000;
 
-    //final float good_enough_QQ_total_rgb = 3 * good_enough_total_rgb;
-    final float good_enough_QQ_total_rgb = 5 * good_enough_total_rgb;
+    //final float goodEnoughQQTotalRGB = 3 * goodEnoughTotalRGB;
+    final float goodEnoughQQTotalRGB = 5 * goodEnoughTotalRGB;
 
     public SpiralSearch(PImage itemImage, PImage streetImage, int x, int y)
     {
@@ -64,26 +63,22 @@ class SpiralSearch
         di = 1;
         dj = 0;
         // length of current segment
-        segment_length = 1;
+        segmentLength = 1;
 
         // current position (i, j) and how much of current segment we passed
-        i = start_x;
-        j = start_y;
-        segment_passed = 0;
-        match_found = false;
+        i = startX;
+        j = startY;
+        segmentPassed = 0;
+        matchFound = false;
 
         // Initialise values for keeping record of 'best' fit of QA fragments with archive
-        sum_total_rgb_diff = 0;
-        lowest_total_rgb_diff = 0;
+        sumTotalRGBDiff = 0;
+        lowestTotalRGBDiff = 0;
         // snap co-ords for lowest rgb 
-        lowest_total_rgb_diff_i = 0;
-        lowest_total_rgb_diff_j = 0;
+        lowestTotalRGBDiff_i = 0;
+        lowestTotalRGBDiff_j = 0;
 
-        no_more_valid_fragments = false; 
-        
-        
-        // Set up for first fragment match
-        //streetFragment = thisStreetImage.get(i, j, itemImage.width, itemImage.height);
+        noMoreValidFragments = false; 
     }
     
     
@@ -91,8 +86,8 @@ class SpiralSearch
     boolean check_fragments_match()
     {
     
-        float total_rgb_diff = 0;
-        float rgb_diff = 0;
+        float totalRGBDiff = 0;
+        float RGBDiff = 0;
         int locItem;
         int locStreet;
         float rStreet;
@@ -107,9 +102,9 @@ class SpiralSearch
         boolean debugRGB = false;
     
 
-        for (int pixelYPosition = 0; pixelYPosition < streetItemInfo[streetItemCount].sampleHeight; pixelYPosition++) 
+        for (int pixelYPosition = 0; pixelYPosition < thisItemImage.height; pixelYPosition++) 
         {
-            for (int pixelXPosition = 0; pixelXPosition < streetItemInfo[streetItemCount].sampleWidth; pixelXPosition++) 
+            for (int pixelXPosition = 0; pixelXPosition < thisItemImage.width; pixelXPosition++) 
             {
                
                 //int loc = pixelXPosition + (pixelYPosition * streetItemInfo[streetItemCount].sampleWidth);
@@ -121,13 +116,13 @@ class SpiralSearch
                 bStreet = blue(thisStreetImage.pixels[locStreet]);
             
                 // for Item snap
-                locItem = pixelXPosition + (pixelYPosition * streetItemInfo[streetItemCount].itemImage.width);
+                locItem = pixelXPosition + (pixelYPosition * thisItemImage.width);
                 rItem = red(thisItemImage.pixels[locItem]);
                 gItem = green(thisItemImage.pixels[locItem]);
                 bItem = blue(thisItemImage.pixels[locItem]);
                   
-                rgb_diff = abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
-                total_rgb_diff += abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
+                RGBDiff = abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
+                totalRGBDiff += abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
             
                 /*
                 if (debugRGB)
@@ -142,22 +137,22 @@ class SpiralSearch
             }
         }
     
-        // Need to save the total_rgb_diff - firstly if lower than lowest_total_rgb_diff, then save it as that, along with i,j
-        // But also need to know what counts as a valid lowest_rgb diff - so also add total_rgb_diff to sum_total_rgb_diff 
+        // Need to save the totalRGBDiff - firstly if lower than lowestTotalRGBDiff, then save it as that, along with i,j
+        // But also need to know what counts as a valid lowest_rgb diff - so also add totalRGBDiff to sumTotalRGBDiff 
     
         if (debugRGB)
         {
-            s = "total_rgb_diff for i,j " + i - startX + "," +  j - startY + ": " + int(total_rgb_diff));
+            s = "totalRGBDiff for i,j " + str(i - startX) + "," +  str(j - startY) + ": " + int(totalRGBDiff);
             printToFile.printDebugLine(s, 1);
         }
             
-        if (total_rgb_diff == 0)
+        if (totalRGBDiff == 0)
         {
             return true;
         }
-        else if (total_rgb_diff < good_enough_total_rgb)
+        else if (totalRGBDiff < goodEnoughTotalRGB)
         {
-            sum_total_rgb_diff += total_rgb_diff;
+            sumTotalRGBDiff += totalRGBDiff;
             return true;
         }
         else
@@ -165,18 +160,18 @@ class SpiralSearch
             if ((i == startX) && (j == startY))
             {
                 // Save this one always - so overwrite initilised value
-                lowest_total_rgb_diff = total_rgb_diff;
-                lowest_total_rgb_diff_i = i;
-                lowest_total_rgb_diff_j = j;
+                lowestTotalRGBDiff = totalRGBDiff;
+                lowestTotalRGBDiff_i = i;
+                lowestTotalRGBDiff_j = j;
             }
-            else if (total_rgb_diff < lowest_total_rgb_diff)
+            else if (totalRGBDiff < lowestTotalRGBDiff)
             {
                 // save this if the lowest one so far
-                lowest_total_rgb_diff = total_rgb_diff;
-                lowest_total_rgb_diff_i = i;
-                lowest_total_rgb_diff_j = j;
+                lowestTotalRGBDiff = totalRGBDiff;
+                lowestTotalRGBDiff_i = i;
+                lowestTotalRGBDiff_j = j;
             }        
-            sum_total_rgb_diff += total_rgb_diff;
+            sumTotalRGBDiff += totalRGBDiff;
             return false;
         }
     }

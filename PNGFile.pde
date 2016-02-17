@@ -17,37 +17,15 @@ class PNGFile
         isStreetSnapFlag = isStreetSnap;
     }
     
-    public boolean loadPNGImage()
+    public boolean setupPNGImage()
     {
-        // Load up this snap/item image
-        String fullFileName;
-        
-        if (isStreetSnapFlag)
+        if (!loadPNGImage())
         {
-            fullFileName = configInfo.readStreetSnapPath() + "/" + PNGImageName;
-        }
-        else
-        {
-            fullFileName = dataPath(PNGImageName);
-        }
-        File file = new File(fullFileName);
-        if (!file.exists())
-        {
-            printToFile.printDebugLine("Missing file - " + fullFileName, 3);
             return false;
         }
-        
-        PNGImage = loadImage(fullFileName, "png");
-        
-        
-        // appropriate to do this now???
-        PNGImage.loadPixels();
-        
+               
         PNGImageWidth = PNGImage.width;
         PNGImageHeight = PNGImage.height;
-        
-        printToFile.printDebugLine("Loading image from " + fullFileName + " with width " + PNGImageHeight + " height " + PNGImageWidth, 1);
-        
         
         return true;
     }
@@ -75,6 +53,61 @@ class PNGFile
     public int readPNGImageWidth()
     {
         return PNGImageWidth;
+    }
+    
+    public boolean loadPNGImage()
+    {
+        // Load up this snap/item image
+        String fullFileName;
+        
+        if (isStreetSnapFlag)
+        {
+            fullFileName = configInfo.readStreetSnapPath() + "/" + PNGImageName;
+        }
+        else
+        {
+            fullFileName = dataPath(PNGImageName);
+        }
+        File file = new File(fullFileName);
+        if (!file.exists())
+        {
+            printToFile.printDebugLine("Missing file - " + fullFileName, 3);
+            return false;
+        }
+        
+        
+        try
+        {
+            // load image
+            PNGImage = loadImage(fullFileName, "png");
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine("Fail to load image for " + PNGImageName, 3);
+            return false;
+        }         
+        try
+        {
+            // load image pixels
+            PNGImage.loadPixels();
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine("Fail to load image pixels for " + PNGImageName, 3);
+            return false;
+        } 
+        
+        printToFile.printDebugLine("Loading image from " + fullFileName + " with width " + PNGImage.height + " height " + PNGImage.width, 3);
+        
+        return true;
+    }
+    
+    public void unloadPNGImage()
+    {
+        PNGImage = null;
+        printToFile.printDebugLine("Unloading image " + PNGImageName, 3);
     }
 
 }

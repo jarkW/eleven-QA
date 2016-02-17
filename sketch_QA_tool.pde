@@ -28,6 +28,21 @@
  */
 
 // TO DO
+// First of all load up all streets/items - so can check for missing L/snaps etc
+// Give msg to screen - streets skipped - missng L* or snaps, snaps ignored (too small).
+// Give user chance to abort then - so can fix problem, or continue.
+// Unload all the snaps held in streets/items.
+// Then process each street in turn - reloading snaps on that streets/each item as needed. Then
+// unload when finished the street. Should be simple enough to have a street_unload_all_snaps - which 
+// unloads the street snaps and then cycles through all the items, unloading the item images - i.e. set to null. 
+// OR do this as part of Setup - once loaded the images to check everything, unlead before move onto next street (and could unload the item
+// images before move on to next item). 
+// Ditto for the load functionality. 
+// Add 
+
+
+
+
 // Use SearchMgr class which does the actual image stuff. 
 // Street -> item -> do image stuff (so store loop counting, current image x,y as vars
 // in this class rather than as globals. Depending on flag, can do all the loop (don't
@@ -112,10 +127,10 @@
 ConfigInfo configInfo;
 
 // Information for this street i.e. the snaps of the street, items on the street
-StreetInfo thisStreetInfo;
+ArrayList<StreetInfo> streetInfoArray;
 
 // Keep track of which street we are on in the list from the config.json file
-int streetNumberBeingProcessed;
+int streetBeingProcessed;
 
 // Handles all output to screen
 DisplayMgr display;
@@ -126,13 +141,14 @@ final int missCoOrds = 32700;
 // Differentiate between error/normal endings
 boolean failNow = false;
 boolean exitNow = false;
-boolean doNothing = false;
+boolean doNothing = false; // useful if want to keep the window open to see error msg, used in dev only
+boolean okToContinue = true;
 
 // Contains both debug and user input information output files
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 3;
+int debugLevel = 1;
 boolean debugToConsole = true;
 
 public void setup() 
@@ -168,7 +184,7 @@ public void setup()
         return;
     }
     
-    if (configInfo.readTotalStreetCount() < 1)
+    if (configInfo.readTotalJSONStreetCount() < 1)
     {
         // No streets to process - exit
         printToFile.printDebugLine("No streets to process - exiting", 3);
@@ -176,27 +192,57 @@ public void setup()
         return;
     }
     
-    // Start setting up the first street to be processed   
-    streetNumberBeingProcessed = 0;
-    thisStreetInfo = new StreetInfo(configInfo.readStreetTSID(streetNumberBeingProcessed));
-    printToFile.printDebugLine("Read street data for TSID " + configInfo.readStreetTSID(streetNumberBeingProcessed), 2); 
-    if (!thisStreetInfo.readOkFlag())
+    // Loads up all streets and the items they contain
+    // Means can check for missing files upfront before starting
+    streetInfoArray = new ArrayList<StreetInfo>();
+    if (!initialiseStreets() || display.checkIfFailedStreetsMsg())
     {
-        println("Error creating street data structure");
+        //failNow = true;
+        okToContinue = false;
+        
+        // Display the start up error messages
+        println("Display error msg");
+        display.showSkippedStreetsMsg();
+        display.showInfoMsg("Errors during initial processing - press 'c' to continue, 'x' to exit");
+        return;
+    }
+    
+    // Check that there are still streets left to process
+    if (streetInfoArray.size() == 0)
+    {
+        printToFile.printDebugLine("No valid streets to process - exiting", 3);
         failNow = true;
         return;
     }
-    if (!thisStreetInfo.initialiseStreetData())
+    
+    printToFile.printDebugLine("Number of streets left to process is " + streetInfoArray.size() + " (out of " + configInfo.readTotalJSONStreetCount() + ")", 3);
+        
+    println("number of failed messages is ", display.failedStreets.size());
+    // Start setting up the first street to be processed and reload snap images 
+    streetBeingProcessed = 0;
+    if (!streetInfoArray.get(streetBeingProcessed).loadStreetImages())
     {
-        println("Error populating street data structure");
         failNow = true;
         return;
     }
+    if (!streetInfoArray.get(streetBeingProcessed).loadAllItemImages())
+    {
+        failNow = true;
+        return;
+    }
+    streetInfoArray.get(streetBeingProcessed).initStreetVars();
+    streetInfoArray.get(streetBeingProcessed).initStreetItemVars();
      
 }
 
 public void draw() 
 {
+    if (!okToContinue)
+    {
+        // Problem during startup - waiting for user to press c or any other key
+        return;
+    }
+    
     if (failNow)
     {
         println("failNow flag set - exiting with errors");
@@ -210,40 +256,115 @@ public void draw()
         printToFile.printOutputLine("All processing completed");
         printToFile.printDebugLine("Exit now - All processing completed", 3);
         doNothing = true;
-        //exit();
+        exit();
     }
     else
     {
         // Process street item unless due to move on to next street
-        if (thisStreetInfo.readStreetFinished())
+        if (streetInfoArray.get(streetBeingProcessed).readStreetFinished())
         {
-            streetNumberBeingProcessed++;
-            if (streetNumberBeingProcessed >= configInfo.readTotalStreetCount())
+            streetBeingProcessed++;
+            if (streetBeingProcessed >= streetInfoArray.size())
             {
                 // Reached end of list of streets - normal ending
                 exitNow = true;
             }
             else
             {
-                // Read in data for this street
-                thisStreetInfo = new StreetInfo(configInfo.readStreetTSID(streetNumberBeingProcessed));
-                printToFile.printDebugLine("Read street data for TSID " + configInfo.readStreetTSID(streetNumberBeingProcessed), 2); 
-                if (!thisStreetInfo.readOkFlag())
+                // Reload images for street/items on street
+                if (!streetInfoArray.get(streetBeingProcessed).loadStreetImages())
                 {
-                    println("Error creating street data structure");
                     failNow = true;
                 }
-                if (!thisStreetInfo.initialiseStreetData())
+                if (!streetInfoArray.get(streetBeingProcessed).loadAllItemImages())
                 {
-                    println("Error populating street data structure");
                     failNow = true;
                 }
+                streetInfoArray.get(streetBeingProcessed).initStreetVars();
+                streetInfoArray.get(streetBeingProcessed).initStreetItemVars();
             }
         }
         else
         {
-            thisStreetInfo.processItem();
+            streetInfoArray.get(streetBeingProcessed).processItem();
+        }
+    }
+}
+
+boolean initialiseStreets()
+{
+        
+    // Initialises all the streets one by one, which in turn load up the items on that street.
+    streetBeingProcessed = -1;
+    for (int i = 0; i < configInfo.readTotalJSONStreetCount(); i++)
+    {
+        streetBeingProcessed++;
+        String streetTSID = configInfo.readStreetTSID(i);
+        if (streetTSID.length() == 0)
+        {
+            // Failure to retrieve TSID
+            printToFile.printDebugLine("Failed to read street TSID number " + str(i + 1) + " from config.json", 3); 
+            return false;
+        }
+            
+        streetInfoArray.add(new StreetInfo(streetTSID));
+            
+        // Now read the error flag for the street array added
+        if (!streetInfoArray.get(i).readOkFlag())
+        {
+           printToFile.printDebugLine("Error creating street data structure", 3);
+           return false;
+        }
+        
+        printToFile.printDebugLine("Read street data for TSID " + streetTSID, 2);
+            
+        // Now populate the street information
+        if (!streetInfoArray.get(i).initialiseStreetData())
+        {
+            printToFile.printDebugLine("Error populating street data structure", 3);
+            return false;
+        }         
+         
+        // Can now unload the snaps for the street/items to free up memory
+        if (!streetInfoArray.get(i).unloadStreetImages())
+        {
+             printToFile.printDebugLine("Unable to unload street images for " + streetInfoArray.get(i).readStreetName(), 3);
+            return false;
+        }
+            
+        if (!streetInfoArray.get(i).unloadAllItemImages())
+        {
+            printToFile.printDebugLine("Unable to unload item images for " + streetInfoArray.get(i).readStreetName(), 3);
+            return false;
+        }
+       
+
+    }
+    
+    // Go through and remove all the invalid streets
+    for (int j = streetInfoArray.size() - 1; j >= 0; j--)
+    {
+        if (streetInfoArray.get(j).readInvalidStreet())
+        {
+            streetInfoArray.remove(j);
         }
     }
     
+    
+        
+    // All OK
+    return true;
+}
+
+void keyPressed() 
+{
+    if ((key == 'c') || (key == 'C')) 
+    {
+        okToContinue = true;
+        return;
+    }
+    else if ((key == 'x') || (key == 'X'))
+    {
+        exit();
+    }
 }

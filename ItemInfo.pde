@@ -45,24 +45,32 @@ class ItemInfo
     public ItemInfo(JSONObject item)
     {
         okFlag = true;
-        
-        itemFinished = false;
-        skipThisItem = false;
         itemJSON = null;
         itemInfo = "";
+        fragFind = null;
         origItemX = 0;
         origItemY = 0;
         newItemX = missCoOrds;
         newItemY = missCoOrds;
-        itemImageBeingUsed = 0;
-        itemImageArray = new ArrayList<PNGFile>();
         sizeOfOriginalJSON = 0;
         sizeOfFinalJSON = 0;
         sizeDiffJSONCalc = 0;
-        fragFind = null;
+        skipThisItem = false;
         
+        initItemVars();
+
+        itemImageArray = new ArrayList<PNGFile>();
+
         itemTSID = item.getString("tsid");
         printToFile.printDebugLine("item tsid is " + itemTSID + "(" + item.getString("label") + ")", 2); 
+    }
+    
+    public void initItemVars()
+    {
+        // These need to be reset after been through the loop of streets
+        // as part of initial validation
+        itemFinished = false;
+        itemImageBeingUsed = 0;
     }
       
     public boolean initialiseItemInfo()
@@ -130,7 +138,7 @@ class ItemInfo
         }
         
         // Load up the item images which will be used to search the snap
-        if (!loadItemImages())
+        if (!setupItemImages())
         {
             printToFile.printDebugLine("Error loading item images for class_tsid " + itemClassTSID, 3); 
             return false;
@@ -197,7 +205,7 @@ class ItemInfo
          }
     }
     
-    boolean loadItemImages()
+    boolean setupItemImages()
     {
         // Using the item class_tsid and info field, load up all the images for this item
         // Depending on the item might need to tweak the order of items
@@ -242,7 +250,7 @@ class ItemInfo
         } 
         else if (itemClassTSID.indexOf("npc_sloth", 0) == 0)
         {
-            printToFile.printDebugLine("NEED TO CONFIGURE SLOTH in loadItemImages ", 3);
+            printToFile.printDebugLine("NEED TO CONFIGURE SLOTH in setupItemImages ", 3);
             return false;
         }
         else if (itemClassTSID.indexOf("quoin", 0) == 0)
@@ -341,7 +349,7 @@ class ItemInfo
         // Now load up the actual item images
         for (i = 0; i < itemImageArray.size(); i++)
         {
-            if (!itemImageArray.get(i).loadPNGImage())
+            if (!itemImageArray.get(i).setupPNGImage())
             {
                 printToFile.printDebugLine("Failed to load up item image " + itemImageArray.get(i).PNGImageName, 3);
                 return false;
@@ -684,6 +692,31 @@ class ItemInfo
         }
         
     }
+       
+    public boolean loadItemImages()
+    {
+        for (int i = 0; i < itemImageArray.size(); i++)
+        {
+            if (!itemImageArray.get(i).loadPNGImage())
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public boolean unloadItemImages()
+    {
+        for (int i = 0; i < itemImageArray.size(); i++)
+        {
+            itemImageArray.get(i).unloadPNGImage();
+        }
+        return true;
+    }   
+    
+    
+    
+    
     
     public int readOrigItemX()
     {

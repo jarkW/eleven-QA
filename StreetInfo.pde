@@ -2,6 +2,7 @@ class StreetInfo
 {
     boolean okFlag;
     boolean streetFinished;
+    boolean invalidStreet;
     
     // passed to constructor - read in originally from config.json
     String streetTSID;
@@ -22,13 +23,22 @@ class StreetInfo
     public StreetInfo(String tsid)
     {
         okFlag = true;
-        streetFinished = false;
-        streetTSID = tsid;
-        itemBeingProcessed = 0;
-        streetSnapBeingUsed = 0;
         
+        initStreetVars();
+
+        streetTSID = tsid;       
         itemInfoArray = new ArrayList<ItemInfo>();
         streetSnapArray = new ArrayList<PNGFile>();
+    }
+    
+    public void initStreetVars()
+    {
+        // These need to be reset after been through the loop of streets
+        // as part of initial validation
+        itemBeingProcessed = 0;
+        streetSnapBeingUsed = 0;
+        streetFinished = false;
+        invalidStreet = false;
     }
 
     boolean readStreetData()
@@ -47,7 +57,7 @@ class StreetInfo
             {
                 printToFile.printDebugLine("SKIPPING MISSING street location file - " + locFileName, 3);
                 display.setSkippedStreetsMsg("Skipping street - Missing location JSON file for TSID " + streetTSID);
-                streetFinished = true;
+                invalidStreet = true;
                 return false;
             }
         } 
@@ -146,7 +156,7 @@ class StreetInfo
         {
             printToFile.printDebugLine("SKIPPING STREET - No street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
             display.setSkippedStreetsMsg("Skipping street " + streetName + ": No street snaps found");
-            streetFinished = true;
+            invalidStreet = true;
             return false;
         }
        
@@ -175,7 +185,7 @@ class StreetInfo
                 {
                     // Is the actual street we want, so copy
                     archiveSnapFilenames.append(SnapFilenames[i]);
-                }                
+                }
             }
             if ((streetName.equals("Sabudana Drama Towers")) || (streetName.equals("Egret Taun Towers")) ||
                 (streetName.equals("Hauki Seeks Manor")) || (streetName.equals("Hakusan Heaps Towers")) ||
@@ -221,7 +231,7 @@ class StreetInfo
             streetSnapArray.add(new PNGFile(archiveSnapFilenames.get(i), true));
             
             // load up the image
-            if (!streetSnapArray.get(i).loadPNGImage())
+            if (!streetSnapArray.get(i).setupPNGImage())
             {
                 printToFile.printDebugLine("Failed to load up image " + archiveSnapFilenames.get(i), 3);
                 return false;
@@ -249,6 +259,7 @@ class StreetInfo
             }
         }
         
+       
         // Everything OK
         return true;
     }
@@ -257,9 +268,10 @@ class StreetInfo
     {
 
         // Read in street data - list of item TSIDs 
-        if (!readStreetData())
+        if (!readStreetData()) //<>//
         {
-            if (streetFinished)
+            println("readStreetData failed");
+            if (invalidStreet)
             {
                 // i.e. need to skip this street as location information not available
                 printToFile.printDebugLine("Skipping missing location JSON file", 3);
@@ -274,15 +286,14 @@ class StreetInfo
             }
         }
 
-        display.setStreetName(streetName, streetTSID, streetNumberBeingProcessed + 1, configInfo.readTotalStreetCount());
+        display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
         
         if (!loadArchiveStreetSnaps())
         {
-            if (streetFinished)
+            if (invalidStreet)
             {
                 // i.e. need to skip this street as missing street snaps for street
                 printToFile.printDebugLine("Skipping street - missing/invalid street snaps", 3);
-                display.setSkippedStreetsMsg("Skipping street " + streetName + ": Missing/invalid location JSON file for TSID " + streetTSID);
                 return true; // continue
             }
             else
@@ -311,7 +322,7 @@ class StreetInfo
         
         // Display information
         display.clearDisplay();
-        display.setStreetName(streetName, streetTSID, streetNumberBeingProcessed + 1, configInfo.readTotalStreetCount());
+        display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
         display.setItemProgress(itemData.itemClassTSID, itemData.itemTSID, itemBeingProcessed+1, itemInfoArray.size());
 
         itemData.searchUsingReference();
@@ -352,7 +363,14 @@ class StreetInfo
     
     public PNGFile readStreetSnap(int n)
     {
-        return streetSnapArray.get(n);
+        if (n < streetSnapArray.size())
+        {
+            return streetSnapArray.get(n);
+        }
+        else
+        {
+            return null;
+        }
     }
   
     // IS THIS USED?
@@ -370,5 +388,65 @@ class StreetInfo
     {
         return (streetSnapArray);
     }
+    
+    public boolean loadStreetImages()
+    {
+        for (int i = 0; i < streetSnapArray.size(); i++)
+        {
+            if (!streetSnapArray.get(i).loadPNGImage())
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public boolean unloadStreetImages()
+    {
+        for (int i = 0; i < streetSnapArray.size(); i++)
+        {
+            streetSnapArray.get(i).unloadPNGImage();
+        }
+        return true;
+    }   
+    
+    public boolean unloadAllItemImages()
+    {
+        for  (int i = 0; i < itemInfoArray.size(); i++)
+        {
+            itemInfoArray.get(i).unloadItemImages();
+        }
+        return true;
+    }
+    
+    public boolean loadAllItemImages()
+    {
+        for  (int i = 0; i < itemInfoArray.size(); i++)
+        {
+            if (!itemInfoArray.get(i).loadItemImages())
+            {
+                return false;
+            }
+        }
+        return true;
+        
+    }
+    
+    public void initStreetItemVars()
+    {
+        for  (int i = 0; i < itemInfoArray.size(); i++)
+        {
+            itemInfoArray.get(i).initItemVars();
+        }
+    }
+    
+    public boolean readInvalidStreet()
+    {
+        return invalidStreet;
+    }
+    
+    
+    
+    
     
 }
