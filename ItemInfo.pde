@@ -8,9 +8,12 @@ class ItemInfo
     JSONObject itemJSON;
     String itemTSID;
     String itemClassTSID;
-    String itemInfo;  // additional info needed for some items
+    String origItemExtraInfo;  // additional info needed for some items
     int    origItemX;
     int    origItemY;
+
+    // Fields which are deduced from snap comparison - and then written to JSON file
+    String newItemExtraInfo;  
     int    newItemX;
     int    newItemY;
     
@@ -46,12 +49,13 @@ class ItemInfo
     {
         okFlag = true;
         itemJSON = null;
-        itemInfo = "";
+        origItemExtraInfo = "";
         fragFind = null;
         origItemX = 0;
         origItemY = 0;
         newItemX = missCoOrds;
         newItemY = missCoOrds;
+        newItemExtraInfo = "";
         sizeOfOriginalJSON = 0;
         sizeOfFinalJSON = 0;
         sizeDiffJSONCalc = 0;
@@ -144,9 +148,9 @@ class ItemInfo
             return false;
         }      
         
-        if (itemInfo.length() > 0)
+        if (origItemExtraInfo.length() > 0)
         {
-            printToFile.printDebugLine("class_tsid " + itemClassTSID + " info = <" + itemInfo + "> with x,y " + str(origItemX) + "," + str(origItemY), 2); 
+            printToFile.printDebugLine("class_tsid " + itemClassTSID + " info = <" + origItemExtraInfo + "> with x,y " + str(origItemX) + "," + str(origItemY), 2); 
         }
         else
         {
@@ -237,7 +241,7 @@ class ItemInfo
         }
         else if (itemClassTSID.indexOf("npc_mailbox", 0) == 0)
         {
-            if (itemInfo.equals("mailboxRight"))
+            if (origItemExtraInfo.equals("mailboxRight"))
             {
                 itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxRight.png", false));
                 itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxLeft.png", false));
@@ -268,9 +272,9 @@ class ItemInfo
             // Are dealing with a tree. First load the existing tree image and then load the other tree images
             // Finally prune out the duplicate - rather than keep doing if statements
             itemFragmentPNGName = itemClassTSID;
-            if (itemInfo.length() > 0)
+            if (origItemExtraInfo.length() > 0)
             {
-                itemFragmentPNGName = itemFragmentPNGName + "_" + itemInfo;
+                itemFragmentPNGName = itemFragmentPNGName + "_" + origItemExtraInfo;
             }
             // Add this item image
             itemImageArray.add(new PNGFile(itemFragmentPNGName + ".png", false));
@@ -323,9 +327,9 @@ class ItemInfo
             // ice_knob
             // dust_trap
             itemFragmentPNGName = itemClassTSID;
-            if (itemInfo.length() > 0)
+            if (origItemExtraInfo.length() > 0)
             {
-                itemFragmentPNGName = itemFragmentPNGName + "_" + itemInfo;
+                itemFragmentPNGName = itemFragmentPNGName + "_" + origItemExtraInfo;
             }
             
             // Work out how many item images exist
@@ -373,13 +377,13 @@ class ItemInfo
             // Read in the dir field 
             try
             {
-                itemInfo = itemJSON.getString("dir");
+                origItemExtraInfo = itemJSON.getString("dir");
             }
             catch(Exception e)
             {
                 printToFile.printDebugLine("Failed to read dir field from item JSON file " + itemTSID, 2);
                 itemJSON.setString("dir", "right");
-                itemInfo = "right";
+                origItemExtraInfo = "right";
                 // As have just added in a new key - keep track of this expected change to file length
                 String str = "'dir': 'right',";
                 sizeDiffJSONCalc += str.length() + 1;
@@ -387,7 +391,7 @@ class ItemInfo
             }
             
             // Currently all shrines are set to 'right' so flag up error if that isn't true
-            if (!itemInfo.equals("right"))
+            if (!origItemExtraInfo.equals("right"))
             {
                 printToFile.printDebugLine("Unexpected dir = left field in shrine JSON file  " + itemTSID, 3);
                 return false;
@@ -399,11 +403,7 @@ class ItemInfo
 
         switch (itemClassTSID)
         {
-            case "quoin":
-                // Just default to 'mystery' as will be determining the type of quoin from snaps only
-                itemInfo = "mystery";
-                break;
-                
+            case "quoin":     
             case "wood_tree":
             case "npc_mailbox":
             case "dirt_pile":
@@ -425,37 +425,36 @@ class ItemInfo
                 } 
                 if (itemClassTSID.equals("quoin"))
                 {
-                    itemInfo = readJSONString(instanceProps, "type");
-                    // But could just default this to be "mystery" as never use it again until do search
+                    origItemExtraInfo = readJSONString(instanceProps, "type");
                 }
                 else if ((itemClassTSID.equals("wood_tree")) || (itemClassTSID.equals("npc_mailbox")) || (itemClassTSID.equals("dirt_pile")))
                 {
-                    itemInfo = readJSONString(instanceProps, "variant");
+                    origItemExtraInfo = readJSONString(instanceProps, "variant");
                 }
                 /*
                 else if (itemClassTSID.equals("quoin"))
                 {
-                    itemInfo = readJSONString(instanceProps, "type");
+                    origItemExtraInfo = readJSONString(instanceProps, "type");
                 }
                 */
                 else if ((itemClassTSID.equals("mortar_barnacle")) || (itemClassTSID.equals("jellisac")))
                 {
-                    itemInfo = readJSONString(instanceProps, "blister");
+                    origItemExtraInfo = readJSONString(instanceProps, "blister");
                 }
                 else if (itemClassTSID.equals("ice_knob"))
                 {
-                    itemInfo = readJSONString(instanceProps, "knob");
+                    origItemExtraInfo = readJSONString(instanceProps, "knob");
                 }
                 else if (itemClassTSID.equals("dust_trap"))
                 {
-                    itemInfo = readJSONString(instanceProps, "trap_class");
+                    origItemExtraInfo = readJSONString(instanceProps, "trap_class");
                 }               
                 else
                 {
                     printToFile.printDebugLine("Trying to read unexpected field from instanceProps for item class " + itemClassTSID, 3);
                     return false;
                 }
-                if (itemInfo.length() == 0)
+                if (origItemExtraInfo.length() == 0)
                 {
                     return false;
                 }
@@ -465,7 +464,7 @@ class ItemInfo
                 // Read in the dir field 
                 try
                 {
-                    itemInfo = itemJSON.getString("dir");
+                    origItemExtraInfo = itemJSON.getString("dir");
                 }
                 catch(Exception e)
                 {
@@ -487,12 +486,12 @@ class ItemInfo
                 if (origItemX > 0)
                 {
                     // stone is on RHS of screen - so set to 'left'
-                    itemInfo = "left";
+                    origItemExtraInfo = "left";
                 }
                 else
                 {
                     // stone is on LHS of screen - so set to 'right'
-                    itemInfo = "right";
+                    origItemExtraInfo = "right";
                 }
                                
                 String tempInfo;
@@ -505,7 +504,7 @@ class ItemInfo
                 {
                     // The dir field is often missing - so just insert now
                     printToFile.printDebugLine("Failed to read dir field from item JSON file - so insert " + itemTSID, 3);
-                    itemJSON.setString("dir", itemInfo);
+                    itemJSON.setString("dir", origItemExtraInfo);
                     // As have just added in a new key - keep track of this expected change to file length
                     String str = "'dir': 'right',";
                     sizeDiffJSONCalc += str.length() + 1;
@@ -561,7 +560,7 @@ class ItemInfo
         for (int i = 0; i < values.size(); i++) 
         {
             fragment = values.getJSONObject(i);
-            if ((fragment.getString("class_tsid").equals(itemClassTSID)) && (fragment.getString("info").equals(itemInfo)))
+            if ((fragment.getString("class_tsid").equals(itemClassTSID)) && (fragment.getString("info").equals(origItemExtraInfo)))
             {
                 // Found fragment for this item
                 fragOffsetX = fragment.getInt("offset_x");
@@ -573,7 +572,7 @@ class ItemInfo
         }
         
         // If we reach here then missing item from json file
-        printToFile.printDebugLine("Missing class_tsid " + itemClassTSID + " and/or info field <" + itemInfo + "> in samples.json", 3);
+        printToFile.printDebugLine("Missing class_tsid " + itemClassTSID + " and/or info field <" + origItemExtraInfo + "> in samples.json", 3);
         return false;
     }
     
@@ -620,53 +619,20 @@ class ItemInfo
     
     public void searchUsingReference()
     {
-        // Does the actual matching of images/snap?
-        //printToFile.printDebugLine("unimplemented searchUsingReference()", 3);
-  /*      
-        // Display 
-        // initiate fragment search - which will search through all the images for this item, over all street snaps
-        set up fragSearch with correct co-ords (i.e. done offset from x,y)
-        when search is done, return new offset? So fragsearch offset is 0 to start with?
-        */
+        // NB ALSO NEED TO UPDATE/CORRECT THE JSON LENGTH??? OR COULD BE DONE BY WRITING FUNCTION?
+        // DON't FORGET FOR CASES WHERE ADDED IN NEW FIELDS e.g. SHRINES, 
         if (fragFind.readSearchDone())
         {
-            // Search has completed
-            String matchedImage = fragFind.readItemImageThatMatched();
-            if (matchedImage.length() > 0)
-            {
-                // Search finished successfully
-                // If classtsid is quoin, then need to read in new kind of quoin and set up
-                println("Matched image is ", matchedImage);
-                /*
-                .. And other things such as dirt - antyhing with an 'info' field
-                Use readOffsetX()/readOffsetY() to correct the x,y
-                */
-            }
-            else
-            {
-                // Search failed so move onto next item
-                
-            }
+            // Search has completed - either run out of streets or was successful
+            newItemX = fragFind.readNewItemX();
+            newItemY = fragFind.readNewItemY();
+            newItemExtraInfo = fragFind.readNewItemExtraInfo();
+            itemFinished = true;
         }
         else
         {
-            fragFind.showFragment();
+            fragFind.searchForFragment();
         }
-     
-        if (itemInfo.length() > 0)
-        {
-            printToFile.printDebugLine("Searching item class_tsid " + itemClassTSID + " info = <" + itemInfo + "> with x,y " + str(origItemX) + "," + str(origItemY) + //
-            " offset is " + fragOffsetX + "," + fragOffsetY + " size hxw is " + fragHeight + "x" + fragWidth, 2);
-                           
-        }
-        else
-        {
-            printToFile.printDebugLine("Searching item class_tsid " + itemClassTSID + " with x,y " + str(origItemX) + "," + str(origItemY), 2); 
-            printToFile.printDebugLine("Searching item class_tsid " + itemClassTSID + " with x,y " + str(origItemX) + "," + str(origItemY) + //
-            " offset is " + fragOffsetX + "," + fragOffsetY + " size hxw is " + fragHeight + "x" + fragWidth, 2);
-        }
-        itemFinished = true;
-        
     }
     
     // Simple functions to read/set variables
@@ -714,7 +680,10 @@ class ItemInfo
         return true;
     }   
     
-    
+    public String readOrigItemExtraInfo()
+    {
+        return origItemExtraInfo;
+    }
     
     
     
@@ -726,6 +695,15 @@ class ItemInfo
     {
         return origItemY;
     }
+    public String readItemClassTSID()
+    {
+        return itemClassTSID;
+    }
+    public String readItemTSID()
+    {
+        return itemTSID;
+    }
+    
     public int readFragOffsetX()
     {
         return fragOffsetX;

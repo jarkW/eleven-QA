@@ -207,32 +207,11 @@ public void setup()
         return;
     }
     
-    // Check that there are still streets left to process
-    if (streetInfoArray.size() == 0)
-    {
-        printToFile.printDebugLine("No valid streets to process - exiting", 3);
-        failNow = true;
-        return;
-    }
-    
-    printToFile.printDebugLine("Number of streets left to process is " + streetInfoArray.size() + " (out of " + configInfo.readTotalJSONStreetCount() + ")", 3);
-        
-    println("number of failed messages is ", display.failedStreets.size());
-    // Start setting up the first street to be processed and reload snap images 
-    streetBeingProcessed = 0;
-    if (!streetInfoArray.get(streetBeingProcessed).loadStreetImages())
+    if (!setForFirstStreet())
     {
         failNow = true;
         return;
-    }
-    if (!streetInfoArray.get(streetBeingProcessed).loadAllItemImages())
-    {
-        failNow = true;
-        return;
-    }
-    streetInfoArray.get(streetBeingProcessed).initStreetVars();
-    streetInfoArray.get(streetBeingProcessed).initStreetItemVars();
-     
+    }     
 }
 
 public void draw() 
@@ -261,6 +240,7 @@ public void draw()
     else
     {
         // Process street item unless due to move on to next street
+        printToFile.printDebugLine("streetBeingProcessed is  " + streetBeingProcessed + " streetFinished flag is " + streetInfoArray.get(streetBeingProcessed).readStreetFinished(), 1);
         if (streetInfoArray.get(streetBeingProcessed).readStreetFinished())
         {
             streetBeingProcessed++;
@@ -295,10 +275,11 @@ boolean initialiseStreets()
 {
         
     // Initialises all the streets one by one, which in turn load up the items on that street.
-    streetBeingProcessed = -1;
-    for (int i = 0; i < configInfo.readTotalJSONStreetCount(); i++)
+    //streetBeingProcessed = -1;
+    int i;
+    for (i = 0, streetBeingProcessed = 0; i < configInfo.readTotalJSONStreetCount(); i++, streetBeingProcessed++)
     {
-        streetBeingProcessed++;
+        //streetBeingProcessed++;
         String streetTSID = configInfo.readStreetTSID(i);
         if (streetTSID.length() == 0)
         {
@@ -341,18 +322,50 @@ boolean initialiseStreets()
 
     }
     
+    
+    
     // Go through and remove all the invalid streets
     for (int j = streetInfoArray.size() - 1; j >= 0; j--)
     {
         if (streetInfoArray.get(j).readInvalidStreet())
         {
             streetInfoArray.remove(j);
+            printToFile.printDebugLine("reducing size of street array to " + streetInfoArray.size(), 1);
         }
     }
-    
-    
+        
         
     // All OK
+    return true;
+}
+
+boolean setForFirstStreet()
+{
+        // Check that there are still streets left to process
+    if (streetInfoArray.size() == 0)
+    {
+        printToFile.printDebugLine("No valid streets to process - exiting", 3);
+        return false;
+    }
+    
+    printToFile.printDebugLine("Number of streets left to process is " + streetInfoArray.size() + " (out of " + configInfo.readTotalJSONStreetCount() + ")", 3);
+        
+    println("number of failed messages is ", display.failedStreets.size());
+    // Start setting up the first street to be processed and reload snap images 
+    streetBeingProcessed = 0;
+    if (!streetInfoArray.get(streetBeingProcessed).loadStreetImages())
+    {
+        return false;
+    }
+    if (!streetInfoArray.get(streetBeingProcessed).loadAllItemImages())
+    {
+        return false;
+    }
+    streetInfoArray.get(streetBeingProcessed).initStreetVars();
+    streetInfoArray.get(streetBeingProcessed).initStreetItemVars();
+    
+    printToFile.printDebugLine("DONE ALL INITIAL CHECKING: SET UP FOR FIRST STREET " + streetInfoArray.get(streetBeingProcessed).readStreetName(), 3);
+    
     return true;
 }
 
@@ -360,7 +373,14 @@ void keyPressed()
 {
     if ((key == 'c') || (key == 'C')) 
     {
-        okToContinue = true;
+        if (!setForFirstStreet())
+        {
+            failNow = true;
+        }
+        else
+        {
+            okToContinue = true;
+        }
         return;
     }
     else if ((key == 'x') || (key == 'X'))
