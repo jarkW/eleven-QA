@@ -9,22 +9,26 @@ class ItemInfo
     String itemTSID;
     String itemClassTSID;
     String origItemExtraInfo;  // additional info needed for some items
+    String origItemClassName;    // used for quoins only/reporting differences at end
     int    origItemX;
     int    origItemY;
+    
+    // Used to read/set the additional info in item JSON
+    String itemExtraInfoKey;
 
     // Fields which are deduced from snap comparison - and then written to JSON file
     String newItemExtraInfo;  
+    String newItemClassName;    // used for quoins only
     int    newItemX;
     int    newItemY;
+    
+    // show if need to write out changed JSON file
+    boolean saveChangedJSONfile;
     
     // defaults for fragment
     // Offset from the actual x,y of the item for this fragment
     int fragOffsetX;
     int fragOffsetY;
-    
-    // MIGHT NOT BE NEEDED - can work out from the image png file
-    int fragHeight;
-    int fragWidth;
     
     FragmentFind fragFind;
     
@@ -32,8 +36,8 @@ class ItemInfo
     ArrayList<PNGFile> itemImageArray;
     
     // ARE THESE EVER USED HERE?
-    int itemImageBeingUsed;
-    int streetImageBeingUsed;
+    //int itemImageBeingUsed;
+    //int streetImageBeingUsed;
     
     // Info used to compare size of input/output JSON files
     int sizeOfOriginalJSON;
@@ -50,23 +54,36 @@ class ItemInfo
         okFlag = true;
         itemJSON = null;
         origItemExtraInfo = "";
+        origItemClassName = "";
+        itemExtraInfoKey = "";
         fragFind = null;
         origItemX = 0;
         origItemY = 0;
         newItemX = missCoOrds;
         newItemY = missCoOrds;
-        newItemExtraInfo = "";
+        newItemExtraInfo = "";        
+        newItemClassName = "";
+        
         sizeOfOriginalJSON = 0;
         sizeOfFinalJSON = 0;
         sizeDiffJSONCalc = 0;
         skipThisItem = false;
+        saveChangedJSONfile = false;
         
         initItemVars();
 
         itemImageArray = new ArrayList<PNGFile>();
 
-        itemTSID = item.getString("tsid");
-        printToFile.printDebugLine("item tsid is " + itemTSID + "(" + item.getString("label") + ")", 2); 
+        itemTSID = Utils.readJSONString(item, "tsid", true);
+        if (!Utils.readOkFlag() || itemTSID.length() == 0)
+        {
+            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            okFlag = false;
+        }
+        else
+        {
+            printToFile.printDebugLine("item tsid is " + itemTSID + "(" + item.getString("label") + ")", 2);
+        }
     }
     
     public void initItemVars()
@@ -74,7 +91,7 @@ class ItemInfo
         // These need to be reset after been through the loop of streets
         // as part of initial validation
         itemFinished = false;
-        itemImageBeingUsed = 0;
+        //itemImageBeingUsed = 0;
     }
       
     public boolean initialiseItemInfo()
@@ -106,15 +123,31 @@ class ItemInfo
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Failed load the item json file " + itemFileName, 3);
+            printToFile.printDebugLine("Failed to load the item json file " + itemFileName, 3);
             return false;
         }
         
         printToFile.printDebugLine("Loaded item JSON OK", 1);
         
-        origItemX = itemJSON.getInt("x");
-        origItemY = itemJSON.getInt("y");
-        itemClassTSID = itemJSON.getString("class_tsid");
+        // These fields are always present - so if missing = error
+        origItemX = Utils.readJSONInt(itemJSON, "x", true);
+        if (!Utils.readOkFlag())
+        {
+            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            return false;
+        }
+        origItemY = Utils.readJSONInt(itemJSON, "y", true);
+        if (!Utils.readOkFlag())
+        {
+            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            return false;
+        }
+        itemClassTSID = Utils.readJSONString(itemJSON, "class_tsid", true);
+        if (!Utils.readOkFlag() || itemClassTSID.length() == 0)
+        {
+            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            return false;
+        }
         
         // Before proceeding any further need to check if this is an item we are
         // scanning for - skip if not
@@ -163,7 +196,7 @@ class ItemInfo
         }
         
         // Initialise for the item to be searched for
-        itemImageBeingUsed = 0;
+        //itemImageBeingUsed = 0;
         fragFind = new FragmentFind(this);
  
         return true;
@@ -200,6 +233,9 @@ class ItemInfo
             case "patch_dark":
             case "party_atm":
             case "race_ticket_dispenser":
+            case "subway_gate":
+            case "subway_map":
+            case "bag_notice_board":
                 return true;
                 
             default:
@@ -259,13 +295,22 @@ class ItemInfo
         }
         else if (itemClassTSID.indexOf("quoin", 0) == 0)
         {
-            // As we are setting quoins from the snap, load up the most common quoins first
-            itemImageArray.add(new PNGFile("quoin_xp.png", false));
-            itemImageArray.add(new PNGFile("quoin_energy.png", false));
-            itemImageArray.add(new PNGFile("quoin_mood.png", false));
-            itemImageArray.add(new PNGFile("quoin_currants.png", false));
-            itemImageArray.add(new PNGFile("quoin_favor.png", false));
-            itemImageArray.add(new PNGFile("quoin_time.png", false));
+            
+            if (!configInfo.readChangeXYOnly())
+            {
+                // As we are setting quoins from the snap, load up the most common quoins first
+                itemImageArray.add(new PNGFile("quoin_xp.png", false));
+                itemImageArray.add(new PNGFile("quoin_energy.png", false));
+                itemImageArray.add(new PNGFile("quoin_mood.png", false));
+                itemImageArray.add(new PNGFile("quoin_currants.png", false));
+                itemImageArray.add(new PNGFile("quoin_favor.png", false));
+                itemImageArray.add(new PNGFile("quoin_time.png", false));
+            }
+            else
+            {
+                // As only changing the x,y can just load up the relevant snap (including mystery quoins)
+                itemImageArray.add(new PNGFile(itemClassTSID + "_" + origItemExtraInfo + ".png", false));
+            }
         }
         else if ((itemClassTSID.indexOf("wood_tree", 0) == 0) || (itemClassTSID.indexOf("trant_", 0) == 0))
         {
@@ -375,22 +420,37 @@ class ItemInfo
         {
             // Shorter code rather than adding in class_tsid for all 30 shrines
             // Read in the dir field 
-            try
+            
+            // As dir may not exist - is not an error
+            itemExtraInfoKey = "dir";
+            origItemExtraInfo = Utils.readJSONString(itemJSON, itemExtraInfoKey, false);
+            if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
             {
-                origItemExtraInfo = itemJSON.getString("dir");
-            }
-            catch(Exception e)
-            {
-                printToFile.printDebugLine("Failed to read dir field from item JSON file " + itemTSID, 2);
-                itemJSON.setString("dir", "right");
+                // Failed to read this field from JSON file - so need to insert one
+                printToFile.printDebugLine("Failed to read dir field from shrine JSON file " + itemTSID, 2);
+                
+                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, "right"))
+                {
+                    // Error occurred - fail
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine("Failed to insert new dir field in item JSON file " + itemTSID, 3);
+                    return false;
+                }
+
+                // save this new dir field - will need to load the shrine picture
                 origItemExtraInfo = "right";
+                
                 // As have just added in a new key - keep track of this expected change to file length
-                String str = "'dir': 'right',";
-                sizeDiffJSONCalc += str.length() + 1;
-                printToFile.printDebugLine("Updated JSON file size difference is " + sizeDiffJSONCalc, 1);
+                sizeDiffJSONCalc += Utils.readByteCount();
+                printToFile.printDebugLine("Updated JSON file size difference after insert dir field is " + sizeDiffJSONCalc, 1);
+                
+                // Show JSON file needs saving after processing done
+                saveChangedJSONfile = true;
             }
             
             // Currently all shrines are set to 'right' so flag up error if that isn't true
+            // Putting this in so that if I ever come across a left-shrine, it will cause the code to fail
+            // Hence read the value in rather than simply setting to 'right' all the time.
             if (!origItemExtraInfo.equals("right"))
             {
                 printToFile.printDebugLine("Unexpected dir = left field in shrine JSON file  " + itemTSID, 3);
@@ -411,49 +471,60 @@ class ItemInfo
             case "jellisac":
             case "ice_knob":
             case "dust_trap":
-                // Read in the instanceProps array 
-                instanceProps = null;
-                try
+                // Read in the instanceProps array - failure is always an error
+                instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
+                if (!Utils.readOkFlag())
                 {
-                    instanceProps = itemJSON.getJSONObject("instanceProps");
-                }
-                catch(Exception e)
-                {
-                    println(e);
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
                     printToFile.printDebugLine("Failed to get instanceProps from item JSON file " + itemTSID, 3);
                     return false;
-                } 
+                }
+                
                 if (itemClassTSID.equals("quoin"))
                 {
-                    origItemExtraInfo = readJSONString(instanceProps, "type");
+                    // Save the class_name field for this item - only used when reporting original/changed quoin at end
+                    origItemClassName = Utils.readJSONString(instanceProps, "class_name", true);
+                    if (!Utils.readOkFlag() || origItemClassName.length() == 0)
+                    {
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine("Failed to get instanceProps.class_name" + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
+                        return false;
+                    }    
+                    
+                    // Now continue with getting the type field from the json file
+                    itemExtraInfoKey = "type";
                 }
                 else if ((itemClassTSID.equals("wood_tree")) || (itemClassTSID.equals("npc_mailbox")) || (itemClassTSID.equals("dirt_pile")))
                 {
-                    origItemExtraInfo = readJSONString(instanceProps, "variant");
+                    itemExtraInfoKey = "variant";
                 }
-                /*
-                else if (itemClassTSID.equals("quoin"))
-                {
-                    origItemExtraInfo = readJSONString(instanceProps, "type");
-                }
-                */
                 else if ((itemClassTSID.equals("mortar_barnacle")) || (itemClassTSID.equals("jellisac")))
                 {
-                    origItemExtraInfo = readJSONString(instanceProps, "blister");
+                    itemExtraInfoKey = "blister";
                 }
                 else if (itemClassTSID.equals("ice_knob"))
                 {
-                    origItemExtraInfo = readJSONString(instanceProps, "knob");
+                    itemExtraInfoKey = "knob";
                 }
                 else if (itemClassTSID.equals("dust_trap"))
                 {
-                    origItemExtraInfo = readJSONString(instanceProps, "trap_class");
-                }               
+                    itemExtraInfoKey = "trap_class";
+                }
                 else
                 {
                     printToFile.printDebugLine("Trying to read unexpected field from instanceProps for item class " + itemClassTSID, 3);
                     return false;
                 }
+                
+                // Now read in the additional information using the key
+                origItemExtraInfo = Utils.readJSONString(instanceProps, itemExtraInfoKey, true);
+                if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
+                {
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine("Failed to get from instanceProps." + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
+                    return false;
+                }
+
                 if (origItemExtraInfo.length() == 0)
                 {
                     return false;
@@ -462,16 +533,14 @@ class ItemInfo
    
             case "wall_button":
                 // Read in the dir field 
-                try
+                itemExtraInfoKey = "dir";
+                origItemExtraInfo = Utils.readJSONString(itemJSON, itemExtraInfoKey, true);
+                if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
                 {
-                    origItemExtraInfo = itemJSON.getString("dir");
-                }
-                catch(Exception e)
-                {
-                    println(e);
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
                     printToFile.printDebugLine("Failed to read dir field from item JSON file " + itemTSID, 3);
                     return false;
-                } 
+                }
                 break;
                          
             case "npc_sloth":
@@ -481,8 +550,8 @@ class ItemInfo
             case "visiting_stone":
                 // Read in the dir field 
                 // NB The dir field is not always set in visiting_stones - and often set wrong.
-                // Therefore default the direction depending on what side of the screen it is
-                //
+                // Therefore default the direction depending on what side of the screen it is    
+                itemExtraInfoKey = "dir";
                 if (origItemX > 0)
                 {
                     // stone is on RHS of screen - so set to 'left'
@@ -493,39 +562,38 @@ class ItemInfo
                     // stone is on LHS of screen - so set to 'right'
                     origItemExtraInfo = "right";
                 }
-                               
-                String tempInfo;
-                // Insert dir field if not already present.
-                try
+                
+                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, origItemExtraInfo))
                 {
-                    tempInfo = itemJSON.getString("dir");
+                    // Error occurred - fail
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine("Failed to set dir field in item JSON file " + itemTSID, 3);
+                    return false;
                 }
-                catch(Exception e)
+                
+                // As have just added/changed key - keep track of this expected change to file length
+                sizeDiffJSONCalc += Utils.readByteCount();
+                printToFile.printDebugLine("Updated JSON file size difference after set dir field is " + sizeDiffJSONCalc, 1);
+                
+                // Also need to check that there is a state field set - don't report an error if missing
+                String stateValue = Utils.readJSONString(itemJSON, "state", false);
+                if (!Utils.readOkFlag() || stateValue.length() == 0)
                 {
-                    // The dir field is often missing - so just insert now
-                    printToFile.printDebugLine("Failed to read dir field from item JSON file - so insert " + itemTSID, 3);
-                    itemJSON.setString("dir", origItemExtraInfo);
-                    // As have just added in a new key - keep track of this expected change to file length
-                    String str = "'dir': 'right',";
-                    sizeDiffJSONCalc += str.length() + 1;
-                    printToFile.printDebugLine("Updated JSON file size difference is " + sizeDiffJSONCalc, 1);
-
-                    // Check that also have state field set
-                    try
+                    // It isn't present - so insert
+                    if (!Utils.setJSONString(itemJSON, "state", "1"))
                     {
-                        tempInfo = itemJSON.getString("state");
+                        // Error occurred - fail
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine("Failed to set state field in item JSON file " + itemTSID, 3);
+                        return false;
                     }
-                    catch(Exception e2)
-                    {
-                        printToFile.printDebugLine("Failed to read STATE field from item JSON file - so insert set to 1 " + itemTSID, 3);
-                        itemJSON.setString("state", "1");
-                        // As have just added in a new key - keep track of this expected change to file length
-                        str = "'state': '1',";
-                        sizeDiffJSONCalc += str.length() + 1;
-                        printToFile.printDebugLine("Updated JSON file size difference is " + sizeDiffJSONCalc, 1);
-                    }
-
-                }               
+                    // As have just added key - keep track of this expected change to file length
+                    sizeDiffJSONCalc += Utils.readByteCount();
+                    printToFile.printDebugLine("Updated JSON file size difference after insert state field is " + sizeDiffJSONCalc, 1);
+                }
+                             
+                // Show JSON file needs saving after processing done
+                saveChangedJSONfile = true;
                 break;
                                 
             default:
@@ -533,7 +601,185 @@ class ItemInfo
                 break;
          }
 
+        return true;
+    } 
+    
+    boolean setItemInfoInJSON()
+    {
+        JSONObject instanceProps;
         
+        // Saving information determined from the snap. Typically information which affects the 
+        // appearance of an item e.g. the type of quoin or dirtpile    
+        if (itemClassTSID.indexOf("npc_shrine_", 0) == 0)
+        {
+            // Shorter code rather than adding in class_tsid for all 30 shrines
+            if (!newItemExtraInfo.equals("right"))
+            {
+                // Should never happen
+                printToFile.printDebugLine("Dir field in shrine " + itemTSID + " is not set to right - is set to " + newItemExtraInfo, 3);
+                return false;
+            }
+            
+            // Dir set to right has already been saved in the json and the flag set. So nothing to do
+            return true;
+        }
+
+        switch (itemClassTSID)
+        {
+            case "quoin":     
+            case "wood_tree":
+            case "npc_mailbox":
+            case "dirt_pile":
+            case "mortar_barnacle":
+            case "jellisac":
+            case "ice_knob":
+            case "dust_trap":
+                // Read in the instanceProps array - failure is always an error
+                instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
+                if (!Utils.readOkFlag())
+                {
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine("Failed to get instanceProps from item JSON file " + itemTSID, 3);
+                    return false;
+                }
+
+                if (itemClassTSID.equals("quoin"))
+                {
+                    // Now need to set up the type and class_name field
+                    
+                    // NB WILL NEED TO RECODE SOME OF THESE IF IN AL ETC
+                    switch (newItemExtraInfo)
+                    {
+                        case "xp":
+                        case "energy":
+                        case "mood":
+                        case "currants":
+                        case "favor":
+                        case "time":
+                        case "mystery":
+                            if (newItemExtraInfo.equals("xp"))
+                            {
+                                newItemClassName = "fast tiny xp";  
+                            }
+                            else if (newItemExtraInfo.equals("energy"))
+                            {
+                                newItemClassName = "fast tiny energy";
+                            }
+                            else if (newItemExtraInfo.equals("mood"))
+                            {
+                                newItemClassName = "fast tiny mood";
+                            }
+                            else if (newItemExtraInfo.equals("currants"))
+                            {
+                                newItemClassName = "fast tiny currants";
+                            }
+                            else if (newItemExtraInfo.equals("favor"))
+                            {
+                                newItemClassName = "small random favor";
+                            }
+                            else if (newItemExtraInfo.equals("time"))
+                            {
+                                newItemClassName = "fast tiny time";
+                            }
+                            else if (newItemExtraInfo.equals("mystery"))
+                            {
+                                newItemClassName = "placement tester";
+                            }  
+                            // Now save the two fields
+                            if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
+                            {
+                                printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                                return false;
+                            }
+                            sizeDiffJSONCalc += Utils.readByteCount();
+                            printToFile.printDebugLine("Updated JSON file size difference after change type field is " + sizeDiffJSONCalc, 1);
+                            
+                            if (!Utils.setJSONString(instanceProps, "class_name", newItemClassName))
+                            {
+                                printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                                return false;
+                            }
+                            sizeDiffJSONCalc += Utils.readByteCount();
+                            printToFile.printDebugLine("Updated JSON file size difference after change class_name field is " + sizeDiffJSONCalc, 1);
+                            break;
+
+                        default:
+                            printToFile.printDebugLine("Unexpected quoin type set from snaps - " + newItemExtraInfo, 3);
+                            return false;
+
+                    }
+                }
+                else 
+                {                            
+                    if (!Utils.setJSONString(instanceProps, itemExtraInfoKey, newItemExtraInfo))
+                    {
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    sizeDiffJSONCalc += Utils.readByteCount();
+                    printToFile.printDebugLine("Updated JSON file size difference after change " + itemExtraInfoKey + " field is " + sizeDiffJSONCalc, 1);                
+                }
+                // Don't think I need to set the items array as well???
+                break;
+   
+            case "wall_button":
+            case "visiting_stone":
+                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, newItemExtraInfo))
+                {
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    return false;
+                }
+                sizeDiffJSONCalc += Utils.readByteCount();
+                printToFile.printDebugLine("Updated JSON file size difference after change " + itemExtraInfoKey + " field is " + sizeDiffJSONCalc, 1);                
+                break;
+                         
+            case "npc_sloth":
+                printToFile.printDebugLine("Not sure about sloth - check to see if both dir and instanceProps.dir are set to be the same " + itemTSID, 3);
+                return false;
+                       
+            case "marker_qurazy":
+            case "trant_bean":
+            case "trant_egg":
+            case "trant_bubble":
+            case "trant_gas":
+            case "trant_spice":
+            case "trant_fruit":
+            case "paper_tree":
+            case "rock_beryl_1":
+            case "rock_beryl_2":
+            case "rock_beryl_3":
+            case "rock_dullite_1":
+            case "rock_dullite_2":
+            case "rock_dullite_3":
+            case "rock_sparkly_1":
+            case "rock_sparkly_2":
+            case "rock_sparkly_3":
+            case "rock_metal_1":
+            case "rock_metal_2":
+            case "rock_metal_3":
+            case "peat_1":
+            case "peat_2":
+            case "peat_3":            
+            case "patch":            
+            case "patch_dark":
+            case "sloth_knocker":
+            case "party_atm":
+            case "race_ticket_dispenser":
+            case "subway_gate":
+            case "subway_map":
+            case "bag_notice_board":
+                // Don't have any additional information such as 'dir' - so return
+                return true;
+                 
+            default:
+                // Should never reach here
+                printToFile.printDebugLine("Unrecognised classTSID in setItemInfoInJson - " + itemClassTSID, 3);
+                return false;
+
+         }
+
+        // Show JSON file needs saving after processing done - only reach this point if changes needed to be saved
+        saveChangedJSONfile = true;
         return true;
     } 
     
@@ -552,21 +798,54 @@ class ItemInfo
         catch(Exception e)
         {
             println(e);
-            println("Failed to open samples.json file");
+            printToFile.printDebugLine("Failed to open samples.json file", 3);
             return false;
         }
-        values = json.getJSONArray("fragments");
+        
+        values = Utils.readJSONArray(json, "fragments", true);
+        if (!Utils.readOkFlag())
+        {
+            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            printToFile.printDebugLine("Failed to read fragments array in samples.json file", 3);
+            return false;
+        }
         
         for (int i = 0; i < values.size(); i++) 
         {
             fragment = values.getJSONObject(i);
-            if ((fragment.getString("class_tsid").equals(itemClassTSID)) && (fragment.getString("info").equals(origItemExtraInfo)))
+            String tsid = Utils.readJSONString(fragment, "class_tsid", true);
+            if (!Utils.readOkFlag() || tsid.length() == 0)
+            {
+                printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                printToFile.printDebugLine("Failed to read class_tsid in fragments array in samples.json file", 3);
+                return false;
+            }
+            String info = Utils.readJSONString(fragment, "info", true);
+            // Is OK if set to ""
+            if (!Utils.readOkFlag())
+            {
+                printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                printToFile.printDebugLine("Failed to read info in fragments array in samples.json file", 3);
+                return false;
+            }
+            
+            if ((tsid.equals(itemClassTSID)) && (info.equals(origItemExtraInfo)))
             {
                 // Found fragment for this item
-                fragOffsetX = fragment.getInt("offset_x");
-                fragOffsetY = fragment.getInt("offset_y");
-                fragWidth = fragment.getInt("width");
-                fragHeight = fragment.getInt("height");
+                fragOffsetX = Utils.readJSONInt(fragment, "offset_x", true);
+                if (!okFlag)
+                {
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine("Failed to read offset_x in fragments array in samples.json file", 3);
+                    return false;
+                }
+                fragOffsetY = Utils.readJSONInt(fragment, "offset_y", true);
+                if (!okFlag)
+                {
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine("Failed to read offset_y in fragments array in samples.json file", 3);
+                    return false;
+                }
                 return true;
             }
         }
@@ -575,64 +854,168 @@ class ItemInfo
         printToFile.printDebugLine("Missing class_tsid " + itemClassTSID + " and/or info field <" + origItemExtraInfo + "> in samples.json", 3);
         return false;
     }
-    
-    String readJSONString(JSONObject jsonFile, String key)
-    {
-        String readString = "";
-        try
-        {
-            if (jsonFile.isNull(key) == true) 
-            {
-                println("Missing key ", key, " in json file");
-                okFlag = false;
-                return "";
-            }
-            readString = jsonFile.getString(key, "");
-        }
-        catch(Exception e)
-        {
-            println(e);
-            println("Failed to read string from json file with key ", key);
-            okFlag = false;
-            return "";
-        }
-        if (readString.length() == 0)
-        {
-            println("Null field returned for key", key);
-            okFlag = false;
-            return "";
-        }
-        return readString;
-    }
-    
-    int sizeOfJSONFile (String fname)
-    {
-        String lines[] = loadStrings(fname);
-        int fnameLength = 0;
-        
-        for (int i = 0 ; i < lines.length; i++) 
-        {
-            fnameLength += lines[i].length();
-        }
-        return fnameLength;
-    }
-    
+       
     public void searchUsingReference()
     {
-        // NB ALSO NEED TO UPDATE/CORRECT THE JSON LENGTH??? OR COULD BE DONE BY WRITING FUNCTION?
-        // DON't FORGET FOR CASES WHERE ADDED IN NEW FIELDS e.g. SHRINES, 
+
         if (fragFind.readSearchDone())
         {
+            String s;
+            
             // Search has completed - either run out of streets or was successful
             newItemX = fragFind.readNewItemX();
             newItemY = fragFind.readNewItemY();
             newItemExtraInfo = fragFind.readNewItemExtraInfo();
+            
+            // The Utils functions will update the expected change in length of JSON file counter
+            // automatically          
+            if (newItemX != origItemX)
+            {
+                if (!Utils.setJSONInt(itemJSON, "x", newItemX))
+                {
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    failNow = true;
+                    return;
+                }
+                // Show JSON file needs saving after processing done
+                saveChangedJSONfile = true;
+            }
+            
+            if (newItemY != origItemY)
+            {
+                if (!Utils.setJSONInt(itemJSON, "y", newItemY))
+                {
+                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    failNow = true;
+                    return;
+                }
+                // Show JSON file needs saving after processing done
+                saveChangedJSONfile = true;
+            }
+            
+            // Sets up the special fields e.g. 'dir' or 'type' fields based on ExtraInfo field
+            // Only do this if not doing an x,y_only kind of search - which leaves the special fields
+            // as originally set
+            if (!configInfo.readChangeXYOnly())
+            {
+                if (!setItemInfoInJSON())
+                {
+                        failNow = true;
+                        return;
+                }
+            }
+
+            if (saveChangedJSONfile)
+            {
+                
+                s = "Original item (" + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+                if (origItemExtraInfo.length() > 0)
+                {
+                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    if (itemClassTSID.equals("quoin"))
+                    {
+                        s = s + " (" + origItemClassName + ")";
+                    }
+                }
+                printToFile.printOutputLine(s);
+                printToFile.printDebugLine(s, 2);
+                
+                s = "New item (" + itemTSID + ") " + itemClassTSID + " x,y = " + newItemX + "," + newItemY;             
+                if (newItemExtraInfo.length() > 0)
+                {
+                    s = s + " " + itemExtraInfoKey + " = " + newItemExtraInfo;
+                    if (itemClassTSID.equals("quoin"))
+                    {
+                        s = s + " (" + newItemClassName + ")";
+                    }
+                }
+                printToFile.printOutputLine(s);
+                printToFile.printDebugLine(s, 2);
+                
+                // Write the JSON file out - includes checking that the new file length = old one plus calculated diff
+                try
+                {
+                    //saveJSONObject(itemJSON, configInfo.readPersdataPath() + "/" + itemTSID + ".json");
+                    println("WRITING ", itemTSID + ".json TO TEMP");
+                    saveJSONObject(itemJSON, dataPath("") + "/temp/" + itemTSID + ".json");
+                }
+                catch(Exception e)
+                {
+                    println(e);
+                    printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
+                    printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
+                    failNow = true;
+                    return;
+                }
+                
+                // Double check the file length is as expected               
+                //sizeOfFinalJSON = sizeOfJSONFile(configInfo.readPersdataPath() + "/" + itemTSID + ".json");
+                println("Checking temp for written File!!!");
+                sizeOfFinalJSON = sizeOfJSONFile(dataPath("") + "/temp/" + itemTSID + ".json");
+                
+                if (sizeOfFinalJSON != (sizeOfOriginalJSON + sizeDiffJSONCalc))
+                {
+                    s = "Unexpected size difference in new " + itemTSID + ".json file: Original file = " + sizeOfOriginalJSON + 
+                    " bytes, expected change in bytes =  " + sizeDiffJSONCalc + " New file = " + sizeOfFinalJSON + " bytes";
+                    printToFile.printDebugLine(s, 3);
+                    printToFile.printOutputLine(s);
+                    failNow = true;
+                    return;
+                }
+                printToFile.printDebugLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
+                printToFile.printOutputLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
+
+            }
+            else
+            {
+                s = "Unchanged item (" + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+                if (origItemExtraInfo.length() > 0)
+                {
+                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    if (itemClassTSID.equals("quoin"))
+                    {
+                        s = s + " (" + origItemClassName + ")";
+                    }
+                }
+                printToFile.printOutputLine(s);
+                printToFile.printDebugLine(s, 2);
+            }
             itemFinished = true;
+            
+            // Removing a file - Which works ....
+            File f = new File(dataPath("") + "/temp/" + itemTSID + ".json");
+            if (f.exists())
+            {
+                f.delete();
+            }
+            if (doDelay && newItemX != missCoOrds)
+            {
+                delay(1000);
+            }
         }
         else
         {
             fragFind.searchForFragment();
         }
+    }
+    
+        
+    int sizeOfJSONFile (String fname)
+    {
+        String lines[] = loadStrings(fname);
+        int fnameLength = 0;
+        String strippedLine = "";
+        
+        okFlag = true;
+        
+        for (int i = 0 ; i < lines.length; i++) 
+        {
+            strippedLine = lines[i];
+            // strip of trailing/leading white space
+            strippedLine = strippedLine.trim();
+            fnameLength += strippedLine.length();
+        }
+        return fnameLength;
     }
     
     // Simple functions to read/set variables

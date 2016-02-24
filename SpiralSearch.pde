@@ -112,7 +112,7 @@ class SpiralSearch
 
         noMoreValidFragments = false; 
         
-        printToFile.printDebugLine("Continuing search for " + classTSID + " at snap x,y " + x + "," + y + " with search box wxh " + widthBox + "x" + heightBoxitemImage., 1);
+        printToFile.printDebugLine("Continuing search for " + classTSID + " at snap x,y " + x + "," + y + " with search box wxh " + widthBox + "x" + heightBox, 1);
 
     }
     

@@ -6,6 +6,8 @@ class ConfigInfo {
     String fixturesPath;
     String persdataPath;
     String streetSnapPath;
+    boolean changeXYOnly;
+    
     StringList streetTSIDArray = new StringList();
     String outputFile;
 
@@ -30,7 +32,7 @@ class ConfigInfo {
         try
         {
         // Read in stuff from the config file
-            json = loadJSONObject("config.json");
+            json = loadJSONObject("config.json"); 
         }
         catch(Exception e)
         {
@@ -40,33 +42,75 @@ class ConfigInfo {
         }
    
         // Now read in the different fields
-        useVagrant = readJSONBoolean(json, "use_vagrant_dirs");       
-        fixturesPath = readJSONString(json, "fixtures_path");   
-        persdataPath = readJSONString(json, "persdata_path");
-        streetSnapPath = readJSONString(json, "street_snap_path");
-        outputFile = readJSONString(json, "output_file");
+        useVagrant = Utils.readJSONBool(json, "use_vagrant_dirs", true);  
+        if (!Utils.readOkFlag())
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read use_vagrant_dirs in config.json file");
+            return false;
+        }
+        fixturesPath = Utils.readJSONString(json, "fixtures_path", true); 
+        if (!Utils.readOkFlag() || fixturesPath.length() == 0)
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read fixtures_path in config.json file");
+            return false;
+        }
+        persdataPath = Utils.readJSONString(json, "persdata_path", true);
+        if (!Utils.readOkFlag() || persdataPath.length() == 0)
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read persdata_path in config.json file");
+            return false;
+        }
+        streetSnapPath = Utils.readJSONString(json, "street_snap_path", true);
+        if (!Utils.readOkFlag() || streetSnapPath.length() == 0)
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read street_snap_path in config.json file");
+            return false;
+        }
+        outputFile = Utils.readJSONString(json, "output_file", true);
+        if (!Utils.readOkFlag() || outputFile.length() == 0)
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read output_file in config.json file");
+            return false;
+        }
+        
+        changeXYOnly = Utils.readJSONBool(json, "change_xy_only", true);
+        if (!Utils.readOkFlag() || outputFile.length() == 0)
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read change_xy_only in config.json file");
+            return false;
+        }
         
         // Need to check that output file is a text file
         if (outputFile.indexOf(".txt") == -1)
         {
             println("Output file (output_file) needs to a .txt file");
-            okFlag = false;
             return false;
         }    
         
         // Read in array of street TSID from config file
+        JSONArray TSIDArray = Utils.readJSONArray(json, "streets", true);
+        if (!Utils.readOkFlag())
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read in streets array from config.json");
+            return false;
+        }
         try
         {
-            JSONArray TSIDArray = null;
-            TSIDArray = json.getJSONArray("streets");
             for (int i = 0; i < TSIDArray.size(); i++)
             {    
                 // extract the TSID
-                JSONObject tsidObject = TSIDArray.getJSONObject(i);
-                String tsid = tsidObject.getString("tsid", null);
-                
-                if (tsid.length() == 0)
+                JSONObject tsidObject = TSIDArray.getJSONObject(i);                               
+                String tsid = Utils.readJSONString(tsidObject, "tsid", true);
+                if (!Utils.readOkFlag() || tsid.length() == 0)
                 {
+                    println(Utils.readErrMsg());
                     println("Missing value for street tsid");
                     return false;
                 }
@@ -84,59 +128,7 @@ class ConfigInfo {
         // Everything OK
         return true;
     }
-    
-    String readJSONString(JSONObject jsonFile, String key)
-    {
-        String readString = "";
-        try
-        {
-            if (jsonFile.isNull(key) == true) 
-            {
-                println("Missing key ", key, " in json file");
-                okFlag = false;
-                return "";
-            }
-            readString = jsonFile.getString(key, "");
-        }
-        catch(Exception e)
-        {
-            println(e);
-            println("Failed to read string from json file with key ", key);
-            okFlag = false;
-            return "";
-        }
-        if (readString.length() == 0)
-        {
-            println("Null field returned for key", key);
-            okFlag = false;
-            return "";
-        }
-        return readString;
-    }
-    
-    boolean readJSONBoolean(JSONObject jsonFile, String key)
-    {
-        boolean readBool = false;
-        try
-        {
-            if (jsonFile.isNull(key) == true) 
-            {
-                println("Missing key ", key, " in json file");
-                okFlag = false;
-                return false;
-            }
-            readBool = jsonFile.getBoolean(key, false);
-        }
-        catch(Exception e)
-        {
-            println(e);
-            println("Failed to read boolean from json file with key ", key);
-            okFlag = false;
-            return false;
-        }
-        return readBool;
-    }
-    
+           
     public boolean readOkFlag()
     {
         return okFlag;
@@ -160,6 +152,11 @@ class ConfigInfo {
     public String readStreetSnapPath()
     {
         return streetSnapPath;
+    }
+    
+    public boolean readChangeXYOnly()
+    {
+        return changeXYOnly;
     }
          
     public String readStreetTSID(int n)

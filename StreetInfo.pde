@@ -77,28 +77,22 @@ class StreetInfo
         printToFile.printDebugLine("Reading location file " + locFileName, 2);
         
         // Read in street name
-        streetName = "";
-        try
+                
+        streetName = Utils.readJSONString(json, "label", true);
+        if (!Utils.readOkFlag() || streetName.length() == 0)
         {
-            streetName = json.getString("label");
-        }
-        catch(Exception e)
-        {
-            println(e);
+            printToFile.printDebugLine(Utils.readErrMsg(), 3);
             printToFile.printDebugLine("Fail to read in street name from street JSON file " + locFileName, 3);
             return false;
-        } 
+        }
+  
         printToFile.printDebugLine("Street name is " + streetName, 2);
     
         // Read in the list of street items
-        streetItems = null;
-        try
+        streetItems = Utils.readJSONArray(json, "items", true);
+        if (!Utils.readOkFlag())
         {
-            streetItems = json.getJSONArray("items");
-        }
-        catch(Exception e)
-        {
-            println(e);
+            printToFile.printDebugLine(Utils.readErrMsg(), 3);
             printToFile.printDebugLine("Fail to read in item array in street JSON file " + locFileName, 3);
             return false;
         } 
@@ -110,11 +104,11 @@ class StreetInfo
     
     boolean readStreetItemData()
     {
-        println("Read item TSID from street L file");   
+        printToFile.printDebugLine("Read item TSID from street L file", 2);   
         // First set up basic information for each street - i.e. item TSID
         for (int i = 0; i < streetItems.size(); i++) 
         {
-            itemInfoArray.add(new ItemInfo(streetItems.getJSONObject(i)));
+            itemInfoArray.add(new ItemInfo(streetItems.getJSONObject(i))); 
             
             // Now read the error flag for the last street item array added
             int total = itemInfoArray.size();
@@ -270,7 +264,6 @@ class StreetInfo
         // Read in street data - list of item TSIDs 
         if (!readStreetData()) //<>//
         {
-            println("readStreetData failed");
             if (invalidStreet)
             {
                 // i.e. need to skip this street as location information not available
@@ -326,6 +319,10 @@ class StreetInfo
         display.setItemProgress(itemData.itemClassTSID, itemData.itemTSID, itemBeingProcessed+1, itemInfoArray.size());
 
         itemData.searchUsingReference();
+        if (failNow)
+        {
+            return;
+        }
         
         if (itemData.readItemFinished())
         {

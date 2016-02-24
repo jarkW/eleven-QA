@@ -23,7 +23,7 @@ class PrintToFile {
         catch(Exception e)
         {
             println(e);
-            println("Failed to open output file ", configInfo.readOutputFilename());
+            printToFile.printDebugLine("Failed to open output file " + configInfo.readOutputFilename(), 3);
             return false;
         }
         
@@ -38,13 +38,10 @@ class PrintToFile {
             catch(Exception e)
             {
                 println(e);
+                // Cannot write this error to debug file ...
                 println("Failed to open debug file");
                 return false;
             }
-        }
-        else
-        {
-            println("Debug file not opened as debugLevel is 0");
         }
         
         initDone = true;

@@ -99,7 +99,7 @@ class PNGFile
             return false;
         } 
         
-        printToFile.printDebugLine("Loading image from " + fullFileName + " with width " + PNGImage.height + " height " + PNGImage.width, 3);
+        printToFile.printDebugLine("Loading image from " + fullFileName + " with width " + PNGImage.height + " height " + PNGImage.width, 1);
         
         return true;
     }
@@ -107,7 +107,7 @@ class PNGFile
     public void unloadPNGImage()
     {
         PNGImage = null;
-        printToFile.printDebugLine("Unloading image " + PNGImageName, 3);
+        printToFile.printDebugLine("Unloading image " + PNGImageName, 1);
     }
 
 }

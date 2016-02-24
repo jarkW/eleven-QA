@@ -16,7 +16,9 @@
  *
  * For quoins, all available snaps will be searched in order to provide as much information
  *( as possible about quoin types/x,y. Any quoins not located in this manner will be 
- * set to 'mystery' unless the 'do_xy_only' flag is set in the config file.
+ * set to 'mystery' unless the 'do_xy_only' flag is set in the config file. NB This might change
+ * functionality - as the setting to mystery forces a write of the quoin item file ... but could simply
+ * add code that instead of checking diff in extra_info, instead always writes out quoin item files in that case
  *
  * The new x,y values and variant information is written to JSON files in persdata.
  * The tool will eventually be able to write to either the server/vagrant depending on 
@@ -40,17 +42,18 @@
 // Ditto for the load functionality. 
 // Add 
 
-
-
+// NB
+//NB 
+// Do i need to set other fields in quoin - e.g. benefit_floor - look at sheet in googledocs to see if vary between quoin types
+// Change check on field change to exclude spaces - only count characters??? So avoid problems with white space.
+// Is there an issue - need UNIX endings on files
+// Can I delete files in Processing - could then write the JSON file to scratch space, if OK then write to persdata and delete the temporary one
 
 // Use SearchMgr class which does the actual image stuff. 
 // Street -> item -> do image stuff (so store loop counting, current image x,y as vars
 // in this class rather than as globals. Depending on flag, can do all the loop (don't
 // show the red moving frame), or just do one loop iteration before returning to 
 // top level
-
-// take the lowest y value for the quoin - i.e. least negative. Just overwrite the
-// saved value - no -need to store in special array
 
 //Do all processing for image in single loop - might be a lot quicker to do. Could be
 // non-debug version? But won't be able to display images. Use flag in config.json
@@ -150,6 +153,7 @@ PrintToFile printToFile;
 // 2= general tracing info 3= error debug info only
 int debugLevel = 1;
 boolean debugToConsole = true;
+boolean doDelay = true;
 
 public void setup() 
 {
@@ -201,7 +205,6 @@ public void setup()
         okToContinue = false;
         
         // Display the start up error messages
-        println("Display error msg");
         display.showSkippedStreetsMsg();
         display.showInfoMsg("Errors during initial processing - press 'c' to continue, 'x' to exit");
         return;
@@ -215,7 +218,7 @@ public void setup()
 }
 
 public void draw() 
-{
+{    
     if (!okToContinue)
     {
         // Problem during startup - waiting for user to press c or any other key
@@ -329,8 +332,8 @@ boolean initialiseStreets()
     {
         if (streetInfoArray.get(j).readInvalidStreet())
         {
+            printToFile.printDebugLine("Removing invalid street (" + streetInfoArray.get(j).readStreetTSID() + ") from street array, reduced to " + (streetInfoArray.size()-1) + " streets", 2);
             streetInfoArray.remove(j);
-            printToFile.printDebugLine("reducing size of street array to " + streetInfoArray.size(), 1);
         }
     }
         
@@ -350,7 +353,6 @@ boolean setForFirstStreet()
     
     printToFile.printDebugLine("Number of streets left to process is " + streetInfoArray.size() + " (out of " + configInfo.readTotalJSONStreetCount() + ")", 3);
         
-    println("number of failed messages is ", display.failedStreets.size());
     // Start setting up the first street to be processed and reload snap images 
     streetBeingProcessed = 0;
     if (!streetInfoArray.get(streetBeingProcessed).loadStreetImages())

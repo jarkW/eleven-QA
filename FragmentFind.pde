@@ -79,7 +79,7 @@ class FragmentFind
                 // found Y is lower than the previous found Y (i.e. bottom of bounce found)
                 if ((newItemX == missCoOrds) || (newItemY < (thisItemInfo.readOrigItemY() + spiralSearch.readDiffY())))
                 {
-                    // First time found
+                    printToFile.printDebugLine("Quoin - replacing previous y value of " + newItemY + " with " + thisItemInfo.readOrigItemY() + spiralSearch.readDiffY(), 2);
                     newItemX = thisItemInfo.readOrigItemX() + spiralSearch.readDiffX();
                     newItemY = thisItemInfo.readOrigItemY() + spiralSearch.readDiffY(); 
                 }
@@ -145,6 +145,11 @@ class FragmentFind
                     if (streetImageBeingUsed >= streetSnapArray.size())
                     {
                         // No more snaps to search
+                        // If the quoin has not been found, then set the type to be mystery, so user can reset manually
+                        // And keep existing x,y
+                        newItemX = thisItemInfo.readOrigItemX();
+                        newItemY = thisItemInfo.readOrigItemY();
+                        newItemExtraInfo = "mystery";
                         searchDone = true;
                     }
                     itemImageBeingUsed = 0;
