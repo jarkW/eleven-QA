@@ -10,6 +10,7 @@ class StreetInfo
     // Read in from L* file
     JSONArray streetItems;
     String streetName;
+    String hubID;
     
     // list of street snaps and associated images
     ArrayList<PNGFile> streetSnapArray;
@@ -87,6 +88,17 @@ class StreetInfo
         }
   
         printToFile.printDebugLine("Street name is " + streetName, 2);
+        
+        // Read in the region id
+        hubID = Utils.readJSONString(json, "hubid", true);
+        if (!Utils.readOkFlag() || hubID.length() == 0)
+        {
+            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            printToFile.printDebugLine("Fail to read in hub id from street JSON file " + locFileName, 3);
+            return false;
+        }
+        
+        printToFile.printDebugLine("Region/hub id is " + hubID, 2);
     
         // Read in the list of street items
         streetItems = Utils.readJSONArray(json, "items", true);
@@ -353,6 +365,11 @@ class StreetInfo
         return streetName;
     }
     
+    public String readHubID()
+    {
+        return hubID;
+    }
+    
     public String readStreetTSID()
     {
         return streetTSID;
@@ -369,18 +386,7 @@ class StreetInfo
             return null;
         }
     }
-  
-    // IS THIS USED?
-    public void incrStreetSnapBeingUsed ()
-    {
-        streetSnapBeingUsed++;
-        
-        if (streetSnapBeingUsed >= streetSnapArray.size())
-        {
-            streetSnapBeingUsed = 0;
-        }
-    }
-    
+      
     public ArrayList<PNGFile> getStreetImageArray ()
     {
         return (streetSnapArray);

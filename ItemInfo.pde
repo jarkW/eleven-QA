@@ -24,6 +24,7 @@ class ItemInfo
     
     // show if need to write out changed JSON file
     boolean saveChangedJSONfile;
+    boolean alreadySetDirField;
     
     // defaults for fragment
     // Offset from the actual x,y of the item for this fragment
@@ -69,6 +70,7 @@ class ItemInfo
         sizeDiffJSONCalc = 0;
         skipThisItem = false;
         saveChangedJSONfile = false;
+        alreadySetDirField = false;
         
         initItemVars();
 
@@ -446,6 +448,9 @@ class ItemInfo
                 
                 // Show JSON file needs saving after processing done
                 saveChangedJSONfile = true;
+                
+                // Set flag so give meaningful msg at end of processing
+                alreadySetDirField = true;
             }
             
             // Currently all shrines are set to 'right' so flag up error if that isn't true
@@ -551,7 +556,7 @@ class ItemInfo
                 // Read in the dir field 
                 // NB The dir field is not always set in visiting_stones - and often set wrong.
                 // Therefore default the direction depending on what side of the screen it is    
-                itemExtraInfoKey = "dir";
+                itemExtraInfoKey = "dir";              
                 if (origItemX > 0)
                 {
                     // stone is on RHS of screen - so set to 'left'
@@ -594,6 +599,9 @@ class ItemInfo
                              
                 // Show JSON file needs saving after processing done
                 saveChangedJSONfile = true;
+                
+                // Set flag so give meaningful msg at end of processing
+                alreadySetDirField = true;
                 break;
                                 
             default:
@@ -602,12 +610,11 @@ class ItemInfo
          }
 
         return true;
-    } 
+    }
     
     boolean setItemInfoInJSON()
     {
         JSONObject instanceProps;
-        
         // Saving information determined from the snap. Typically information which affects the 
         // appearance of an item e.g. the type of quoin or dirtpile    
         if (itemClassTSID.indexOf("npc_shrine_", 0) == 0)
@@ -623,7 +630,15 @@ class ItemInfo
             // Dir set to right has already been saved in the json and the flag set. So nothing to do
             return true;
         }
-
+        else if (!itemClassTSID.equals("quoin") && newItemExtraInfo.equals(origItemExtraInfo)) 
+        {
+            // None of the additional information has been changed from the original. 
+            // So just return without setting the flag.
+            // For quoins this check is done later once the classname has been determined.
+            return true;
+        }
+        
+        // Only reach here if the information field has changed for non-quoins. 
         switch (itemClassTSID)
         {
             case "quoin":     
@@ -645,69 +660,86 @@ class ItemInfo
 
                 if (itemClassTSID.equals("quoin"))
                 {
-                    // Now need to set up the type and class_name field
-                    
-                    // NB WILL NEED TO RECODE SOME OF THESE IF IN AL ETC
-                    switch (newItemExtraInfo)
+                    // Now need to set up the type and class_name field in the JSON structure
+                    // First determine the default quoin fields assocated with this type
+                    QuoinFields quoinInstanceProps = new QuoinFields();                   
+                    if (!quoinInstanceProps.defaultFields(streetInfoArray.get(streetBeingProcessed).readHubID(), streetInfoArray.get(streetBeingProcessed).readStreetTSID(), newItemExtraInfo))
                     {
-                        case "xp":
-                        case "energy":
-                        case "mood":
-                        case "currants":
-                        case "favor":
-                        case "time":
-                        case "mystery":
-                            if (newItemExtraInfo.equals("xp"))
-                            {
-                                newItemClassName = "fast tiny xp";  
-                            }
-                            else if (newItemExtraInfo.equals("energy"))
-                            {
-                                newItemClassName = "fast tiny energy";
-                            }
-                            else if (newItemExtraInfo.equals("mood"))
-                            {
-                                newItemClassName = "fast tiny mood";
-                            }
-                            else if (newItemExtraInfo.equals("currants"))
-                            {
-                                newItemClassName = "fast tiny currants";
-                            }
-                            else if (newItemExtraInfo.equals("favor"))
-                            {
-                                newItemClassName = "small random favor";
-                            }
-                            else if (newItemExtraInfo.equals("time"))
-                            {
-                                newItemClassName = "fast tiny time";
-                            }
-                            else if (newItemExtraInfo.equals("mystery"))
-                            {
-                                newItemClassName = "placement tester";
-                            }  
-                            // Now save the two fields
-                            if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
-                            {
-                                printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                                return false;
-                            }
-                            sizeDiffJSONCalc += Utils.readByteCount();
-                            printToFile.printDebugLine("Updated JSON file size difference after change type field is " + sizeDiffJSONCalc, 1);
-                            
-                            if (!Utils.setJSONString(instanceProps, "class_name", newItemClassName))
-                            {
-                                printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                                return false;
-                            }
-                            sizeDiffJSONCalc += Utils.readByteCount();
-                            printToFile.printDebugLine("Updated JSON file size difference after change class_name field is " + sizeDiffJSONCalc, 1);
-                            break;
-
-                        default:
-                            printToFile.printDebugLine("Unexpected quoin type set from snaps - " + newItemExtraInfo, 3);
-                            return false;
-
+                        printToFile.printDebugLine("Error defaulting fields in quoin instanceProps structure", 3);
+                        return false;
                     }
+                    newItemClassName = quoinInstanceProps.readClassName();
+                    
+                    if (newItemClassName.equals(origItemClassName))
+                    {
+                        // Nothing to save so return without setting flag
+                        return true;
+                    }
+                    
+                    // Now save the fields in instanceProps
+                    if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
+                    {
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    sizeDiffJSONCalc += Utils.readByteCount();
+                    //printToFile.printDebugLine("Updated JSON file size difference after change type field is " + sizeDiffJSONCalc, 1);
+                                              
+                    if (!Utils.setJSONString(instanceProps, "class_name", newItemClassName))
+                    {
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    sizeDiffJSONCalc += Utils.readByteCount();
+                    //printToFile.printDebugLine("Updated JSON file size difference after change class_name field is " + sizeDiffJSONCalc, 1);
+                    
+                    if (!Utils.setJSONInt(instanceProps, "respawn_time", quoinInstanceProps.readRespawnTime()))
+                    {
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    sizeDiffJSONCalc += Utils.readByteCount();
+                    //printToFile.printDebugLine("Updated JSON file size difference after change respawn_time field is " + sizeDiffJSONCalc, 1);
+                    
+                    if (!Utils.setJSONString(instanceProps, "is_random", quoinInstanceProps.readIsRandom()))
+                    {
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    sizeDiffJSONCalc += Utils.readByteCount();
+                    
+                    if (!Utils.setJSONString(instanceProps, "benefit", quoinInstanceProps.readBenefit()))
+                    {
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    sizeDiffJSONCalc += Utils.readByteCount();
+                    
+                    if (!Utils.setJSONString(instanceProps, "benefit_floor", quoinInstanceProps.readBenefitFloor()))
+                    {
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    sizeDiffJSONCalc += Utils.readByteCount();
+                    
+                    if (!Utils.setJSONString(instanceProps, "benefit_ceil", quoinInstanceProps.readBenefitCeiling()))
+                    {
+                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    sizeDiffJSONCalc += Utils.readByteCount();
+                    
+                    if (newItemExtraInfo.equals("favor"))
+                    {
+                        if (!Utils.setJSONString(instanceProps, "giant", quoinInstanceProps.readGiant()))
+                        {
+                            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                            return false;
+                        }
+                        sizeDiffJSONCalc += Utils.readByteCount();
+                    }
+                                   
+                    printToFile.printDebugLine("Updated JSON file size difference after change all quoin fields field is " + sizeDiffJSONCalc, 1);
                 }
                 else 
                 {                            
@@ -867,6 +899,23 @@ class ItemInfo
             newItemY = fragFind.readNewItemY();
             newItemExtraInfo = fragFind.readNewItemExtraInfo();
             
+            if (!fragFind.readItemFound() && newItemX == missCoOrds)
+            {
+                // Item wasn't found on the snaps (quoins handled differently)
+                // So don't update the JSON at all in this case (even though inserted dir in shrines for example earlier) - discard any changes
+                s = "Item NOT FOUND (";
+                s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+                if (origItemExtraInfo.length() > 0)
+                {
+                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                }
+                printToFile.printOutputLine(s);
+                printToFile.printDebugLine(s, 2);
+
+                itemFinished = true;
+                return;
+            }
+            
             // The Utils functions will update the expected change in length of JSON file counter
             // automatically          
             if (newItemX != origItemX)
@@ -907,52 +956,63 @@ class ItemInfo
 
             if (saveChangedJSONfile)
             {
-                
-                s = "Original item (" + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
-                if (origItemExtraInfo.length() > 0)
-                {
-                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
-                    if (itemClassTSID.equals("quoin"))
-                    {
-                        s = s + " (" + origItemClassName + ")";
-                    }
-                }
-                printToFile.printOutputLine(s);
-                printToFile.printDebugLine(s, 2);
-                
-                s = "New item (" + itemTSID + ") " + itemClassTSID + " x,y = " + newItemX + "," + newItemY;             
+                 s = "Changed item (" + itemTSID + ") " + itemClassTSID;
                 if (newItemExtraInfo.length() > 0)
                 {
-                    s = s + " " + itemExtraInfoKey + " = " + newItemExtraInfo;
-                    if (itemClassTSID.equals("quoin"))
+                    if (newItemExtraInfo.equals(origItemExtraInfo) && newItemClassName.equals(origItemClassName))
                     {
-                        s = s + " (" + newItemClassName + ")";
+                        s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                        if (itemClassTSID.equals("quoin"))
+                        {
+                            s = s + " (" + origItemClassName + ")";
+                        }
                     }
+                    else
+                    {
+                        s = s + " changed " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                        if (itemClassTSID.equals("quoin"))
+                        {
+                            s = s + " (" + origItemClassName + ")";
+                        }
+                        s = s + " to " + newItemExtraInfo;
+                        if (itemClassTSID.equals("quoin"))
+                        {
+                            s = s + " (" + newItemClassName + ")";
+                        }
+                    }
+                }
+                if ((origItemX == newItemX) && (origItemY == newItemY))
+                {
+                    s = s + " with unchanged x,y = " + origItemX + "," + origItemY;
+                }
+                else
+                {
+                    s = s + " with changed x,y = " + origItemX + "," + origItemY + " to " + newItemX + "," + newItemY;
+                }
+                
+                if (alreadySetDirField)
+                {
+                    s = s + " (inserting/updating  dir field in JSON file)";
                 }
                 printToFile.printOutputLine(s);
                 printToFile.printDebugLine(s, 2);
                 
-                // Write the JSON file out - includes checking that the new file length = old one plus calculated diff
+                // Write the JSON file out to temporary place before checking that the new file length = old one plus calculated diff
                 try
                 {
-                    //saveJSONObject(itemJSON, configInfo.readPersdataPath() + "/" + itemTSID + ".json");
-                    println("WRITING ", itemTSID + ".json TO TEMP");
                     saveJSONObject(itemJSON, dataPath("") + "/temp/" + itemTSID + ".json");
                 }
                 catch(Exception e)
                 {
                     println(e);
-                    printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
-                    printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
+                    printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + dataPath("") + "/temp/", 3);
+                    printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + dataPath("") + "/temp/");
                     failNow = true;
                     return;
                 }
                 
                 // Double check the file length is as expected               
-                //sizeOfFinalJSON = sizeOfJSONFile(configInfo.readPersdataPath() + "/" + itemTSID + ".json");
-                println("Checking temp for written File!!!");
-                sizeOfFinalJSON = sizeOfJSONFile(dataPath("") + "/temp/" + itemTSID + ".json");
-                
+                sizeOfFinalJSON = sizeOfJSONFile(dataPath("") + "/temp/" + itemTSID + ".json");               
                 if (sizeOfFinalJSON != (sizeOfOriginalJSON + sizeDiffJSONCalc))
                 {
                     s = "Unexpected size difference in new " + itemTSID + ".json file: Original file = " + sizeOfOriginalJSON + 
@@ -962,13 +1022,46 @@ class ItemInfo
                     failNow = true;
                     return;
                 }
-                printToFile.printDebugLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
-                printToFile.printOutputLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
+                
+                // File is valid so write to persdata and then delete the one in the temporary directory
+                if (writeJSONsToPersdata)
+                {
+                    try
+                    {
+                        saveJSONObject(itemJSON, configInfo.readPersdataPath() + "/" + itemTSID + ".json");
+                    }    
+                    catch(Exception e)
+                    {
+                        println(e);
+                        printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
+                        printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
+                        failNow = true;
+                        return;
+                    }
+                    
+                    printToFile.printDebugLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
+                    printToFile.printOutputLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
+                    
+                    // Now remove the file from the temporary directory.
 
+                    File f = new File(dataPath("") + "/temp/" + itemTSID + ".json");
+                    if (f.exists())
+                    {
+                        f.delete();
+                    }
+                }
             }
             else
             {
-                s = "Unchanged item (" + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+                if (fragFind.readItemFound())
+                {
+                    s = "Unchanged (found) item (";
+                }
+                else
+                {
+                    s = "Unchanged (not found) item (";
+                }
+                s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
                 if (origItemExtraInfo.length() > 0)
                 {
                     s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
@@ -981,13 +1074,8 @@ class ItemInfo
                 printToFile.printDebugLine(s, 2);
             }
             itemFinished = true;
-            
-            // Removing a file - Which works ....
-            File f = new File(dataPath("") + "/temp/" + itemTSID + ".json");
-            if (f.exists())
-            {
-                f.delete();
-            }
+                     
+            // If an item was found, then delay the image for a second before continuing - for debug onl
             if (doDelay && newItemX != missCoOrds)
             {
                 delay(1000);
@@ -1068,8 +1156,6 @@ class ItemInfo
         return origItemExtraInfo;
     }
     
-    
-    
     public int readOrigItemX()
     {
         return origItemX;
@@ -1105,4 +1191,6 @@ class ItemInfo
     {
         return okFlag;
     } 
+    
+
 }

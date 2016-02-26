@@ -42,13 +42,6 @@
 // Ditto for the load functionality. 
 // Add 
 
-// NB
-//NB 
-// Do i need to set other fields in quoin - e.g. benefit_floor - look at sheet in googledocs to see if vary between quoin types
-// Change check on field change to exclude spaces - only count characters??? So avoid problems with white space.
-// Is there an issue - need UNIX endings on files
-// Can I delete files in Processing - could then write the JSON file to scratch space, if OK then write to persdata and delete the temporary one
-
 // Use SearchMgr class which does the actual image stuff. 
 // Street -> item -> do image stuff (so store loop counting, current image x,y as vars
 // in this class rather than as globals. Depending on flag, can do all the loop (don't
@@ -76,21 +69,7 @@
 // NO - IS BETTER FOR THE PERSON TO DECIDE, AS GIVING LIST OF TSIDS, THEY CAN
 // RUN TOOL TWICE FOR STREETS ALREADY/NOT DONE WITH OPTION SET DIFFERENTLY.
 
-// Compare the output json files with the originals to check no fields been
-// accidentally deleted/changed
-// Easiest to compare char count - if only change x,y = 4 char diff (might change to -ve, inc/dec by 1 char)
-// but if setting variant field - OK as just changing number
-// quoins - setting type 
-// NB will know the original type, and know what setting it to - so can work out what difference
-// is expected from this field. 
-// class_name = "small random favor" (type = "favor")
-// class_name = "fast tiny mood" (type = mood)
-// class_name = "fast tiny energy" (type = energy)
-// class_name = "fast tiny xp" (type = "xp")
-// class_name = "fast tiny currants" (type = "currants")
-// class_name = "fast tiny time" (type = "time")
-// class_name = "placement tester" (type = "mystery")
-//
+
 // adding keys to visiting stone (so can count diff expected?)
 // adding keys (dir) to shrines if not read in 'dir'
 //
@@ -154,6 +133,7 @@ PrintToFile printToFile;
 int debugLevel = 1;
 boolean debugToConsole = true;
 boolean doDelay = true;
+boolean writeJSONsToPersdata = false;
 
 public void setup() 
 {

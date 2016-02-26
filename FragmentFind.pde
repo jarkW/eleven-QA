@@ -16,6 +16,7 @@ class FragmentFind
     int newItemX;
     int newItemY;
     String newItemExtraInfo;
+    boolean itemFound;
     
     int itemImageBeingUsed;
     int streetImageBeingUsed;
@@ -35,13 +36,14 @@ class FragmentFind
         newItemX = missCoOrds;
         newItemY = missCoOrds;
         newItemExtraInfo = "";
+        itemFound = false;
         
         thisItemInfo = itemInfo;
         
         // Copy arrays we need from the item object - to keep the code simpler only
         itemImageArray = itemInfo.readItemImageArray();
         streetSnapArray = streetInfoArray.get(streetBeingProcessed).getStreetImageArray();
-        println("Size of street snap array is ", streetInfoArray.get(streetBeingProcessed).streetSnapArray.size());
+        printToFile.printDebugLine("Size of street snap array is " + streetInfoArray.get(streetBeingProcessed).streetSnapArray.size(), 1);
 
         // Need to convert the JSON x,y to relate to the street snap - use the first loaded street snap
         startX = thisItemInfo.readOrigItemX() + streetSnapArray.get(0).PNGImage.width/2 + thisItemInfo.readFragOffsetX();
@@ -70,6 +72,7 @@ class FragmentFind
         // Carry out the search for the item and depending on the result might then move on to look at the next image
         if (spiralSearch.searchForItem())
         {           
+            itemFound = true;
             // Match has been found - might be perfect or good enough - so save the information         
             if (thisItemInfo.readItemClassTSID().equals("quoin") || thisItemInfo.readItemClassTSID().equals("marker_qurazy"))
             {
@@ -141,7 +144,7 @@ class FragmentFind
                 {
                     // No more quoin item images to search - so OK to skip to next street, starting with first quoin image again
                     streetImageBeingUsed++; 
-                    println("streetImageBeingUsed is now ", streetImageBeingUsed, " array size is ", streetSnapArray.size());
+                    printToFile.printDebugLine("streetImageBeingUsed is now " + streetImageBeingUsed + " array size is " + streetSnapArray.size(), 1);
                     if (streetImageBeingUsed >= streetSnapArray.size())
                     {
                         // No more snaps to search
@@ -165,11 +168,19 @@ class FragmentFind
             }
             else
             {
-                // OK to move on to the next street - all other items and quoins with known types
+                // OK to move on to the next street - all other items and quoins with known types which have yet to be found
                 streetImageBeingUsed++;    
                 if (streetImageBeingUsed >= streetSnapArray.size())
                 {
-                    // No more snaps to search
+                    // No more snaps to search - set quoins to be mystery - calling function will check for this
+                    if (thisItemInfo.readItemClassTSID().equals("quoin") && newItemX == missCoOrds)
+                    {
+                        // Item was not found - so set the new x,y to match the original x,y. 
+                        // For quoins, default the type to mystery so clear which ones have not been set
+                        newItemX = thisItemInfo.readOrigItemX();
+                        newItemY = thisItemInfo.readOrigItemY();
+                        newItemExtraInfo = "mystery";
+                    }
                     searchDone = true;
                 }
                 else
@@ -202,7 +213,7 @@ class FragmentFind
         if (searchDone)
         {
             // Dump out debug info to give me some idea of whether I've gotten the searchbox the right size or not
-            printToFile.printDebugLine("Found item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemExtraInfo + 
+            printToFile.printDebugLine("Returning from FragmentFound item  found = " + itemFound + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemExtraInfo + 
                                         "> old x,y = " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " new x,y " + newItemX + "," + newItemY, 2);
             printToFile.printDebugLine(" For reference - " + debugInfo, 2);
 
@@ -220,15 +231,16 @@ class FragmentFind
         String fname = itemImageArray.get(itemImageBeingUsed).readPNGImageName();
         String extraInfo = "";
         
+        println(" image name ", fname, " for item class tsid ", thisItemInfo.itemClassTSID);
+        
         if (fname.length() > (thisItemInfo.itemClassTSID.length() + 4))
         {
             // Means there is an _info field to extract - so strip off the classTSID_ part and .png
             extraInfo = fname.substring((thisItemInfo.itemClassTSID.length() + 1), fname.length() - 4);
         }
-                
         return extraInfo;
     }
-    
+       
     public boolean readSearchDone()
     {
         return searchDone;
@@ -247,6 +259,11 @@ class FragmentFind
     public String readNewItemExtraInfo()
     {
         return newItemExtraInfo;
+    }
+    
+    public boolean readItemFound()
+    {
+        return itemFound;
     }
     
 }
