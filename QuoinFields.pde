@@ -8,11 +8,12 @@ class QuoinFields
     String benefitFloor;
     String benefitCeiling;
     String giant;
-        
+            
     public boolean defaultFields(String region, String streetTSID, String quoinType)
     {
         // Set up the fields for use in the instanceProps structure in quoins - will depend on the region the quoin is in
         giant = "";
+
          
         // At some point need to set up different values here depending on region (streetInfo.hubID) and/or street TSID
             

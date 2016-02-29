@@ -131,6 +131,22 @@ class ItemInfo
         
         printToFile.printDebugLine("Loaded item JSON OK", 1);
         
+        // Make a copy of the original JSON - in case want to compare later
+        // For debug purposes only
+        if (configInfo.readDebugSaveOrigAndNewJSONs())
+        {                 
+            try
+            {
+                saveJSONObject(itemJSON, "C:/Glitch/QA2/JSONsForComparison/Orig/" + itemTSID + ".json");
+            }    
+            catch(Exception e)
+            {
+                println(e);
+                printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + "C:/Glitch/QA2/JSONsForComparison/Orig/", 3);
+                return false;
+            }
+        }
+        
         // These fields are always present - so if missing = error
         origItemX = Utils.readJSONInt(itemJSON, "x", true);
         if (!Utils.readOkFlag())
@@ -675,7 +691,7 @@ class ItemInfo
                         // Nothing to save so return without setting flag
                         return true;
                     }
-                    
+                    printToFile.printDebugLine("Updated JSON file size difference before changing quoin fields is " + sizeDiffJSONCalc, 1);
                     // Now save the fields in instanceProps
                     if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
                     {
@@ -683,15 +699,15 @@ class ItemInfo
                         return false;
                     }
                     sizeDiffJSONCalc += Utils.readByteCount();
-                    //printToFile.printDebugLine("Updated JSON file size difference after change type field is " + sizeDiffJSONCalc, 1);
-                                              
+                    printToFile.printDebugLine("Updated JSON file size difference after change type field is " + sizeDiffJSONCalc, 1);
+                                            
                     if (!Utils.setJSONString(instanceProps, "class_name", newItemClassName))
                     {
                         printToFile.printDebugLine(Utils.readErrMsg(), 3);
                         return false;
                     }
                     sizeDiffJSONCalc += Utils.readByteCount();
-                    //printToFile.printDebugLine("Updated JSON file size difference after change class_name field is " + sizeDiffJSONCalc, 1);
+                    printToFile.printDebugLine("Updated JSON file size difference after change class_name field is " + sizeDiffJSONCalc, 1);
                     
                     if (!Utils.setJSONInt(instanceProps, "respawn_time", quoinInstanceProps.readRespawnTime()))
                     {
@@ -699,7 +715,7 @@ class ItemInfo
                         return false;
                     }
                     sizeDiffJSONCalc += Utils.readByteCount();
-                    //printToFile.printDebugLine("Updated JSON file size difference after change respawn_time field is " + sizeDiffJSONCalc, 1);
+                    printToFile.printDebugLine("Updated JSON file size difference after change respawn_time field is " + sizeDiffJSONCalc, 1);
                     
                     if (!Utils.setJSONString(instanceProps, "is_random", quoinInstanceProps.readIsRandom()))
                     {
@@ -707,6 +723,7 @@ class ItemInfo
                         return false;
                     }
                     sizeDiffJSONCalc += Utils.readByteCount();
+                    printToFile.printDebugLine("Updated JSON file size difference after change is_random field is " + sizeDiffJSONCalc, 1);
                     
                     if (!Utils.setJSONString(instanceProps, "benefit", quoinInstanceProps.readBenefit()))
                     {
@@ -714,6 +731,7 @@ class ItemInfo
                         return false;
                     }
                     sizeDiffJSONCalc += Utils.readByteCount();
+                    printToFile.printDebugLine("Updated JSON file size difference after change benefit field is " + sizeDiffJSONCalc, 1);
                     
                     if (!Utils.setJSONString(instanceProps, "benefit_floor", quoinInstanceProps.readBenefitFloor()))
                     {
@@ -721,6 +739,7 @@ class ItemInfo
                         return false;
                     }
                     sizeDiffJSONCalc += Utils.readByteCount();
+                    printToFile.printDebugLine("Updated JSON file size difference after change benefit_floor field is " + sizeDiffJSONCalc, 1);
                     
                     if (!Utils.setJSONString(instanceProps, "benefit_ceil", quoinInstanceProps.readBenefitCeiling()))
                     {
@@ -728,6 +747,7 @@ class ItemInfo
                         return false;
                     }
                     sizeDiffJSONCalc += Utils.readByteCount();
+                    printToFile.printDebugLine("Updated JSON file size difference after change benefit_ceil field is " + sizeDiffJSONCalc, 1);
                     
                     if (newItemExtraInfo.equals("favor"))
                     {
@@ -737,7 +757,8 @@ class ItemInfo
                             return false;
                         }
                         sizeDiffJSONCalc += Utils.readByteCount();
-                    }
+                        printToFile.printDebugLine("Updated JSON file size difference after change giant field is " + sizeDiffJSONCalc, 1);
+                    }                    
                                    
                     printToFile.printDebugLine("Updated JSON file size difference after change all quoin fields field is " + sizeDiffJSONCalc, 1);
                 }
@@ -1015,12 +1036,29 @@ class ItemInfo
                 sizeOfFinalJSON = sizeOfJSONFile(dataPath("") + "/temp/" + itemTSID + ".json");               
                 if (sizeOfFinalJSON != (sizeOfOriginalJSON + sizeDiffJSONCalc))
                 {
-                    s = "Unexpected size difference in new " + itemTSID + ".json file: Original file = " + sizeOfOriginalJSON + 
-                    " bytes, expected change in bytes =  " + sizeDiffJSONCalc + " New file = " + sizeOfFinalJSON + " bytes";
+                    s = "Unexpected size difference of " + (sizeOfFinalJSON - sizeOfOriginalJSON) + " in new " + itemTSID + ".json file: Original file = " + sizeOfOriginalJSON + 
+                    " bytes, New file = " + sizeOfFinalJSON + " bytes, expected change in bytes =  " + sizeDiffJSONCalc; 
                     printToFile.printDebugLine(s, 3);
                     printToFile.printOutputLine(s);
                     failNow = true;
                     return;
+                }
+                
+                // for debug purposes only - save the item JSON files in a temporary directory - which will be read by a different
+                // tool if I want to compare the old/new JSON files quickly
+                if (configInfo.readDebugSaveOrigAndNewJSONs())
+                {
+                    try
+                    {
+                        saveJSONObject(itemJSON, "C:/Glitch/QA2/JSONsForComparison/New/" + itemTSID + ".json");
+                    }    
+                    catch(Exception e)
+                    {
+                        println(e);
+                        printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + "C:/Glitch/QA2/JSONsForComparison/New/", 3);
+                        failNow = true;
+                        return;
+                    }
                 }
                 
                 // File is valid so write to persdata and then delete the one in the temporary directory
@@ -1101,8 +1139,13 @@ class ItemInfo
             strippedLine = lines[i];
             // strip of trailing/leading white space
             strippedLine = strippedLine.trim();
+            // strip out all spaces/" characters - so int/string for the same field have the same length
+            // e.g. "benefit": "0", is the same as "benefit": 0,
+            strippedLine = strippedLine.replaceAll(" ", "");
+            strippedLine = strippedLine.replaceAll("\"", "");
             fnameLength += strippedLine.length();
         }
+
         return fnameLength;
     }
     

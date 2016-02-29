@@ -7,6 +7,7 @@ class ConfigInfo {
     String persdataPath;
     String streetSnapPath;
     boolean changeXYOnly;
+    boolean debugSaveOrigAndNewJSONs;
     
     StringList streetTSIDArray = new StringList();
     String outputFile;
@@ -86,6 +87,15 @@ class ConfigInfo {
             return false;
         }
         
+        // REMOVE BEFORE END OF TESTING
+        debugSaveOrigAndNewJSONs = Utils.readJSONBool(json, "debug_save_all_JSONs_for_comparison", true);
+        if (!Utils.readOkFlag() || outputFile.length() == 0)
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read debug_save_all_JSONs_for_comparison in config.json file");
+            return false;
+        }
+        
         // Need to check that output file is a text file
         if (outputFile.indexOf(".txt") == -1)
         {
@@ -157,6 +167,11 @@ class ConfigInfo {
     public boolean readChangeXYOnly()
     {
         return changeXYOnly;
+    }
+    
+    public boolean readDebugSaveOrigAndNewJSONs()
+    {
+        return debugSaveOrigAndNewJSONs;
     }
          
     public String readStreetTSID(int n)

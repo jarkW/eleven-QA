@@ -194,7 +194,10 @@ public void setup()
     {
         failNow = true;
         return;
-    }     
+    }
+    
+    MemoryDump memoryDump = new MemoryDump();
+    memoryDump.printMemoryUsage();
 }
 
 public void draw() 
