@@ -20,9 +20,6 @@ class StreetInfo
     int itemBeingProcessed;
     ArrayList<ItemInfo> itemInfoArray;
     
-    // Hash map of all the item images needed to validate this street
-    ItemImages itemImagesHashMap;
-    
     // constructor/initialise fields
     public StreetInfo(String tsid)
     {
@@ -33,7 +30,6 @@ class StreetInfo
         streetTSID = tsid;       
         itemInfoArray = new ArrayList<ItemInfo>();
         streetSnapArray = new ArrayList<PNGFile>();
-        itemImagesHashMap = new ItemImages();
     }
     
     public void initStreetVars()

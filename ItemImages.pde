@@ -18,7 +18,7 @@ class ItemImages
     }
     
   
-    public boolean initItemImages(String itemClassTSID, String origItemExtraInfo, int xCoOrd)
+    public boolean initItemImages(String itemClassTSID, String origItemExtraInfo)
     { 
         // NB this function just loads up the file image names - they are not loaded into memory. This is done separately by calling function.
         ArrayList<PNGFile> itemImageArray = new ArrayList<PNGFile>();
@@ -37,43 +37,7 @@ class ItemImages
         // the first one to be used. 
         
         // First set create all the entries in the itemImageArray - loading the snaps will be done later
-        if (itemClassTSID.indexOf("visiting_stone", 0) == 0)
-        {
-            // For visiting stones - load up the correct image using the item JSON x,y to know what is expected
-            // As there is only ever one of these on a street, the order of images will always be correct
-            if (xCoOrd < 0)
-            {
-                // visiting stone is on LHS of page - so load up the 'right' image to be first
-                itemImageArray.add(new PNGFile(itemClassTSID + "_right.png", false));
-                itemImageArray.add(new PNGFile(itemClassTSID + "_left.png", false));
-            }
-            else
-            {
-                // visiting stone is on RHS of page - so load up the 'left' image to be first
-                itemImageArray.add(new PNGFile(itemClassTSID + "_left.png", false));
-                itemImageArray.add(new PNGFile(itemClassTSID + "_right.png", false));
-            }
-        }
-        else if (itemClassTSID.indexOf("wall_button", 0) == 0)
-        {
-            // assume left-facing button to start with
-            itemImageArray.add(new PNGFile(itemClassTSID + "_left.png", false));
-            itemImageArray.add(new PNGFile(itemClassTSID + "_right.png", false));
-        }
-        else if (itemClassTSID.indexOf("npc_mailbox", 0) == 0)
-        {
-            if (origItemExtraInfo.equals("mailboxRight"))
-            {
-                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxRight.png", false));
-                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxLeft.png", false));
-            }
-            else
-            {
-                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxLeft.png", false));
-                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxRight.png", false));
-            }
-        } 
-        else if (itemClassTSID.indexOf("npc_sloth", 0) == 0)
+        if (itemClassTSID.indexOf("npc_sloth", 0) == 0)
         {
             printToFile.printDebugLine("NEED TO CONFIGURE SLOTH in setupItemImages ", 3);
             return false;
@@ -118,6 +82,9 @@ class ItemImages
             // Can search for images based on the class_tsid and info fields
             // Rest of items do not have a dir field (or in case of shrines, only ever set to right, so only one image to load
             // npc_shrine_* (will only ever be _right variety)
+            // visiting_stone (just load up both variants)
+            // wall_button (load up both variants, left will be first, which suits us)
+            // npc_mailbox (load up both variants)
             // sloth_knocker
             // patch
             // patch_dark

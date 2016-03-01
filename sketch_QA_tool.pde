@@ -105,6 +105,9 @@ ArrayList<StreetInfo> streetInfoArray;
 // Keep track of which street we are on in the list from the config.json file
 int streetBeingProcessed;
 
+// Hash map of all the item images needed to validate this street
+ItemImages itemImagesHashMap;
+
 // Handles all output to screen
 DisplayMgr display;
 
@@ -167,6 +170,9 @@ public void setup()
         return;
     }
     
+    //Set up ready to start adding images to this 
+    itemImagesHashMap = new ItemImages();
+    
     // Loads up all streets and the items they contain
     // Means can check for missing files upfront before starting
     streetInfoArray = new ArrayList<StreetInfo>();
@@ -216,6 +222,16 @@ public void draw()
     }
     else
     {
+        // NEED TO CHANGE THIS ALL
+        // Work on one street at a time
+        // Call street_init stuff (e.g. loading streetsnaps/pruning, which in turn calls item_init stuff (so the item could be repsonsible
+        // for kicking off setting up the image snaps)? 
+        // Then if error, handle
+        // Then process the street.
+        // Once done, set the street to null. And then start over again.
+        // Add to the item snaps hashmap as needed, so subsequent streets will just be
+        // able to access the files. 
+        
         // Process street item unless due to move on to next street
         printToFile.printDebugLine("streetBeingProcessed is  " + streetBeingProcessed + " streetFinished flag is " + streetInfoArray.get(streetBeingProcessed).readStreetFinished(), 1);
         if (streetInfoArray.get(streetBeingProcessed).readStreetFinished())

@@ -31,7 +31,6 @@ class FragmentFind
         okFlag = true;
         
         searchDone = false;
-        itemImageBeingUsed = 0;
         streetImageBeingUsed = 0;
         newItemX = missCoOrds;
         newItemY = missCoOrds;
@@ -40,8 +39,23 @@ class FragmentFind
         
         thisItemInfo = itemInfo;
         
-        // Copy arrays we need from the item object - to keep the code simpler only
+        // Copy arrays we need from the item object - to keep the code simpler onl      
         itemImageArray = itemInfo.readItemImageArray();
+                
+        // DO SOMETHING CLEVER HERE FOR if x/y changes only wanted. 
+        if (configInfo.readChangeXYOnly())
+        {
+            // can just set itemImageBeingUsed to the correct number 
+            // which will force it to just use that image to check with
+            // For quoins, just select the image we are interested in - for everything else, once the item is found once, it won't be searched for again
+            // so less important
+        }
+        else
+        {
+            // start at the beginning
+            itemImageBeingUsed = 0;
+        }
+        
         streetSnapArray = streetInfoArray.get(streetBeingProcessed).getStreetImageArray();
         printToFile.printDebugLine("Size of street snap array is " + streetInfoArray.get(streetBeingProcessed).streetSnapArray.size(), 1);
 
