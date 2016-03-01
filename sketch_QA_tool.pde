@@ -220,6 +220,12 @@ public void draw()
         printToFile.printDebugLine("streetBeingProcessed is  " + streetBeingProcessed + " streetFinished flag is " + streetInfoArray.get(streetBeingProcessed).readStreetFinished(), 1);
         if (streetInfoArray.get(streetBeingProcessed).readStreetFinished())
         {
+            // Need to free up memory for this finished street before move on
+            // This won't work as then upsets the 'streetBeingProcessed variable'
+            // But could just delete this array element, and then street being processed is always 0 as never return to it again.
+            // Or write a function in streetInfo class which nulls all the pointers in the structure - which would then clean up memory
+            //streetInfoArray.remove(streetBeingProcessed);
+            
             streetBeingProcessed++;
             if (streetBeingProcessed >= streetInfoArray.size())
             {
@@ -229,6 +235,8 @@ public void draw()
             else
             {
                 // Reload images for street/items on street
+                
+                // Need to be redone as changed structures
                 if (!streetInfoArray.get(streetBeingProcessed).loadStreetImages())
                 {
                     failNow = true;
@@ -284,6 +292,7 @@ boolean initialiseStreets()
         }         
          
         // Can now unload the snaps for the street/items to free up memory
+        // NB Need to remove these functions/redo
         if (!streetInfoArray.get(i).unloadStreetImages())
         {
              printToFile.printDebugLine("Unable to unload street images for " + streetInfoArray.get(i).readStreetName(), 3);

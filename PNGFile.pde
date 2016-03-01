@@ -15,6 +15,7 @@ class PNGFile
          
         PNGImageName = fname;
         isStreetSnapFlag = isStreetSnap;
+        PNGImage = null;
     }
     
     public boolean setupPNGImage()
@@ -59,6 +60,12 @@ class PNGFile
     {
         // Load up this snap/item image
         String fullFileName;
+        
+        if (PNGImage != null)
+        {
+            // Image has already been loaded into memory
+            return true;
+        }
         
         if (isStreetSnapFlag)
         {

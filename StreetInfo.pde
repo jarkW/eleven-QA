@@ -20,6 +20,9 @@ class StreetInfo
     int itemBeingProcessed;
     ArrayList<ItemInfo> itemInfoArray;
     
+    // Hash map of all the item images needed to validate this street
+    ItemImages itemImagesHashMap;
+    
     // constructor/initialise fields
     public StreetInfo(String tsid)
     {
@@ -30,6 +33,7 @@ class StreetInfo
         streetTSID = tsid;       
         itemInfoArray = new ArrayList<ItemInfo>();
         streetSnapArray = new ArrayList<PNGFile>();
+        itemImagesHashMap = new ItemImages();
     }
     
     public void initStreetVars()
@@ -153,7 +157,7 @@ class StreetInfo
     boolean loadArchiveStreetSnaps()
     {
         // Using the street name, loads up all the street snaps from the QA snap directory
-        // NB Need to makes sure these are all the same size - if not, then bomb out with error message
+        // NB Need to makes sure these are all the same size - so smaller images are removed from the list of snaps automatically
         
         // Work out how many street snaps exist
         String [] SnapFilenames = Utils.loadFilenames(configInfo.readStreetSnapPath(), streetName);
@@ -448,7 +452,17 @@ class StreetInfo
         return invalidStreet;
     }
     
+    public ArrayList<PNGFile> getItemImages(String itemClassTSID)
+    {
+         // Passes this down to the item image handler
+         return (itemImagesHashMap.getItemImages(itemClassTSID));
+    }
     
+    public boolean loadItemImages(String itemClassTSID)
+    {
+         // Passes this down to the item image handler
+         return (itemImagesHashMap.loadItemImages(itemClassTSID));
+    }
     
     
     

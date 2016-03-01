@@ -62,7 +62,7 @@ class ItemInfo
         
         initItemVars();
 
-        itemImageArray = new ArrayList<PNGFile>();
+        itemImageArray = null;
 
         itemTSID = Utils.readJSONString(item, "tsid", true);
         if (!Utils.readOkFlag() || itemTSID.length() == 0)
@@ -250,162 +250,24 @@ class ItemInfo
     {
         // Using the item class_tsid and info field, load up all the images for this item
         // Depending on the item might need to tweak the order of items
-        
-        String itemFragmentPNGName;
-        PNGFile itemPNG;
-        int i;
-
-        if (itemClassTSID.indexOf("visiting_stone", 0) == 0)
+       
+        // need to load up the images before getting a pointer to the street structure
+        // If this has already been done, the function just returns success, so is quick to do
+        if (!streetInfoArray.get(streetBeingProcessed).loadItemImages(itemClassTSID))
         {
-            // For visiting stones - load up the correct image using the item JSON x,y to know what is expected
-            if (origItemX < 0)
-            {
-                // visiting stone is on LHS of page - so load up the 'right' image
-                itemFragmentPNGName = itemClassTSID + "_right.png";
-            }
-            else
-            {
-                // visiting stone is on RHS of page - so load up the 'left' image
-                itemFragmentPNGName = itemClassTSID + "_left.png";
-            }
-            itemImageArray.add(new PNGFile(itemFragmentPNGName, false));
-        }
-        else if (itemClassTSID.indexOf("wall_button", 0) == 0)
-        {
-            // assume left-facing button to start with
-            itemImageArray.add(new PNGFile(itemClassTSID + "_left.png", false));
-            itemImageArray.add(new PNGFile(itemClassTSID + "_right.png", false));
-        }
-        else if (itemClassTSID.indexOf("npc_mailbox", 0) == 0)
-        {
-            if (origItemExtraInfo.equals("mailboxRight"))
-            {
-                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxRight.png", false));
-                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxLeft.png", false));
-            }
-            else
-            {
-                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxLeft.png", false));
-                itemImageArray.add(new PNGFile(itemClassTSID + "_mailboxRight.png", false));
-            }
-        } 
-        else if (itemClassTSID.indexOf("npc_sloth", 0) == 0)
-        {
-            printToFile.printDebugLine("NEED TO CONFIGURE SLOTH in setupItemImages ", 3);
+            // return error
+            printToFile.printDebugLine("Failed to load item images for " + itemClassTSID, 3);
             return false;
         }
-        else if (itemClassTSID.indexOf("quoin", 0) == 0)
+        
+        itemImageArray = streetInfoArray.get(streetBeingProcessed).getItemImages(itemClassTSID);
+        if (itemImageArray == null)
         {
-            
-            if (!configInfo.readChangeXYOnly())
-            {
-                // As we are setting quoins from the snap, load up the most common quoins first
-                itemImageArray.add(new PNGFile("quoin_xp.png", false));
-                itemImageArray.add(new PNGFile("quoin_energy.png", false));
-                itemImageArray.add(new PNGFile("quoin_mood.png", false));
-                itemImageArray.add(new PNGFile("quoin_currants.png", false));
-                itemImageArray.add(new PNGFile("quoin_favor.png", false));
-                itemImageArray.add(new PNGFile("quoin_time.png", false));
-            }
-            else
-            {
-                // As only changing the x,y can just load up the relevant snap (including mystery quoins)
-                itemImageArray.add(new PNGFile(itemClassTSID + "_" + origItemExtraInfo + ".png", false));
-            }
+            // return error
+            printToFile.printDebugLine("Null itemImageArray returned for " + itemClassTSID, 3);
+            return false;
         }
-        else if ((itemClassTSID.indexOf("wood_tree", 0) == 0) || (itemClassTSID.indexOf("trant_", 0) == 0))
-        {
-            // Are dealing with a tree. First load the existing tree image and then load the other tree images
-            // Finally prune out the duplicate - rather than keep doing if statements
-            itemFragmentPNGName = itemClassTSID;
-            if (origItemExtraInfo.length() > 0)
-            {
-                itemFragmentPNGName = itemFragmentPNGName + "_" + origItemExtraInfo;
-            }
-            // Add this item image
-            itemImageArray.add(new PNGFile(itemFragmentPNGName + ".png", false));
-            // Now add all the trees
-            itemImageArray.add(new PNGFile("trant_bean.png", false));
-            itemImageArray.add(new PNGFile("trant_fruit.png", false));
-            itemImageArray.add(new PNGFile("trant_bubble.png", false));
-            itemImageArray.add(new PNGFile("trant_spice.png", false));
-            itemImageArray.add(new PNGFile("trant_gas.png", false));
-            itemImageArray.add(new PNGFile("trant_egg.png", false));
-            itemImageArray.add(new PNGFile("wood_tree_1.png", false));    
-            itemImageArray.add(new PNGFile("wood_tree_2.png", false));  
-            itemImageArray.add(new PNGFile("wood_tree_3.png", false));  
-            itemImageArray.add(new PNGFile("wood_tree_4.png", false));  
-            
-            // Now remove the duplicate item image - skip past first image
-            boolean duplicateFound = false;
-            for (i = 1; i < itemImageArray.size() && !duplicateFound; i++)
-            {
-                if (itemImageArray.get(i).PNGImageName.equals(itemFragmentPNGName + ".png"))
-                {
-                    itemImageArray.remove(i);
-                    duplicateFound = true;
-                }
-            }
-            if (!duplicateFound)
-            {
-                // Should never happen
-                printToFile.printDebugLine("Failed to remove duplicate tree item image ", 3);
-                return false;
-            }            
-        }
-        else
-        {
-            // Can search for images based on the class_tsid and info fields
-            // Rest of items do not have a dir field (or in case of shrines, only ever set to right, so only one image to load
-            // npc_shrine_* (will only ever be _right variety)
-            // sloth_knocker
-            // patch
-            // patch_dark
-            // party_atm
-            // race_ticket_dispenser
-            // rock_*
-            // peat_*
-            // marker_qurazy
-            // paper_tree (as can only ever be a paper tree/not planted by player)
-            // dirt_pile
-            // mortar_barnacle
-            // jellisac
-            // ice_knob
-            // dust_trap
-            itemFragmentPNGName = itemClassTSID;
-            if (origItemExtraInfo.length() > 0)
-            {
-                itemFragmentPNGName = itemFragmentPNGName + "_" + origItemExtraInfo;
-            }
-            
-            // Work out how many item images exist
-            String [] imageFilenames = null;
-            imageFilenames = Utils.loadFilenames(dataPath(""), itemFragmentPNGName);
 
-            if ((imageFilenames == null) || (imageFilenames.length == 0))
-            {
-                printToFile.printDebugLine("No files found in " + dataPath("") + " for item/info " + itemFragmentPNGName, 3);
-                return false;
-            }
-       
-            // Now create am entry for each of the snaps
-            for (i = 0; i < imageFilenames.length; i++) 
-            {
-                // This currently never returns an error
-                itemImageArray.add(new PNGFile(imageFilenames[i], false));
-            } 
-        }
-        
-        // Now load up the actual item images
-        for (i = 0; i < itemImageArray.size(); i++)
-        {
-            if (!itemImageArray.get(i).setupPNGImage())
-            {
-                printToFile.printDebugLine("Failed to load up item image " + itemImageArray.get(i).PNGImageName, 3);
-                return false;
-            }
-        }
-        
         return true;
     }
     
