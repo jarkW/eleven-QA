@@ -2,7 +2,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 
 static boolean okFlag;
-static int byteCount;
 static String errMsg;
 
 static class Utils
@@ -240,11 +239,7 @@ static class Utils
         
     static public boolean setJSONInt(JSONObject jsonFile, String key, int value)
     {
-        // In addition to writing the value to file, it also records the expected JSON file size difference as result
-        // of this change
-        // Calling function needs to read this value
         okFlag = true;
-        byteCount = 0;
         
         if (key.length() == 0)
         {
@@ -252,21 +247,7 @@ static class Utils
             errMsg = "Null key passed to setJSONInt";
             return false;
         }
-              
-        int existingValue = readJSONInt(jsonFile, key, false);
-        if (!okFlag)
-        {
-            // this is a new key to be added
-            // Will be of form "'key_name': int_val,"
-            // Exclude " and spaces
-            byteCount = key.length() + 1 + str(value).length() + 2; // include extra EOL char as well as comma
-        }
-        else
-        {
-            // updating key, so only need to take into account difference in value size e.g. 99 changing to 100
-            byteCount = str(value).length() - str(existingValue).length();
-        }
-                
+                              
         try
         {
             // OK for key to be absent, will just be inserted
@@ -290,14 +271,7 @@ static class Utils
     static public boolean setJSONString(JSONObject jsonFile, String key, String value)
     {
     
-        // In addition to writing the value to file, it also records the expected JSON file size difference as result
-        // of this change
-        // Calling function needs to read this value
         okFlag = true;
-        byteCount = 0;
-        String cleanKey = key;
-        String cleanValue = value;
-        String cleanExistingValue;
         
         if (key.length() == 0)
         {
@@ -305,47 +279,7 @@ static class Utils
             errMsg = "Null key passed to setJSONString";
             return false;
         }
-        
-        // Clean spaces and " out of the key/value for subsequent file length checking
-        // Means that a field which is set to a string will be the same 'length' as one
-        // set to an int. Only used for sanity checking file lengths and is needed because the original 
-        // json files often had fields such as benefit_ceil set to int, whereas the /qasave tool
-        // sets this field as a string (which matches quoin.js).
-        cleanKey = cleanKey.replaceAll(" ", "");
-        cleanKey = cleanKey.replaceAll("\"", "");
-        cleanValue = cleanValue.replaceAll(" ", "");
-        cleanValue = cleanValue.replaceAll("\"", "");
-              
-        String existingValue = readJSONString(jsonFile, key, false);
-        cleanExistingValue = existingValue.replaceAll(" ", "");
-        cleanExistingValue = existingValue.replaceAll("\"", "");
-        
-        if (!okFlag)
-        {
-            // this is a new key to be added
-            // Will be of form 'key_name': 'value_str',
-            // Exclude " and spaces
-            //byteCount = key.length() + 1 + value.length() + 2; // include extra EOL char and comma
-            byteCount = cleanKey.length() + 1 + cleanValue.length() + 2; // include extra EOL char and comma
-            println("Adding new key ", key, " with value <", value, "> change in JSON = ", byteCount);
-        }
-        else if (existingValue.length() == 0)
-        {
-            // this is a new key to be added ?????
-            // Will be of form 'key_name': 'value_str',  ?????? so will need to reduce char count added
-            byteCount = 1 + key.length() + 4 + value.length() + 3; // include extra EOL char
-            okFlag = false;
-            errMsg = "ERROR Existing key has no value assigned " + key + " with value <" + value + "> change in JSON = " + byteCount;
-            return false;
-        }
-        else
-        {
-            // updating key, so only need to take into account difference in value size e.g. "left" changing to "right"
-            //byteCount = value.length() - existingValue.length();
-            byteCount = cleanValue.length() - cleanExistingValue.length();
-            println("Changing key ", key, " with value <", value, "> change in JSON = ", byteCount);
-        }
-                        
+                                
         try
         {
             // OK for key to be absent, will just be inserted
@@ -370,12 +304,7 @@ static class Utils
     {
         return okFlag;
     }
-    
-    static public int readByteCount()
-    {
-        return byteCount;
-    }
-    
+        
     static public String readErrMsg()
     {
         return errMsg;

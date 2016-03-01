@@ -25,9 +25,12 @@
  * where the QA person is working. 
  *
  * NB It is up to the user to ensure that snaps are correctly labelled with the street 
- * name as it appears in the game. And that they are all the same size - like zoi/cleops
+ * name as it appears in the game. 
  *
  */
+ 
+ // Need to see if know where the config.json is - if not, then dialog box so user can select.
+ // Next time run program, screen shows the path of the json and gives user chance to change/accept
 
 // TO DO
 // First of all load up all streets/items - so can check for missing L/snaps etc
@@ -42,11 +45,6 @@
 // Ditto for the load functionality. 
 // Add 
 
-// Use SearchMgr class which does the actual image stuff. 
-// Street -> item -> do image stuff (so store loop counting, current image x,y as vars
-// in this class rather than as globals. Depending on flag, can do all the loop (don't
-// show the red moving frame), or just do one loop iteration before returning to 
-// top level
 
 //Do all processing for image in single loop - might be a lot quicker to do. Could be
 // non-debug version? But won't be able to display images. Use flag in config.json
@@ -54,13 +52,6 @@
 //Display the thing being searched for together with large image of snap.
 // Have a wire frame that moves around to show what being compared with small image
 // Save 'best fit so far' as pink box on image
-
-// Need to check always working with the correct size png file - save the size of the first
-// one opened? And check the others all the same (ignore files that are not?)
-// Might also need to check that snap file not contain 'Subway' unless the street name
-// also does. Otherwise GFJ will also pick up GFJ subway station
-// When read in all the snaps - could check all same dimensions - if not
-// then could give error message and continue?
 
 // Have an option where only changes x,y in files (e.g. if on street where already started
 // QA. Or could do something where if street is in persdata-qa, only change the x,y? 
@@ -133,7 +124,7 @@ PrintToFile printToFile;
 int debugLevel = 1;
 boolean debugToConsole = true;
 boolean doDelay = true;
-boolean writeJSONsToPersdata = false;
+boolean writeJSONsToPersdata = false;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
 
 public void setup() 
 {
