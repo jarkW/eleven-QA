@@ -1,4 +1,4 @@
-public class MemoryDump {
+public class Memory {
  
     public void printMemoryUsage() {
  
@@ -13,6 +13,6 @@ public class MemoryDump {
         printToFile.printDebugLine("Total Memory: " + instance.totalMemory() / mb + 
                                     "  Free Memory: " + instance.freeMemory() / mb +
                                     "  Used Memory: " + (instance.totalMemory() - instance.freeMemory()) / mb +
-                                    "   Max Memory: " + instance.maxMemory() / mb + (instance.totalMemory() - instance.freeMemory()) / mb, 1);
+                                    "   Max Memory: " + instance.maxMemory() / mb + (instance.totalMemory() - instance.freeMemory()) / mb, 3);
     }
 }

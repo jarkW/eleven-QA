@@ -53,7 +53,7 @@ class SpiralSearch
 
     public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int x, int y, int widthBox, int heightBox)
     {
-
+        printToFile.printDebugLine("Create New SpiralSearch", 1);
         // Initialise variables      
         thisItemImage = itemImage;
         thisStreetImage = streetImage;
@@ -113,7 +113,7 @@ class SpiralSearch
         noMoreValidFragments = false; 
         
         printToFile.printDebugLine("Continuing search for " + classTSID + " at snap x,y " + x + "," + y + " with search box wxh " + widthBox + "x" + heightBox, 1);
-
+        //printHashCodes(this);
     }
     
     public boolean searchForItem()

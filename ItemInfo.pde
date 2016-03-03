@@ -1,8 +1,9 @@
 class ItemInfo
 {
     boolean okFlag;
-    boolean itemFinished;
-    boolean skipThisItem;
+    boolean itemFinished; // searched the street snap for this item - could be success or failure
+    
+    boolean skipThisItem; // Either item we are not scanning for, or item which has already had its position/type determined, so don't need to search again
     
     // Read in from I* file
     JSONObject itemJSON;
@@ -34,7 +35,7 @@ class ItemInfo
     FragmentFind fragFind;
     
     // Contains the item fragments used to search the snap
-    ArrayList<PNGFile> itemImageArray;
+    ArrayList<PNGFile> itemImages;
     
     // ARE THESE EVER USED HERE?
     //int itemImageBeingUsed;
@@ -62,7 +63,7 @@ class ItemInfo
         
         initItemVars();
 
-        itemImageArray = null;
+        itemImages = null;
 
         itemTSID = Utils.readJSONString(item, "tsid", true);
         if (!Utils.readOkFlag() || itemTSID.length() == 0)
@@ -176,9 +177,9 @@ class ItemInfo
         }
         
         // Load up the item images which will be used to search the snap
-        if (!setupItemImages())
+        if (!getThisItemImages())
         {
-            printToFile.printDebugLine("Error loading item images for class_tsid " + itemClassTSID, 3); 
+            printToFile.printDebugLine("Error getting item images for class_tsid " + itemClassTSID, 3); 
             return false;
         }      
         
@@ -191,14 +192,18 @@ class ItemInfo
             printToFile.printDebugLine("class_tsid " + itemClassTSID + " with x,y " + str(origItemX) + "," + str(origItemY), 2); 
         }
         // print out item images that have been loaded
-        for (int i = 0; i < itemImageArray.size(); i++)
+        for (int i = 0; i < itemImages.size(); i++)
         {
-            printToFile.printDebugLine("Loaded item image " + itemImageArray.get(i).PNGImageName, 1);
+            //printToFile.printDebugLine("Can see item image " + itemImages.get(i).PNGImageName, 1);
         }
         
         // Initialise for the item to be searched for
         //itemImageBeingUsed = 0;
-        fragFind = new FragmentFind(this);
+        
+        if (!resetReadyForNewItemSearch())
+        {
+            return false;
+        }
  
         return true;
     } 
@@ -246,27 +251,29 @@ class ItemInfo
          }
     }
     
-    boolean setupItemImages()
+    boolean getThisItemImages()
     {
-        // Using the item class_tsid and info field, load up all the images for this item
-        // Depending on the item might need to tweak the order of items
-       
-        // need to load up the images before getting a pointer to the street structure
-        // If this has already been done, the function just returns success, so is quick to do
-        if (!streetInfoArray.get(streetBeingProcessed).loadItemImages(itemClassTSID))
+        // Using the item class_tsid, get the pointer to the images for this item
+        // Depending on the item might need to tweak the order of items - TO DO???? 
+        
+        if ((itemClassTSID.indexOf("trant", 0) == 0) || (itemClassTSID.indexOf("wood", 0) == 0))
+        {
+            itemImages = allItemImages.getItemImages("trees");
+        }
+        else
+        {
+            itemImages = allItemImages.getItemImages(itemClassTSID);
+        }
+        
+        if (itemImages == null)
         {
             // return error
-            printToFile.printDebugLine("Failed to load item images for " + itemClassTSID, 3);
+            printToFile.printDebugLine("Null itemImages returned for " + itemClassTSID, 3);
             return false;
         }
         
-        itemImageArray = streetInfoArray.get(streetBeingProcessed).getItemImages(itemClassTSID);
-        if (itemImageArray == null)
-        {
-            // return error
-            printToFile.printDebugLine("Null itemImageArray returned for " + itemClassTSID, 3);
-            return false;
-        }
+        // Reorder some of the fields so searching on the existing version of the item first
+        // Only needed for visiting stones, trees, xy_only quoins
 
         return true;
     }
@@ -513,7 +520,7 @@ class ItemInfo
                     // Now need to set up the type and class_name field in the JSON structure
                     // First determine the default quoin fields assocated with this type
                     QuoinFields quoinInstanceProps = new QuoinFields();                   
-                    if (!quoinInstanceProps.defaultFields(streetInfoArray.get(streetBeingProcessed).readHubID(), streetInfoArray.get(streetBeingProcessed).readStreetTSID(), newItemExtraInfo))
+                    if (!quoinInstanceProps.defaultFields(streetInfo.readHubID(), streetInfo.readStreetTSID(), newItemExtraInfo))
                     {
                         printToFile.printDebugLine("Error defaulting fields in quoin instanceProps structure", 3);
                         return false;
@@ -718,13 +725,271 @@ class ItemInfo
         printToFile.printDebugLine("Missing class_tsid " + itemClassTSID + " and/or info field <" + origItemExtraInfo + "> in samples.json", 3);
         return false;
     }
-       
-    public void searchUsingReference()
+    
+    public boolean saveItemChanges()
     {
+        // Called once all the street snaps have been searched for this item
+        String s;
+        // First need to reset the quoin type if the x,y was not found - set to mystery, with the existing x,y
+        if (itemClassTSID.equals("quoin") && (newItemX == missCoOrds))
+        {
+            newItemX = origItemX;
+            newItemY = origItemY;
+            newItemExtraInfo = "mystery";
+        }
+        
+        if (newItemX != origItemX)
+        {
+            if (!Utils.setJSONInt(itemJSON, "x", newItemX))
+            {
+                printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                return false;
+            }
+            // Show JSON file needs saving after processing done
+            saveChangedJSONfile = true;
+        }
+            
+        if (newItemY != origItemY)
+        {
+            if (!Utils.setJSONInt(itemJSON, "y", newItemY))
+            {
+                printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                return false;
+            }
+            // Show JSON file needs saving after processing done
+            saveChangedJSONfile = true;
+        }
+            
+        // Sets up the special fields e.g. 'dir' or 'type' fields based on ExtraInfo field
+        // Only do this if not doing an x,y_only kind of search - which leaves the special fields
+        // as originally set
+        if (!configInfo.readChangeXYOnly())
+        {
+            if (!setItemInfoInJSON())
+            {
+                return false;
+            }
+        }
 
+        // Note that the saveChangedJSONFile flag may have been set earlier when the JSON file was read in and dir/state fields
+        // were found to be missing, and so added to the item JSON in advance of the searches happening
+        if (saveChangedJSONfile)
+        {
+            // First tell the user what has changed
+             s = "Changed item (" + itemTSID + ") " + itemClassTSID;
+            if (newItemExtraInfo.length() > 0)
+            {
+                if (newItemExtraInfo.equals(origItemExtraInfo) && newItemClassName.equals(origItemClassName))
+                {
+                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    if (itemClassTSID.equals("quoin"))
+                    {
+                        s = s + " (" + origItemClassName + ")";
+                    }
+                }
+                else
+                {
+                    s = s + " changed " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    if (itemClassTSID.equals("quoin"))
+                    {
+                        s = s + " (" + origItemClassName + ")";
+                    }
+                    s = s + " to " + newItemExtraInfo;
+                    if (itemClassTSID.equals("quoin"))
+                    {
+                        s = s + " (" + newItemClassName + ")";
+                    }
+                }
+            }
+            if ((origItemX == newItemX) && (origItemY == newItemY))
+            {
+                s = s + " with unchanged x,y = " + origItemX + "," + origItemY;
+            }
+            else
+            {
+                s = s + " with changed x,y = " + origItemX + "," + origItemY + " to " + newItemX + "," + newItemY;
+            }
+            
+            if (alreadySetDirField)
+            {
+                s = s + " (inserting/updating  dir field in JSON file)";
+            }
+            printToFile.printOutputLine(s);
+            printToFile.printDebugLine(s, 2);
+                
+            // Write the JSON file out to temporary place before checking that the new file length = old one plus calculated diff
+            try
+            {
+                saveJSONObject(itemJSON, dataPath("") + "/NewJSONs/" + itemTSID + ".json");
+            }
+            catch(Exception e)
+            {
+                println(e);
+                printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + dataPath("") + "/NewJSONs/", 3);
+                printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + dataPath("") + "/NewJSONs/");
+                return false;
+            }
+                
+            // Double check the new file is reasonable - has to be done by eye by looking at output from a diff comparison tool
+            JSONDiff jsonDiff = new JSONDiff(itemTSID, dataPath("") + "/OrigJSONs/" + itemTSID + ".json", dataPath("") + "/NewJSONs/" + itemTSID + ".json");
+            if (!jsonDiff.compareJSONFiles())
+            {
+                // Error during the diff process
+                // Display all the messages and then return
+                jsonDiff.displayInfoMsg();
+                return false;
+            }
+            // Displays message to user in both debug/output files
+            jsonDiff.displayInfoMsg();
+                                
+            // Write to persdata and then delete the one in the temporary directory
+            if (writeJSONsToPersdata)
+            {
+                try
+                {
+                    saveJSONObject(itemJSON, configInfo.readPersdataPath() + "/" + itemTSID + ".json");
+                }    
+                catch(Exception e)
+                {
+                    println(e);
+                    printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
+                    printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
+                    return false;
+                }
+                
+                printToFile.printDebugLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
+                printToFile.printOutputLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
+            }
+         } // end if changes to save to JSON file
+         else
+         {
+             // No changes to make to JSON - either because item found (and matches existing file) or not found
+            if (newItemX != missCoOrds)
+            {
+                    s = "Matches existing item (";
+            }
+            else
+            {
+                s = "No changes - not found item (";
+            }
+            s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+            if (origItemExtraInfo.length() > 0)
+            {
+                s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                if (itemClassTSID.equals("quoin"))
+                {
+                    s = s + " (" + origItemClassName + ")";
+                }
+            }
+            printToFile.printOutputLine(s);
+            printToFile.printDebugLine(s, 2);
+        }
+        
+        // Now clean up the copies of the old/new JSONs if they exist
+        // If in debug mode then this step is skipped
+        if (!configInfo.readDebugSaveOrigAndNewJSONs())
+        {
+            // Now remove the file from the temporary directories.
+            File f = new File(dataPath("") + "/OrigJSONs/" + itemTSID + ".json");
+            if (f.exists())
+            {
+                f.delete();
+            }
+                
+            f = new File(dataPath("") + "/NewJSONs/" + itemTSID + ".json");
+            if (f.exists())
+            {
+                f.delete();
+            }
+        }
+        
+        
+        return true;
+    }
+       
+    public void searchSnapForImage()
+    { 
         if (fragFind.readSearchDone())
         {
             String s;
+            
+            // Search has completed - for this item on this street
+            if (fragFind.readItemFound())
+            {
+                // Item was successfully found on the street
+                if (itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy") && newItemX != missCoOrds)
+                {
+                    // This is the 2nd time or more that we've found this quoin/QQ
+                    // Only save the Y-cord if lower than the one we already have
+                    if (newItemY < fragFind.readNewItemY())
+                    {
+                        s = "SEARCH DONE Resetting y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " from " + newItemY + " to " + fragFind.readNewItemY();
+                        printToFile.printDebugLine(s, 2);
+                        
+                        newItemY = fragFind.readNewItemY();
+                    }
+                    else
+                    {
+                        s = "SEARCH DONE Ignoring y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " remains at " + newItemY + "(new = " + fragFind.readNewItemY() + ")";
+                        printToFile.printDebugLine(s, 1);
+                    }
+                    
+                }
+                else
+                {
+                    // Save the information
+                    newItemX = fragFind.readNewItemX();
+                    newItemY = fragFind.readNewItemY();
+                    newItemExtraInfo = fragFind.readNewItemExtraInfo();
+                    
+                    // For all non-quoins/QQ, we only need to do the search once, so on future street snaps, skip this item
+                    if (!itemClassTSID.equals("quoin") && !itemClassTSID.equals("marker_qurazy"))
+                    {
+                        skipThisItem = true;
+                    }
+                    
+                    s = "SEARCH FOUND " + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+                    if (origItemExtraInfo.length() > 0)
+                    {
+                        s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                        if (itemClassTSID.equals("quoin"))
+                        {
+                            s = s + " (" + origItemClassName + ")";
+                        }
+                    }
+                    printToFile.printOutputLine(s);
+                    printToFile.printDebugLine(s, 2);
+                }
+            }
+            else
+            {
+                // Item was not found on the street
+                // So need to go on to the next item on this street
+                s = "SEARCH FAILED " + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+                if (origItemExtraInfo.length() > 0)
+                {
+                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    if (itemClassTSID.equals("quoin"))
+                    {
+                        s = s + " (" + origItemClassName + ")";
+                    }
+                }
+                printToFile.printDebugLine(s, 1);
+            }
+            itemFinished = true;
+
+             // If an item was found, then delay the image for a second before continuing - for debug onl
+            if (doDelay && newItemX != missCoOrds)
+            {
+                delay(1000);
+            }
+        }
+        else
+        {
+            fragFind.searchForFragment();
+        }
+            
+   /*         
             
             // Search has completed - either run out of streets or was successful
             newItemX = fragFind.readNewItemX();
@@ -733,7 +998,7 @@ class ItemInfo
             
             if (!fragFind.readItemFound() && newItemX == missCoOrds)
             {
-                // Item wasn't found on the snaps (quoins handled differently)
+                // Item wasn't found on the snaps (quoins handled differently as are defaulted to mystery quoins if not found, so never go through this bit of code)
                 // So don't update the JSON at all in this case (even though inserted dir in shrines for example earlier) - discard any changes
                 s = "Item NOT FOUND (";
                 s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
@@ -748,8 +1013,7 @@ class ItemInfo
                 return;
             }
             
-            // The Utils functions will update the expected change in length of JSON file counter
-            // automatically          
+        
             if (newItemX != origItemX)
             {
                 if (!Utils.setJSONInt(itemJSON, "x", newItemX))
@@ -788,93 +1052,8 @@ class ItemInfo
 
             if (saveChangedJSONfile)
             {
-                 s = "Changed item (" + itemTSID + ") " + itemClassTSID;
-                if (newItemExtraInfo.length() > 0)
-                {
-                    if (newItemExtraInfo.equals(origItemExtraInfo) && newItemClassName.equals(origItemClassName))
-                    {
-                        s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
-                        if (itemClassTSID.equals("quoin"))
-                        {
-                            s = s + " (" + origItemClassName + ")";
-                        }
-                    }
-                    else
-                    {
-                        s = s + " changed " + itemExtraInfoKey + " = " + origItemExtraInfo;
-                        if (itemClassTSID.equals("quoin"))
-                        {
-                            s = s + " (" + origItemClassName + ")";
-                        }
-                        s = s + " to " + newItemExtraInfo;
-                        if (itemClassTSID.equals("quoin"))
-                        {
-                            s = s + " (" + newItemClassName + ")";
-                        }
-                    }
-                }
-                if ((origItemX == newItemX) && (origItemY == newItemY))
-                {
-                    s = s + " with unchanged x,y = " + origItemX + "," + origItemY;
-                }
-                else
-                {
-                    s = s + " with changed x,y = " + origItemX + "," + origItemY + " to " + newItemX + "," + newItemY;
-                }
-                
-                if (alreadySetDirField)
-                {
-                    s = s + " (inserting/updating  dir field in JSON file)";
-                }
-                printToFile.printOutputLine(s);
-                printToFile.printDebugLine(s, 2);
-                
-                // Write the JSON file out to temporary place before checking that the new file length = old one plus calculated diff
-                try
-                {
-                    saveJSONObject(itemJSON, dataPath("") + "/NewJSONs/" + itemTSID + ".json");
-                }
-                catch(Exception e)
-                {
-                    println(e);
-                    printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + dataPath("") + "/NewJSONs/", 3);
-                    printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + dataPath("") + "/NewJSONs/");
-                    failNow = true;
-                    return;
-                }
-                
-                // Double check the new file is reasonable - has to be done by eye by looking at output from a diff comparison tool
-                JSONDiff jsonDiff = new JSONDiff(itemTSID, dataPath("") + "/OrigJSONs/" + itemTSID + ".json", dataPath("") + "/NewJSONs/" + itemTSID + ".json");
-                if (!jsonDiff.compareJSONFiles())
-                {
-                    // Error during the diff process
-                    // Display all the messages and then return
-                    jsonDiff.displayInfoMsg();
-                    failNow = true;
-                    return;
-                }
-                // Displays message to user in both debug/output files
-                jsonDiff.displayInfoMsg();
-                                
-                // Write to persdata and then delete the one in the temporary directory
-                if (writeJSONsToPersdata)
-                {
-                    try
-                    {
-                        saveJSONObject(itemJSON, configInfo.readPersdataPath() + "/" + itemTSID + ".json");
-                    }    
-                    catch(Exception e)
-                    {
-                        println(e);
-                        printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
-                        printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
-                        failNow = true;
-                        return;
-                    }
-                    
-                    printToFile.printDebugLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
-                    printToFile.printOutputLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
-                }
+                 
+
             }
             else
             {
@@ -900,23 +1079,7 @@ class ItemInfo
             }
             itemFinished = true;
             
-            // Now clean up the copies of the old/new JSONs if they exist
-            // If in debug mode then this step is skipped
-            if (!configInfo.readDebugSaveOrigAndNewJSONs())
-            {
-                // Now remove the file from the temporary directories.
-                File f = new File(dataPath("") + "/OrigJSONs/" + itemTSID + ".json");
-                if (f.exists())
-                {
-                    f.delete();
-                }
-                
-                f = new File(dataPath("") + "/NewJSONs/" + itemTSID + ".json");
-                if (f.exists())
-                {
-                    f.delete();
-                }
-            }
+  
                      
             // If an item was found, then delay the image for a second before continuing - for debug onl
             if (doDelay && newItemX != missCoOrds)
@@ -928,6 +1091,19 @@ class ItemInfo
         {
             fragFind.searchForFragment();
         }
+        */
+    }
+    
+    public boolean resetReadyForNewItemSearch()
+    {
+        fragFind = null;
+        fragFind = new FragmentFind(this);
+        if (!fragFind.readOkFlag())
+        {
+            return false;
+        }
+        itemFinished = false;
+        return true;
     }
     
     // Simple functions to read/set variables
@@ -936,16 +1112,16 @@ class ItemInfo
         return itemFinished;
     }
     
-    public ArrayList<PNGFile> readItemImageArray()
+    public ArrayList<PNGFile> readItemImages()
     {
-        return itemImageArray;
+        return itemImages;
     }
     
     public PNGFile readItemImage(int n)
     {
-        if (n < itemImageArray.size())
+        if (n < itemImages.size())
         {
-            return itemImageArray.get(n);
+            return itemImages.get(n);
         }
         else
         {
@@ -956,9 +1132,9 @@ class ItemInfo
        
     public boolean loadItemImages()
     {
-        for (int i = 0; i < itemImageArray.size(); i++)
+        for (int i = 0; i < itemImages.size(); i++)
         {
-            if (!itemImageArray.get(i).loadPNGImage())
+            if (!itemImages.get(i).loadPNGImage())
             {
                 return false;
             }
@@ -968,9 +1144,9 @@ class ItemInfo
     
     public boolean unloadItemImages()
     {
-        for (int i = 0; i < itemImageArray.size(); i++)
+        for (int i = 0; i < itemImages.size(); i++)
         {
-            itemImageArray.get(i).unloadPNGImage();
+            itemImages.get(i).unloadPNGImage();
         }
         return true;
     }   
@@ -996,6 +1172,14 @@ class ItemInfo
     {
         return itemTSID;
     }
+    public int readNewItemX()
+    {
+        return newItemX;
+    }
+    public int readNewItemY()
+    {
+        return newItemY;
+    }
     
     public int readFragOffsetX()
     {
@@ -1014,7 +1198,6 @@ class ItemInfo
     public boolean readOkFlag()
     {
         return okFlag;
-    } 
-    
+    }     
 
 }

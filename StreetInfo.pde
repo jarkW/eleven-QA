@@ -13,35 +13,28 @@ class StreetInfo
     String hubID;
     
     // list of street snaps and associated images
-    ArrayList<PNGFile> streetSnapArray;
+    ArrayList<PNGFile> streetSnaps;
     int streetSnapBeingUsed;
     
     // Data read in from each I* file
     int itemBeingProcessed;
-    ArrayList<ItemInfo> itemInfoArray;
+    ArrayList<ItemInfo> itemInfo;
     
     // constructor/initialise fields
     public StreetInfo(String tsid)
     {
         okFlag = true;
         
-        initStreetVars();
-
-        streetTSID = tsid;       
-        itemInfoArray = new ArrayList<ItemInfo>();
-        streetSnapArray = new ArrayList<PNGFile>();
-    }
-    
-    public void initStreetVars()
-    {
-        // These need to be reset after been through the loop of streets
-        // as part of initial validation
         itemBeingProcessed = 0;
         streetSnapBeingUsed = 0;
         streetFinished = false;
         invalidStreet = false;
-    }
 
+        streetTSID = tsid;       
+        itemInfo = new ArrayList<ItemInfo>();
+        streetSnaps = new ArrayList<PNGFile>();
+    }
+    
     boolean readStreetData()
     {
         // Now read in item list and street from L* file
@@ -120,11 +113,11 @@ class StreetInfo
         // First set up basic information for each street - i.e. item TSID
         for (int i = 0; i < streetItems.size(); i++) 
         {
-            itemInfoArray.add(new ItemInfo(streetItems.getJSONObject(i))); 
+            itemInfo.add(new ItemInfo(streetItems.getJSONObject(i))); 
             
             // Now read the error flag for the last street item array added
-            int total = itemInfoArray.size();
-            ItemInfo itemData = itemInfoArray.get(total-1);
+            int total = itemInfo.size();
+            ItemInfo itemData = itemInfo.get(total-1);
                        
             if (!itemData.readOkFlag())
             {
@@ -137,7 +130,7 @@ class StreetInfo
         // Now fill in the all the rest of the item information for this street
         for (int i = 0; i < streetItems.size(); i++) 
         {                                  
-            if (!itemInfoArray.get(i).initialiseItemInfo())
+            if (!itemInfo.get(i).initialiseItemInfo())
             {
                 // actual error
                 printToFile.printDebugLine("Error reading in additional information for item from I* file", 3);
@@ -146,31 +139,29 @@ class StreetInfo
         }
  
         // Everything OK
-        printToFile.printDebugLine(" Initialised street = " + streetName + " street TSID = " + streetTSID + " with item count " + str(itemInfoArray.size()), 2);  
+        printToFile.printDebugLine(" Initialised street = " + streetName + " street TSID = " + streetTSID + " with item count " + str(itemInfo.size()), 2);  
         return true;
     }
     
-    boolean loadArchiveStreetSnaps()
+    boolean validateStreetSnaps()
     {
         // Using the street name, loads up all the street snaps from the QA snap directory
         // NB Need to makes sure these are all the same size - so smaller images are removed from the list of snaps automatically
-        
+        // Will unload the street snaps immediately - as only interested in the list of valid street snaps for now
         // Work out how many street snaps exist
-        String [] SnapFilenames = Utils.loadFilenames(configInfo.readStreetSnapPath(), streetName);
+        String [] snapFilenames = Utils.loadFilenames(configInfo.readStreetSnapPath(), streetName);
 
-        if (SnapFilenames.length == 0)
+        if (snapFilenames.length == 0)
         {
             printToFile.printDebugLine("SKIPPING STREET - No street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
             display.setSkippedStreetsMsg("Skipping street " + streetName + ": No street snaps found");
             invalidStreet = true;
             return false;
         }
-       
-
         int i;
         StringList archiveSnapFilenames = new StringList();
  
-        for (i = 0; i < SnapFilenames.length; i++)
+        for (i = 0; i < snapFilenames.length; i++)
         {
             // Go through each name - only keep valid names for this street.
             // Stripping out files which start with the same name, but which are other streets
@@ -187,10 +178,10 @@ class StreetInfo
                 (streetName.equals("Hauki Seeks")) || (streetName.equals("Hakusan Heaps")))
             {
                 // Need to strip out any of the Tower/Manor streets
-                if ((SnapFilenames[i].indexOf("Towers") == -1) && (SnapFilenames[i].indexOf("Manor") == -1))
+                if ((snapFilenames[i].indexOf("Towers") == -1) && (snapFilenames[i].indexOf("Manor") == -1))
                 {
                     // Is the actual street we want, so copy
-                    archiveSnapFilenames.append(SnapFilenames[i]);
+                    archiveSnapFilenames.append(snapFilenames[i]);
                 }
             }
             if ((streetName.equals("Sabudana Drama Towers")) || (streetName.equals("Egret Taun Towers")) ||
@@ -198,26 +189,26 @@ class StreetInfo
                 (streetName.equals("Gregarious Towers")))
             {
                 // Need to strip out the Basement/Floors streets
-                if ((SnapFilenames[i].indexOf("asement") == -1) && (SnapFilenames[i].indexOf("loor") == -1))
+                if ((snapFilenames[i].indexOf("asement") == -1) && (snapFilenames[i].indexOf("loor") == -1))
                 {
                     // Is the actual street we want, so copy
-                    archiveSnapFilenames.append(SnapFilenames[i]);
+                    archiveSnapFilenames.append(snapFilenames[i]);
                 } 
             }       
             else if (streetName.indexOf("Subway") == -1)
             { 
                 // Street is not a subway - so remove any subway snaps
-                if (SnapFilenames[i].indexOf("Subway") == -1)
+                if (snapFilenames[i].indexOf("Subway") == -1)
                 {
                     // Snap is not the subway station, so keep
-                    archiveSnapFilenames.append(SnapFilenames[i]);
+                    archiveSnapFilenames.append(snapFilenames[i]);
                 }
                 
             }
             else
             {
                 // Valid subway street snap so keep
-                archiveSnapFilenames.append(SnapFilenames[i]);
+                archiveSnapFilenames.append(snapFilenames[i]);
 
             }
         }
@@ -234,37 +225,39 @@ class StreetInfo
         for (i = 0; i < archiveSnapFilenames.size(); i++) 
         {
             // This currently never returns an error
-            streetSnapArray.add(new PNGFile(archiveSnapFilenames.get(i), true));
+            streetSnaps.add(new PNGFile(archiveSnapFilenames.get(i), true));
             
             // load up the image
-            if (!streetSnapArray.get(i).setupPNGImage())
+            if (!streetSnaps.get(i).setupPNGImage())
             {
                 printToFile.printDebugLine("Failed to load up image " + archiveSnapFilenames.get(i), 3);
                 return false;
             }
             
             // Keep track of the largest snap size - most likely to be the FSS e.g. zoi/cleops
-            if (streetSnapArray.get(i).readPNGImageWidth() > maxImageWidth)
+            if (streetSnaps.get(i).readPNGImageWidth() > maxImageWidth)
             {
-                maxImageWidth = streetSnapArray.get(i).PNGImageWidth;
+                maxImageWidth = streetSnaps.get(i).PNGImageWidth;
             }
-            if (streetSnapArray.get(i).readPNGImageHeight() > maxImageHeight)
+            if (streetSnaps.get(i).readPNGImageHeight() > maxImageHeight)
             {
-                maxImageHeight = streetSnapArray.get(i).PNGImageHeight;
+                maxImageHeight = streetSnaps.get(i).PNGImageHeight;
             } 
+            
+            // Now unload the image
+            streetSnaps.get(i).unloadPNGImage();
         }
         
         // Work backwards so always removing from the end, not the top
-        for (i = streetSnapArray.size()-1; i >= 0; i--)
+        for (i = streetSnaps.size()-1; i >= 0; i--)
         {
-            if ((streetSnapArray.get(i).readPNGImageWidth() != maxImageWidth) || (streetSnapArray.get(i).readPNGImageHeight() != maxImageHeight))
+            if ((streetSnaps.get(i).readPNGImageWidth() != maxImageWidth) || (streetSnaps.get(i).readPNGImageHeight() != maxImageHeight))
             {
-                printToFile.printDebugLine("Skipping street snap " + streetSnapArray.get(i).readPNGImageName() + " because resolution is smaller than " + 
+                printToFile.printDebugLine("Skipping street snap " + streetSnaps.get(i).readPNGImageName() + " because resolution is smaller than " + 
                 maxImageWidth + "x" + maxImageHeight + "pixels", 3);
-                streetSnapArray.remove(i);
+                streetSnaps.remove(i);
             }
-        }
-        
+        }        
        
         // Everything OK
         return true;
@@ -293,7 +286,7 @@ class StreetInfo
 
         display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
         
-        if (!loadArchiveStreetSnaps())
+        if (!validateStreetSnaps())
         {
             if (invalidStreet)
             {
@@ -323,28 +316,75 @@ class StreetInfo
     public void processItem()
     {
         // Does the main work - passes control down to the item structure
-        ItemInfo itemData = itemInfoArray.get(itemBeingProcessed);
+        ItemInfo itemData = itemInfo.get(itemBeingProcessed);
         
         // Display information
         display.clearDisplay();
         display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
-        display.setItemProgress(itemData.itemClassTSID, itemData.itemTSID, itemBeingProcessed+1, itemInfoArray.size());
+        display.setItemProgress(itemData.itemClassTSID, itemData.itemTSID, itemBeingProcessed+1, itemInfo.size());
 
-        itemData.searchUsingReference();
+        itemData.searchSnapForImage();
         if (failNow)
         {
             return;
         }
         
         if (itemData.readItemFinished())
-        {
-            // Item has been successfully located, so move onto next one
+        {            
+            // Move onto next one
             itemBeingProcessed++;
-            if (itemBeingProcessed >= itemInfoArray.size())
+            if (itemBeingProcessed >= itemInfo.size())
             {
-                // Finished all items on the street, mark street as done
-                streetFinished = true;
+                // Finished all items on the street
+                // So move onto the next street snap after unloading the current one
+                streetSnaps.get(streetSnapBeingUsed).unloadPNGImage();
+               
+                streetSnapBeingUsed++;
+                if (streetSnapBeingUsed >= streetSnaps.size())
+                {
+                    // Reached end of street snaps so mark street as finished
+                    // First need to write all the item changes to file
+                    for (int i = 0; i < itemInfo.size(); i++)
+                    {
+                        if (!itemInfo.get(i).saveItemChanges())
+                        {
+                            failNow = true;
+                            return; 
+                        }
+                    }
+                    streetFinished = true;
+                    return;
+                }
+                else
+                {
+                    // Start with the first item again on the new street snap
+                    if (!loadStreetImage(streetSnapBeingUsed))
+                    {
+                        failNow = true;
+                        return;
+                    }
+                    itemBeingProcessed = 0;
+                }
             }
+            
+            // Set up fragFind in item ready to start the next item/streetsnap search combo
+            // i.e. loads up pointers to correct street snap and item images
+            // Only do this for items we still need to search for
+            if (!itemInfo.get(itemBeingProcessed).readSkipThisItem())
+            {
+                if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
+                {
+                    failNow = true;
+                    return;
+                }
+            }
+            else
+            {
+               printToFile.printDebugLine("Skipping item " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
+                                           itemInfo.get(itemBeingProcessed).readOrigItemExtraInfo() + ") " + 
+                                           itemInfo.get(itemBeingProcessed).readItemTSID(), 1); 
+            }
+            
         }
     }
     
@@ -375,71 +415,27 @@ class StreetInfo
         return streetTSID;
     }
     
-    public PNGFile readStreetSnap(int n)
+    public PNGFile readCurrentStreetSnap()
     {
-        if (n < streetSnapArray.size())
-        {
-            return streetSnapArray.get(n);
-        }
-        else
-        {
-            return null;
-        }
+        return streetSnaps.get(streetSnapBeingUsed);
     }
-      
-    public ArrayList<PNGFile> getStreetImageArray ()
+          
+    public boolean loadStreetImage(int n)
     {
-        return (streetSnapArray);
-    }
-    
-    public boolean loadStreetImages()
-    {
-        for (int i = 0; i < streetSnapArray.size(); i++)
-        {
-            if (!streetSnapArray.get(i).loadPNGImage())
-            {
-                return false;
-            }
-        }
         return true;
-    }
-    
-    public boolean unloadStreetImages()
-    {
-        for (int i = 0; i < streetSnapArray.size(); i++)
+        /*
+        if (!streetSnaps.get(n).loadPNGImage())
         {
-            streetSnapArray.get(i).unloadPNGImage();
+            return false;
         }
-        return true;
-    }   
-    
-    public boolean unloadAllItemImages()
-    {
-        for  (int i = 0; i < itemInfoArray.size(); i++)
-        {
-            itemInfoArray.get(i).unloadItemImages();
-        }
-        return true;
-    }
-    
-    public boolean loadAllItemImages()
-    {
-        for  (int i = 0; i < itemInfoArray.size(); i++)
-        {
-            if (!itemInfoArray.get(i).loadItemImages())
-            {
-                return false;
-            }
-        }
-        return true;
-        
+        return true; */
     }
     
     public void initStreetItemVars()
     {
-        for  (int i = 0; i < itemInfoArray.size(); i++)
+        for  (int i = 0; i < itemInfo.size(); i++)
         {
-            itemInfoArray.get(i).initItemVars();
+            itemInfo.get(i).initItemVars();
         }
     }
     
@@ -448,6 +444,7 @@ class StreetInfo
         return invalidStreet;
     }
     
+    /*
     public ArrayList<PNGFile> getItemImages(String itemClassTSID)
     {
          // Passes this down to the item image handler
@@ -459,6 +456,7 @@ class StreetInfo
          // Passes this down to the item image handler
          return (itemImagesHashMap.loadItemImages(itemClassTSID));
     }
+    */
     
     
     

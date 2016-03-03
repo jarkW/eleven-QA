@@ -9,7 +9,7 @@ class ConfigInfo {
     boolean changeXYOnly;
     boolean debugSaveOrigAndNewJSONs;
     
-    StringList streetTSIDArray = new StringList();
+    StringList streetTSIDs = new StringList();
     String outputFile;
 
     // constructor/initialise fields
@@ -124,7 +124,7 @@ class ConfigInfo {
                     println("Missing value for street tsid");
                     return false;
                 }
-                streetTSIDArray.append(tsid);
+                streetTSIDs.append(tsid);
             }
         }
         catch(Exception e)
@@ -176,9 +176,9 @@ class ConfigInfo {
          
     public String readStreetTSID(int n)
     {
-        if (n < streetTSIDArray.size())
+        if (n < streetTSIDs.size())
         {
-            return streetTSIDArray.get(n);
+            return streetTSIDs.get(n);
         }
         else
         {
@@ -189,7 +189,7 @@ class ConfigInfo {
     
     public int readTotalJSONStreetCount()
     {
-        return streetTSIDArray.size();
+        return streetTSIDs.size();
     }
     
     public String readOutputFilename()

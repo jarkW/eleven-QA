@@ -80,7 +80,7 @@ class DisplayMgr
         rect(50, 100, itemImage.width, itemImage.height);
     }
     
-    public void showStreetImage(PImage itemImage, PImage streetImage, int centreX, int centreY)
+    public void showStreetImage(PImage streetImage, int itemBoxWidth, int itemBoxHeight, int centreX, int centreY)
     {
         int streetFragHeight = 200;
         int streetFragWidth = 200;
@@ -91,7 +91,7 @@ class DisplayMgr
         noFill();
         stroke(204, 0, 0);
         // Need to calculate where to put the rectangle            
-        rect(200 + int(streetFragWidth/2), 100 + int(streetFragHeight/2), itemImage.width, itemImage.height);
+        rect(200 + int(streetFragWidth/2), 100 + int(streetFragHeight/2), itemBoxWidth, itemBoxHeight);
 
     }
     
