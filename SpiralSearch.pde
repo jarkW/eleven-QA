@@ -40,6 +40,8 @@ class SpiralSearch
     int foundStepY;
 
     boolean noMoreValidFragments;
+    
+    boolean okFlag;
 
     // The smaller this value, the more exacting the match test
     // but then it takes much longer to run. 
@@ -53,10 +55,20 @@ class SpiralSearch
 
     public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int x, int y, int widthBox, int heightBox)
     {
-        printToFile.printDebugLine("Create New SpiralSearch", 1);
+        okFlag = true;
+        
+        printToFile.printDebugLine(this, "Create New SpiralSearch", 1);
         // Initialise variables      
         thisItemImage = itemImage;
         thisStreetImage = streetImage;
+        
+        if (thisStreetImage == null)
+        {
+            printToFile.printDebugLine(this, "Null street image passed in to new SpiralSearch", 1);
+            okFlag = false;
+            return;
+        }
+
         thisItemClassTSID = classTSID;
         startX = x;
         startY = y;
@@ -112,7 +124,7 @@ class SpiralSearch
 
         noMoreValidFragments = false; 
         
-        printToFile.printDebugLine("Continuing search for " + classTSID + " at snap x,y " + x + "," + y + " with search box wxh " + widthBox + "x" + heightBox, 1);
+        printToFile.printDebugLine(this, "Continuing search for " + classTSID + " at snap x,y " + x + "," + y + " with search box wxh " + widthBox + "x" + heightBox, 1);
         //printHashCodes(this);
     }
     
@@ -124,7 +136,7 @@ class SpiralSearch
         {
             if (checkFragmentsMatch())
             {
-                printToFile.printDebugLine("OK/perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
+                printToFile.printDebugLine(this, "OK/perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 foundStepX = stepX;
                 foundStepY = stepY;
                 return true;
@@ -153,7 +165,7 @@ class SpiralSearch
 
         if (lowestTotalRGBDiff < (percentagePass * sumTotalRGBDiff/float(100*RGBDiffCount)))
         {
-            printToFile.printDebugLine("Good enough % match found at step X " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
+            printToFile.printDebugLine(this, "Good enough % match found at step X " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
             "(lowest RGB diff = " + int(lowestTotalRGBDiff) + 
             //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) +
             ") avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
@@ -168,7 +180,7 @@ class SpiralSearch
         else
         {
             // Consider item not found
-            printToFile.printDebugLine("No match found, for reference, lowest RGB Diffstep X" + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
+            printToFile.printDebugLine(this, "No match found, for reference, lowest RGB Diffstep X" + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
            " (lowest RGB diff = " + int(lowestTotalRGBDiff) + 
             //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) + 
             ") avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
@@ -216,7 +228,7 @@ class SpiralSearch
                 (stepY < startY - heightSearchBox/2) || (stepY > startY + heightSearchBox/2))
             {
                 // invalid value - off edge of archive snap, or outside searchbox area so skip this one and continue
-                printToFile.printDebugLine("Off edge of street snap/outside search box - skip this RGB comparison (stepX = " + stepX + " stepY = " + stepY + ")", 1);    
+                printToFile.printDebugLine(this, "Off edge of street snap/outside search box - skip this RGB comparison (stepX = " + stepX + " stepY = " + stepY + ")", 1);    
                 spiralCount++;
             }            
             else
@@ -281,7 +293,7 @@ class SpiralSearch
                     s = "Frag Xpos,YPos = " + pixelXPosition + "," + pixelYPosition;
                     s = s + "    RGB street = " + int(rStreet) + ":" + int(gStreet) + ":" + int(bStreet);
                     s = s + "    RGB item = " + int(rItem) + ":" + int(gItem) + ":" + int(bItem);
-                    printToFile.printDebugLine(s, 1);                    
+                    printToFile.printDebugLine(this, s, 1);                    
                     //println("RGB archive = ", int(rStreet), ":",int(gStreet), ":", int(bStreet),"    RGB Item = ", int(rItem), ":", int(gItem), ":", int(bItem));
                 }
                 */
@@ -294,7 +306,7 @@ class SpiralSearch
         if (debugRGB)
         {
             s = "totalRGBDiff for stepX,stepY " + str(stepX - startX) + "," +  str(stepY - startY) + ": " + int(totalRGBDiff);
-            printToFile.printDebugLine(s, 1);
+            printToFile.printDebugLine(this, s, 1);
         }
             
         if (totalRGBDiff == 0)
@@ -373,5 +385,10 @@ class SpiralSearch
                     " spiralCount = " + spiralCount;
 
         return s;
+    }
+    
+    public boolean readOkFlag()
+    {
+        return okFlag;
     }
 }

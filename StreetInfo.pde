@@ -49,7 +49,7 @@ class StreetInfo
             file = new File(locFileName);
             if (!file.exists())
             {
-                printToFile.printDebugLine("SKIPPING MISSING street location file - " + locFileName, 3);
+                printToFile.printDebugLine(this, "SKIPPING MISSING street location file - " + locFileName, 3);
                 display.setSkippedStreetsMsg("Skipping street - Missing location JSON file for TSID " + streetTSID);
                 invalidStreet = true;
                 return false;
@@ -65,40 +65,40 @@ class StreetInfo
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Fail to load street JSON file " + locFileName, 3);
+            printToFile.printDebugLine(this, "Fail to load street JSON file " + locFileName, 3);
             return false;
         } 
-        printToFile.printDebugLine("Reading location file " + locFileName, 2);
+        printToFile.printDebugLine(this, "Reading location file " + locFileName, 2);
         
         // Read in street name
                 
         streetName = Utils.readJSONString(json, "label", true);
         if (!Utils.readOkFlag() || streetName.length() == 0)
         {
-            printToFile.printDebugLine(Utils.readErrMsg(), 3);
-            printToFile.printDebugLine("Fail to read in street name from street JSON file " + locFileName, 3);
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, "Fail to read in street name from street JSON file " + locFileName, 3);
             return false;
         }
   
-        printToFile.printDebugLine("Street name is " + streetName, 2);
+        printToFile.printDebugLine(this, "Street name is " + streetName, 2);
         
         // Read in the region id
         hubID = Utils.readJSONString(json, "hubid", true);
         if (!Utils.readOkFlag() || hubID.length() == 0)
         {
-            printToFile.printDebugLine(Utils.readErrMsg(), 3);
-            printToFile.printDebugLine("Fail to read in hub id from street JSON file " + locFileName, 3);
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, "Fail to read in hub id from street JSON file " + locFileName, 3);
             return false;
         }
         
-        printToFile.printDebugLine("Region/hub id is " + hubID, 2);
+        printToFile.printDebugLine(this, "Region/hub id is " + hubID, 2);
     
         // Read in the list of street items
         streetItems = Utils.readJSONArray(json, "items", true);
         if (!Utils.readOkFlag())
         {
-            printToFile.printDebugLine(Utils.readErrMsg(), 3);
-            printToFile.printDebugLine("Fail to read in item array in street JSON file " + locFileName, 3);
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, "Fail to read in item array in street JSON file " + locFileName, 3);
             return false;
         } 
  
@@ -109,7 +109,7 @@ class StreetInfo
     
     boolean readStreetItemData()
     {
-        printToFile.printDebugLine("Read item TSID from street L file", 2);   
+        printToFile.printDebugLine(this, "Read item TSID from street L file", 2);   
         // First set up basic information for each street - i.e. item TSID
         for (int i = 0; i < streetItems.size(); i++) 
         {
@@ -121,7 +121,7 @@ class StreetInfo
                        
             if (!itemData.readOkFlag())
             {
-               printToFile.printDebugLine("Error parsing item basic TSID information", 3);
+               printToFile.printDebugLine(this, "Error parsing item basic TSID information", 3);
                return false;
             }
             
@@ -133,13 +133,13 @@ class StreetInfo
             if (!itemInfo.get(i).initialiseItemInfo())
             {
                 // actual error
-                printToFile.printDebugLine("Error reading in additional information for item from I* file", 3);
+                printToFile.printDebugLine(this, "Error reading in additional information for item from I* file", 3);
                 return false;
             }
         }
  
         // Everything OK
-        printToFile.printDebugLine(" Initialised street = " + streetName + " street TSID = " + streetTSID + " with item count " + str(itemInfo.size()), 2);  
+        printToFile.printDebugLine(this, " Initialised street = " + streetName + " street TSID = " + streetTSID + " with item count " + str(itemInfo.size()), 2);  
         return true;
     }
     
@@ -153,7 +153,7 @@ class StreetInfo
 
         if (snapFilenames.length == 0)
         {
-            printToFile.printDebugLine("SKIPPING STREET - No street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
+            printToFile.printDebugLine(this, "SKIPPING STREET - No street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
             display.setSkippedStreetsMsg("Skipping street " + streetName + ": No street snaps found");
             invalidStreet = true;
             return false;
@@ -215,7 +215,7 @@ class StreetInfo
         
         if (archiveSnapFilenames.size() == 0)
         {
-            printToFile.printDebugLine("No files found in rebuilt snap array = BUG for street " + streetName, 3);
+            printToFile.printDebugLine(this, "No files found in rebuilt snap array = BUG for street " + streetName, 3);
             return false;
         } 
         
@@ -230,7 +230,7 @@ class StreetInfo
             // load up the image
             if (!streetSnaps.get(i).setupPNGImage())
             {
-                printToFile.printDebugLine("Failed to load up image " + archiveSnapFilenames.get(i), 3);
+                printToFile.printDebugLine(this, "Failed to load up image " + archiveSnapFilenames.get(i), 3);
                 return false;
             }
             
@@ -253,7 +253,7 @@ class StreetInfo
         {
             if ((streetSnaps.get(i).readPNGImageWidth() != maxImageWidth) || (streetSnaps.get(i).readPNGImageHeight() != maxImageHeight))
             {
-                printToFile.printDebugLine("Skipping street snap " + streetSnaps.get(i).readPNGImageName() + " because resolution is smaller than " + 
+                printToFile.printDebugLine(this, "Skipping street snap " + streetSnaps.get(i).readPNGImageName() + " because resolution is smaller than " + 
                 maxImageWidth + "x" + maxImageHeight + "pixels", 3);
                 streetSnaps.remove(i);
             }
@@ -272,13 +272,13 @@ class StreetInfo
             if (invalidStreet)
             {
                 // i.e. need to skip this street as location information not available
-                printToFile.printDebugLine("Skipping missing location JSON file", 3);
+                printToFile.printDebugLine(this, "Skipping missing location JSON file", 3);
                 return true; // continue
             }
             else
             {
                 // error - need to stop
-                printToFile.printDebugLine("Error in readStreetData", 3);
+                printToFile.printDebugLine(this, "Error in readStreetData", 3);
                 okFlag = false;
                 return false;
             }
@@ -291,27 +291,30 @@ class StreetInfo
             if (invalidStreet)
             {
                 // i.e. need to skip this street as missing street snaps for street
-                printToFile.printDebugLine("Skipping street - missing/invalid street snaps", 3);
+                printToFile.printDebugLine(this, "Skipping street - missing/invalid street snaps", 3);
                 return true; // continue
             }
             else
             {
                 // error - need to stop
-                printToFile.printDebugLine("Error loading up street snaps for " + streetName, 3);
+                printToFile.printDebugLine(this, "Error loading up street snaps for " + streetName, 3);
                 okFlag = false;
                 return false;
             }
         }
 
+/*
+MOVE TO TOP LEVEL SO CAN LOAD STREET SNAP BEFORE CALLING THIS
         if (!readStreetItemData())
         {
-            printToFile.printDebugLine("Error in readStreetItemData", 3);
+            printToFile.printDebugLine(this, "Error in readStreetItemData", 3);
             okFlag = false;
             return false;
         }
-       
+*/       
         return true;
     }
+    
     
     public void processItem()
     {
@@ -322,8 +325,13 @@ class StreetInfo
         display.clearDisplay();
         display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
         display.setItemProgress(itemData.itemClassTSID, itemData.itemTSID, itemBeingProcessed+1, itemInfo.size());
-
-        itemData.searchSnapForImage();
+        
+        if (!itemData.searchSnapForImage())
+        {
+             failNow = true;
+             return;
+        }
+        
         if (failNow)
         {
             return;
@@ -364,6 +372,7 @@ class StreetInfo
                         return;
                     }
                     itemBeingProcessed = 0;
+                    printToFile.printDebugLine(this, "STARTING WITH FIRST ITEM ON STREET SNAP " + streetSnapBeingUsed, 1);
                 }
             }
             
@@ -377,10 +386,11 @@ class StreetInfo
                     failNow = true;
                     return;
                 }
+                printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " ON STREET SNAP " + streetSnapBeingUsed, 1);
             }
             else
             {
-               printToFile.printDebugLine("Skipping item " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
+               printToFile.printDebugLine(this, "Skipping item " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
                                            itemInfo.get(itemBeingProcessed).readOrigItemExtraInfo() + ") " + 
                                            itemInfo.get(itemBeingProcessed).readItemTSID(), 1); 
             }
@@ -417,18 +427,25 @@ class StreetInfo
     
     public PNGFile readCurrentStreetSnap()
     {
+        if (streetSnaps.get(streetSnapBeingUsed).readPNGImage() == null)
+        {
+            printToFile.printDebugLine(this, "readCurrentStreetSnap - Null street image pointer for current street snaps " + streetSnapBeingUsed, 3);
+        }
         return streetSnaps.get(streetSnapBeingUsed);
     }
           
     public boolean loadStreetImage(int n)
     {
-        return true;
-        /*
         if (!streetSnaps.get(n).loadPNGImage())
         {
             return false;
         }
-        return true; */
+        if (streetSnaps.get(n).readPNGImage() == null)
+        {
+            printToFile.printDebugLine(this, "Null street image pointer returned from loadPNGImage for current street snaps " + streetSnapBeingUsed, 3);
+            return false;
+        }
+        return true;
     }
     
     public void initStreetItemVars()

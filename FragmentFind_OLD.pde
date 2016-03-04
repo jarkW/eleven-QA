@@ -44,7 +44,7 @@ class FragmentFindOld
         itemImages = itemInfo.readItemImages();
         if (itemImages == null)
         {
-            printToFile.printDebugLine("Failed to retrieve item images for item " + thisItemInfo.readItemClassTSID() + "(" + thisItemInfo.readItemTSID() + ")", 3);
+            printToFile.printDebugLine(this, "Failed to retrieve item images for item " + thisItemInfo.readItemClassTSID() + "(" + thisItemInfo.readItemTSID() + ")", 3);
             okFlag = false;
             return;
         }
@@ -69,10 +69,10 @@ class FragmentFindOld
             itemImageBeingUsed = 0;
         }
         
-        printToFile.printDebugLine("Starting search with image number " + itemImageBeingUsed + " i.e. " + itemImages.get(itemImageBeingUsed).readPNGImageName(), 1);
+        printToFile.printDebugLine(this, "Starting search with image number " + itemImageBeingUsed + " i.e. " + itemImages.get(itemImageBeingUsed).readPNGImageName(), 1);
         
         streetSnaps = streetInfo.getStreetImageArray();
-        printToFile.printDebugLine("Size of street snap array is " + streetInfo.streetSnaps.size(), 1);
+        printToFile.printDebugLine(this, "Size of street snap array is " + streetInfo.streetSnaps.size(), 1);
 
         // Need to convert the JSON x,y to relate to the street snap - use the first loaded street snap
         startX = thisItemInfo.readOrigItemX() + streetSnaps.get(0).PNGImage.width/2 + thisItemInfo.readFragOffsetX();
@@ -85,10 +85,10 @@ class FragmentFindOld
                                         thisItemInfo.readItemClassTSID(),
                                         startX, startY, defSearchBox, defSearchBox);
                        
-        printToFile.printDebugLine("Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY), 2);
+        printToFile.printDebugLine(this, "Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY), 2);
     }
         
-    public void searchForFragment()
+    public boolean searchForFragment()
     {
         String debugInfo = "";
         
@@ -114,7 +114,7 @@ class FragmentFindOld
                 // found Y is lower than the previous found Y (i.e. bottom of bounce found)
                 if ((newItemX == missCoOrds) || (newItemY < (thisItemInfo.readOrigItemY() + spiralSearch.readDiffY())))
                 {
-                    printToFile.printDebugLine("Quoin - replacing previous y value of " + newItemY + " with " + thisItemInfo.readOrigItemY() + spiralSearch.readDiffY(), 2);
+                    printToFile.printDebugLine(this, "Quoin - replacing previous y value of " + newItemY + " with " + thisItemInfo.readOrigItemY() + spiralSearch.readDiffY(), 2);
                     newItemX = thisItemInfo.readOrigItemX() + spiralSearch.readDiffX();
                     newItemY = thisItemInfo.readOrigItemY() + spiralSearch.readDiffY(); 
                 }
@@ -146,7 +146,11 @@ class FragmentFindOld
                                                     startX + spiralSearch.readDiffX(), 
                                                     startY + spiralSearch.readDiffY(), 
                                                     narrowSearchWidthBox, defSearchBox);
-                    printToFile.printDebugLine("Continuing search for quoin/QQ (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY) + " using street snap " + streetSnaps.get(streetImageBeingUsed).readPNGImageName(), 2);
+                    if (!spiralSearch.readOkFlag()) 
+                    {
+                        return false;
+                    }                                
+                    printToFile.printDebugLine(this, "Continuing search for quoin/QQ (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY) + " using street snap " + streetSnaps.get(streetImageBeingUsed).readPNGImageName(), 2);
                 }
             }
             else
@@ -176,7 +180,7 @@ class FragmentFindOld
                 {
                     // No more quoin item images to search - so OK to skip to next street, starting with first quoin image again
                     streetImageBeingUsed++; 
-                    printToFile.printDebugLine("streetImageBeingUsed is now " + streetImageBeingUsed + " array size is " + streetSnaps.size(), 1);
+                    printToFile.printDebugLine(this, "streetImageBeingUsed is now " + streetImageBeingUsed + " array size is " + streetSnaps.size(), 1);
                     if (streetImageBeingUsed >= streetSnaps.size())
                     {
                         // No more snaps to search
@@ -195,7 +199,11 @@ class FragmentFindOld
                                                     streetSnaps.get(streetImageBeingUsed).readPNGImage(), 
                                                     thisItemInfo.readItemClassTSID(),
                                                     startX, startY, defSearchBox, defSearchBox);
-                    printToFile.printDebugLine("Continuing search for missing quoin ("  + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY) + " using street snap " + streetSnaps.get(streetImageBeingUsed).readPNGImageName(), 2);
+                    if (!spiralSearch.readOkFlag()) 
+                    {
+                        return false;
+                    }
+                    printToFile.printDebugLine(this, "Continuing search for missing quoin ("  + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY) + " using street snap " + streetSnaps.get(streetImageBeingUsed).readPNGImageName(), 2);
                 }
             }
             else
@@ -227,7 +235,12 @@ class FragmentFindOld
                                                     startX + thisItemInfo.readOrigItemX() - newItemX,
                                                     startY + thisItemInfo.readOrigItemY() - newItemY,
                                                     narrowSearchWidthBox, defSearchBox);
-                        printToFile.printDebugLine("Continuing search for quoin/QQ (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY) + " using street snap " + streetSnaps.get(streetImageBeingUsed).readPNGImageName(), 2);
+                            if (!spiralSearch.readOkFlag()) 
+        {
+            okFlag = false;
+            return;
+        }
+                        printToFile.printDebugLine(this, "Continuing search for quoin/QQ (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY) + " using street snap " + streetSnaps.get(streetImageBeingUsed).readPNGImageName(), 2);
                     }
                     else
                     {
@@ -236,7 +249,7 @@ class FragmentFindOld
                                                         streetSnaps.get(streetImageBeingUsed).readPNGImage(), 
                                                         thisItemInfo.readItemClassTSID(),
                                                         startX, startY, defSearchBox, defSearchBox);
-                        printToFile.printDebugLine("Continuing search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY) + " using street snap " + streetSnaps.get(streetImageBeingUsed).readPNGImageName(), 2);
+                        printToFile.printDebugLine(this, "Continuing search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY) + " using street snap " + streetSnaps.get(streetImageBeingUsed).readPNGImageName(), 2);
                     }
                 }
             }
@@ -245,9 +258,9 @@ class FragmentFindOld
         if (searchDone)
         {
             // Dump out debug info to give me some idea of whether I've gotten the searchbox the right size or not
-            printToFile.printDebugLine("Returning from FragmentFound item  found = " + itemFound + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemExtraInfo + 
+            printToFile.printDebugLine(this, "Returning from FragmentFound item  found = " + itemFound + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemExtraInfo + 
                                         "> old x,y = " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " new x,y " + newItemX + "," + newItemY, 2);
-            printToFile.printDebugLine(" For reference - " + debugInfo, 2);
+            printToFile.printDebugLine(this, " For reference - " + debugInfo, 2);
 
         }
  

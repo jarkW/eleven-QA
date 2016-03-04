@@ -84,7 +84,7 @@ class QuoinFields
                 break;
                             
             default:
-                printToFile.printDebugLine("Unrecognised new quoin type " + quoinType, 3);
+                printToFile.printDebugLine(this, "Unrecognised new quoin type " + quoinType, 3);
                 return false;
         }
             

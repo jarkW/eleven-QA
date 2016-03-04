@@ -95,7 +95,7 @@ class ItemImages
         imageFilenames = Utils.loadFilenames(dataPath(""), "rock_");
         if ((imageFilenames == null) || (imageFilenames.length == 0))
         {
-            printToFile.printDebugLine("No files found in " + dataPath("") + " for rock*.png", 3);
+            printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for rock*.png", 3);
             return false;
         }
         for (int i = 0; i < imageFilenames.length; i++) 
@@ -118,7 +118,7 @@ class ItemImages
         imageFilenames = Utils.loadFilenames(dataPath(""), "npc_shrine");
         if ((imageFilenames == null) || (imageFilenames.length == 0))
         {
-            printToFile.printDebugLine("No files found in " + dataPath("") + " for npc_shrine*.png", 3);
+            printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for npc_shrine*.png", 3);
             return false;
         }
         for (int i = 0; i < imageFilenames.length; i++) 
@@ -167,7 +167,7 @@ class ItemImages
         // First check to see if the item has already been loaded up for this street
         if (itemImageHashMap.get(itemClassTSID) != null)
         {
-            printToFile.printDebugLine("Already loaded images for " + itemClassTSID + "(" + origItemExtraInfo + ")", 1);
+            printToFile.printDebugLine(this, "Already loaded images for " + itemClassTSID + "(" + origItemExtraInfo + ")", 1);
             return true;
         }
         
@@ -178,7 +178,7 @@ class ItemImages
         // First set create all the entries in the itemImages - loading the snaps will be done later
         if (itemClassTSID.indexOf("npc_sloth", 0) == 0)
         {
-            printToFile.printDebugLine("NEED TO CONFIGURE SLOTH in setupItemImages ", 3);
+            printToFile.printDebugLine(this, "NEED TO CONFIGURE SLOTH in setupItemImages ", 3);
             return false;
         }
         else if (itemClassTSID.indexOf("quoin", 0) == 0)
@@ -250,7 +250,7 @@ class ItemImages
 
             if ((imageFilenames == null) || (imageFilenames.length == 0))
             {
-                printToFile.printDebugLine("No files found in " + dataPath("") + " for item/info " + itemImagePNGName, 3);
+                printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for item/info " + itemImagePNGName, 3);
                 return false;
             }
        
@@ -264,7 +264,7 @@ class ItemImages
 
         // Images have all been added (although not loaded into memory) - add the images for this item to the hash map
         itemImageHashMap.put(itemClassTSID, itemImages);
-        printToFile.printDebugLine("Loaded images for " + itemClassTSID + "(" + origItemExtraInfo + ")", 1);
+        printToFile.printDebugLine(this, "Loaded images for " + itemClassTSID + "(" + origItemExtraInfo + ")", 1);
         
         return true;
     }
@@ -283,7 +283,7 @@ class ItemImages
         if (itemImages == null)
         {
             // Shouldn't be loading item images if they've not in the hashmap
-            printToFile.printDebugLine("Missing images names for " + itemClassTSID + " in hashmap", 3);
+            printToFile.printDebugLine(this, "Missing images names for " + itemClassTSID + " in hashmap", 3);
             return false;
         }
         
@@ -293,7 +293,7 @@ class ItemImages
             // loads the image into memory and sets up the width/height fields
             if (!itemImages.get(i).setupPNGImage())
             {
-                printToFile.printDebugLine("Errors loading images for " + itemClassTSID, 3);
+                printToFile.printDebugLine(this, "Errors loading images for " + itemClassTSID, 3);
                 return false;
             }
         }
@@ -308,7 +308,7 @@ class ItemImages
         if (itemImages == null)
         {
             // nothing to unload so just return - is this an error condition?
-            printToFile.printDebugLine("Unloading images for " + itemClassTSID + " but nothing is loaded!", 1);
+            printToFile.printDebugLine(this, "Unloading images for " + itemClassTSID + " but nothing is loaded!", 1);
         }
         else
         {

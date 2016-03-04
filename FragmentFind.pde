@@ -30,7 +30,7 @@ class FragmentFind
     // constructor
     public FragmentFind(ItemInfo itemInfo)
     {
-        printToFile.printDebugLine("Create New FragmentFind", 1);
+        printToFile.printDebugLine(this, "Create New FragmentFind", 1);
         okFlag = true;
         
         searchDone = false;
@@ -46,7 +46,7 @@ class FragmentFind
         itemImages = itemInfo.readItemImages();
         if (itemImages == null)
         {
-            printToFile.printDebugLine("Failed to retrieve item images for item " + thisItemInfo.readItemClassTSID() + "(" + thisItemInfo.readItemTSID() + ")", 3);
+            printToFile.printDebugLine(this, "Failed to retrieve item images for item " + thisItemInfo.readItemClassTSID() + "(" + thisItemInfo.readItemTSID() + ")", 3);
             okFlag = false;
             return;
         }
@@ -70,20 +70,15 @@ class FragmentFind
         }
                 
         streetSnapImage = streetInfo.readCurrentStreetSnap();
-        if (streetSnapImage == null)
+        if (streetSnapImage.readPNGImage() == null)
         {
-            printToFile.printDebugLine("Failed to retrieve street snap image " + streetSnapImage.readPNGImageName(), 3);
+            printToFile.printDebugLine(this, "Failed to retrieve street snap image " + streetSnapImage.readPNGImageName(), 3);
             okFlag = false;
             return;
         }
-        printToFile.printDebugLine("Starting search with image number " + itemImageBeingUsed + " i.e. " + itemImages.get(itemImageBeingUsed).readPNGImageName() +
-                                    " with street snap " + streetSnapImage.readPNGImageName(), 1);
 
-        if (!streetSnapImage.loadPNGImage())
-        {
-           printToFile.printDebugLine("Failed to load street snap " + streetSnapImage.readPNGImageName(), 3); 
-        }
-        
+        printToFile.printDebugLine(this, "Starting search with image number " + itemImageBeingUsed + " i.e. " + itemImages.get(itemImageBeingUsed).readPNGImageName() +
+                                    " with street snap " + streetSnapImage.readPNGImageName(), 1);        
         
         // Need to convert the JSON x,y to relate to the street snap 
         // For most items, the search will only be done once so the starting point is the JSON x,y. And the search box will be the default
@@ -96,7 +91,7 @@ class FragmentFind
             startY = thisItemInfo.readNewItemY() + streetSnapImage.readPNGImageHeight() + thisItemInfo.readFragOffsetY();
             searchBoxWidth = narrowSearchWidthBox;
             searchBoxHeight = defSearchBox;
-            printToFile.printDebugLine("Continuing search for quoin/QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY), 2);
+            printToFile.printDebugLine(this, "Continuing search for quoin/QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY), 2);
         }
         else
         {
@@ -105,18 +100,23 @@ class FragmentFind
             startY = thisItemInfo.readOrigItemY() + streetSnapImage.readPNGImageHeight() + thisItemInfo.readFragOffsetY();
             searchBoxWidth = defSearchBox;
             searchBoxHeight = defSearchBox;
-            printToFile.printDebugLine("Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY), 2);
+            printToFile.printDebugLine(this, "Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY), 2);
         }
         spiralSearch = null;
         spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
                             streetSnapImage.readPNGImage(), 
                             thisItemInfo.readItemClassTSID(),
                             startX, startY, searchBoxWidth, searchBoxHeight);
+        if (!spiralSearch.readOkFlag()) 
+        {
+            okFlag = false;
+            return;
+        }
 
         //printHashCodes(this);
     }
         
-    public void searchForFragment()
+    public boolean searchForFragment()
     {
         String debugInfo = "";
         
@@ -161,11 +161,15 @@ class FragmentFind
                 else
                 {
                     // Carry out search using the new image
-                    spiralSearch = null;
+                    spiralSearch = null;  
                     spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
                     streetSnapImage.readPNGImage(), 
                     thisItemInfo.readItemClassTSID(),
                     startX, startY, searchBoxWidth, searchBoxHeight);
+                    if (!spiralSearch.readOkFlag()) 
+                    {
+                        return false;
+                    }
                 }
             }
         }
@@ -173,12 +177,12 @@ class FragmentFind
         if (searchDone)
         {
             // Dump out debug info to give me some idea of whether I've gotten the searchbox the right size or not
-            printToFile.printDebugLine("Returning from FragmentFound item  found = " + itemFound + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemExtraInfo + 
+            printToFile.printDebugLine(this, "Returning from FragmentFound item  found = " + itemFound + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemExtraInfo + 
                                         "> old x,y = " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " new x,y " + newItemX + "," + newItemY, 2);
-            printToFile.printDebugLine(" For reference - " + debugInfo, 2);
+            printToFile.printDebugLine(this, " For reference - " + debugInfo, 2);
 
         }
- 
+        return true;
     }
     
     String extractItemInfoFromItemImageFilename()

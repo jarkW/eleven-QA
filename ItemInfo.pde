@@ -68,12 +68,12 @@ class ItemInfo
         itemTSID = Utils.readJSONString(item, "tsid", true);
         if (!Utils.readOkFlag() || itemTSID.length() == 0)
         {
-            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
             okFlag = false;
         }
         else
         {
-            printToFile.printDebugLine("item tsid is " + itemTSID + "(" + item.getString("label") + ")", 2);
+            printToFile.printDebugLine(this, "ItemInfo constructor item tsid is " + itemTSID + "(" + item.getString("label") + ")", 2);
         }
     }
     
@@ -97,12 +97,12 @@ class ItemInfo
             file = new File(itemFileName);
             if (!file.exists())
             {
-                printToFile.printDebugLine("Missing file - " + itemFileName, 3);
+                printToFile.printDebugLine(this, "Missing file - " + itemFileName, 3);
                 return false;
             }
         } 
                 
-        printToFile.printDebugLine("Item file name is " + itemFileName, 2); 
+        printToFile.printDebugLine(this, "Item file name is " + itemFileName, 2); 
 
         // Now read the item JSON file
         itemJSON = null;
@@ -113,11 +113,11 @@ class ItemInfo
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Failed to load the item json file " + itemFileName, 3);
+            printToFile.printDebugLine(this, "Failed to load the item json file " + itemFileName, 3);
             return false;
         }
         
-        printToFile.printDebugLine("Loaded item JSON OK", 1);
+        printToFile.printDebugLine(this, "Loaded item JSON OK", 1);
         
         // Make a copy of the original JSON - so that is can be compared against the final one              
         try
@@ -127,7 +127,7 @@ class ItemInfo
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + dataPath("") + "/OrigJSONs/", 3);
+            printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + dataPath("") + "/OrigJSONs/", 3);
             return false;
         }
         
@@ -135,19 +135,19 @@ class ItemInfo
         origItemX = Utils.readJSONInt(itemJSON, "x", true);
         if (!Utils.readOkFlag())
         {
-            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
             return false;
         }
         origItemY = Utils.readJSONInt(itemJSON, "y", true);
         if (!Utils.readOkFlag())
         {
-            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
             return false;
         }
         itemClassTSID = Utils.readJSONString(itemJSON, "class_tsid", true);
         if (!Utils.readOkFlag() || itemClassTSID.length() == 0)
         {
-            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
             return false;
         }
         
@@ -157,6 +157,7 @@ class ItemInfo
         {
             // NB - safer to keep it in the item array, and check this flag
             // before doing any actual checking/writing
+            printToFile.printDebugLine(this, "Skipping item (" + itemTSID + ") class_tsid " + itemClassTSID, 1);
             skipThisItem = true;
             return true;
         }
@@ -165,36 +166,36 @@ class ItemInfo
         if (!extractItemInfoFromJson())
         {
             // Error populating info field
-            printToFile.printDebugLine("Failed to extract info for class_tsid " + itemClassTSID, 3);
+            printToFile.printDebugLine(this, "Failed to extract info for class_tsid " + itemClassTSID, 3);
             return false;
         }
         
         // Populate the fragment information for this item (deduced using the save_fragments tool)
         if (!setFragmentDefaultsForItem())
         {
-            printToFile.printDebugLine("Error defaulting fragment defaults for class_tsid " + itemClassTSID, 3); 
+            printToFile.printDebugLine(this, "Error defaulting fragment defaults for class_tsid " + itemClassTSID, 3); 
             return false;
         }
         
         // Load up the item images which will be used to search the snap
         if (!getThisItemImages())
         {
-            printToFile.printDebugLine("Error getting item images for class_tsid " + itemClassTSID, 3); 
+            printToFile.printDebugLine(this, "Error getting item images for class_tsid " + itemClassTSID, 3); 
             return false;
         }      
         
         if (origItemExtraInfo.length() > 0)
         {
-            printToFile.printDebugLine("class_tsid " + itemClassTSID + " info = <" + origItemExtraInfo + "> with x,y " + str(origItemX) + "," + str(origItemY), 2); 
+            printToFile.printDebugLine(this, "class_tsid " + itemClassTSID + " info = <" + origItemExtraInfo + "> with x,y " + str(origItemX) + "," + str(origItemY), 2); 
         }
         else
         {
-            printToFile.printDebugLine("class_tsid " + itemClassTSID + " with x,y " + str(origItemX) + "," + str(origItemY), 2); 
+            printToFile.printDebugLine(this, "class_tsid " + itemClassTSID + " with x,y " + str(origItemX) + "," + str(origItemY), 2); 
         }
         // print out item images that have been loaded
         for (int i = 0; i < itemImages.size(); i++)
         {
-            //printToFile.printDebugLine("Can see item image " + itemImages.get(i).PNGImageName, 1);
+            //printToFile.printDebugLine(this, "Can see item image " + itemImages.get(i).PNGImageName, 1);
         }
         
         // Initialise for the item to be searched for
@@ -246,7 +247,7 @@ class ItemInfo
                 
             default:
                 // Unexpected class tsid - so skip the item
-                printToFile.printDebugLine("Skipping item " + itemTSID + " class tsid " + itemClassTSID, 2);
+                printToFile.printDebugLine(this, "Skipping item " + itemTSID + " class tsid " + itemClassTSID, 2);
                 return false;
          }
     }
@@ -268,7 +269,7 @@ class ItemInfo
         if (itemImages == null)
         {
             // return error
-            printToFile.printDebugLine("Null itemImages returned for " + itemClassTSID, 3);
+            printToFile.printDebugLine(this, "Null itemImages returned for " + itemClassTSID, 3);
             return false;
         }
         
@@ -297,13 +298,13 @@ class ItemInfo
             if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
             {
                 // Failed to read this field from JSON file - so need to insert one
-                printToFile.printDebugLine("Failed to read dir field from shrine JSON file " + itemTSID, 2);
+                printToFile.printDebugLine(this, "Failed to read dir field from shrine JSON file " + itemTSID, 2);
                 
                 if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, "right"))
                 {
                     // Error occurred - fail
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine("Failed to insert new dir field in item JSON file " + itemTSID, 3);
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to insert new dir field in item JSON file " + itemTSID, 3);
                     return false;
                 }
 
@@ -322,7 +323,7 @@ class ItemInfo
             // Hence read the value in rather than simply setting to 'right' all the time.
             if (!origItemExtraInfo.equals("right"))
             {
-                printToFile.printDebugLine("Unexpected dir = left field in shrine JSON file  " + itemTSID, 3);
+                printToFile.printDebugLine(this, "Unexpected dir = left field in shrine JSON file  " + itemTSID, 3);
                 return false;
             }
             
@@ -344,8 +345,8 @@ class ItemInfo
                 instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
                 if (!Utils.readOkFlag())
                 {
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine("Failed to get instanceProps from item JSON file " + itemTSID, 3);
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to get instanceProps from item JSON file " + itemTSID, 3);
                     return false;
                 }
                 
@@ -355,8 +356,8 @@ class ItemInfo
                     origItemClassName = Utils.readJSONString(instanceProps, "class_name", true);
                     if (!Utils.readOkFlag() || origItemClassName.length() == 0)
                     {
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                        printToFile.printDebugLine("Failed to get instanceProps.class_name" + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, "Failed to get instanceProps.class_name" + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
                         return false;
                     }    
                     
@@ -381,7 +382,7 @@ class ItemInfo
                 }
                 else
                 {
-                    printToFile.printDebugLine("Trying to read unexpected field from instanceProps for item class " + itemClassTSID, 3);
+                    printToFile.printDebugLine(this, "Trying to read unexpected field from instanceProps for item class " + itemClassTSID, 3);
                     return false;
                 }
                 
@@ -389,8 +390,8 @@ class ItemInfo
                 origItemExtraInfo = Utils.readJSONString(instanceProps, itemExtraInfoKey, true);
                 if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
                 {
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine("Failed to get from instanceProps." + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to get from instanceProps." + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
                     return false;
                 }
 
@@ -406,14 +407,14 @@ class ItemInfo
                 origItemExtraInfo = Utils.readJSONString(itemJSON, itemExtraInfoKey, true);
                 if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
                 {
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine("Failed to read dir field from item JSON file " + itemTSID, 3);
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to read dir field from item JSON file " + itemTSID, 3);
                     return false;
                 }
                 break;
                          
             case "npc_sloth":
-                printToFile.printDebugLine("Not sure about sloth - check to see if both dir and instanceProps.dir are set to be the same " + itemTSID, 3);
+                printToFile.printDebugLine(this, "Not sure about sloth - check to see if both dir and instanceProps.dir are set to be the same " + itemTSID, 3);
                 return false;
             
             case "visiting_stone":
@@ -435,8 +436,8 @@ class ItemInfo
                 if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, origItemExtraInfo))
                 {
                     // Error occurred - fail
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine("Failed to set dir field in item JSON file " + itemTSID, 3);
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to set dir field in item JSON file " + itemTSID, 3);
                     return false;
                 }
                 
@@ -448,8 +449,8 @@ class ItemInfo
                     if (!Utils.setJSONString(itemJSON, "state", "1"))
                     {
                         // Error occurred - fail
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                        printToFile.printDebugLine("Failed to set state field in item JSON file " + itemTSID, 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, "Failed to set state field in item JSON file " + itemTSID, 3);
                         return false;
                     }
                 }
@@ -480,7 +481,7 @@ class ItemInfo
             if (!newItemExtraInfo.equals("right"))
             {
                 // Should never happen
-                printToFile.printDebugLine("Dir field in shrine " + itemTSID + " is not set to right - is set to " + newItemExtraInfo, 3);
+                printToFile.printDebugLine(this, "Dir field in shrine " + itemTSID + " is not set to right - is set to " + newItemExtraInfo, 3);
                 return false;
             }
             
@@ -510,8 +511,8 @@ class ItemInfo
                 instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
                 if (!Utils.readOkFlag())
                 {
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine("Failed to get instanceProps from item JSON file " + itemTSID, 3);
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to get instanceProps from item JSON file " + itemTSID, 3);
                     return false;
                 }
 
@@ -522,7 +523,7 @@ class ItemInfo
                     QuoinFields quoinInstanceProps = new QuoinFields();                   
                     if (!quoinInstanceProps.defaultFields(streetInfo.readHubID(), streetInfo.readStreetTSID(), newItemExtraInfo))
                     {
-                        printToFile.printDebugLine("Error defaulting fields in quoin instanceProps structure", 3);
+                        printToFile.printDebugLine(this, "Error defaulting fields in quoin instanceProps structure", 3);
                         return false;
                     }
                     newItemClassName = quoinInstanceProps.readClassName();
@@ -535,43 +536,43 @@ class ItemInfo
                     // Now save the fields in instanceProps
                     if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
                     {
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                         return false;
                     }
                                             
                     if (!Utils.setJSONString(instanceProps, "class_name", newItemClassName))
                     {
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                         return false;
                     }
                     
                     if (!Utils.setJSONInt(instanceProps, "respawn_time", quoinInstanceProps.readRespawnTime()))
                     {
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                         return false;
                     }
                     
                     if (!Utils.setJSONString(instanceProps, "is_random", quoinInstanceProps.readIsRandom()))
                     {
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                         return false;
                     }
                     
                     if (!Utils.setJSONString(instanceProps, "benefit", quoinInstanceProps.readBenefit()))
                     {
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                         return false;
                     }
                     
                     if (!Utils.setJSONString(instanceProps, "benefit_floor", quoinInstanceProps.readBenefitFloor()))
                     {
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                         return false;
                     }
                     
                     if (!Utils.setJSONString(instanceProps, "benefit_ceil", quoinInstanceProps.readBenefitCeiling()))
                     {
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                         return false;
                     }
                     
@@ -579,7 +580,7 @@ class ItemInfo
                     {
                         if (!Utils.setJSONString(instanceProps, "giant", quoinInstanceProps.readGiant()))
                         {
-                            printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                             return false;
                         }
                     }                    
@@ -589,7 +590,7 @@ class ItemInfo
                 {                            
                     if (!Utils.setJSONString(instanceProps, itemExtraInfoKey, newItemExtraInfo))
                     {
-                        printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                         return false;
                     }             
                 }
@@ -599,13 +600,13 @@ class ItemInfo
             case "visiting_stone":
                 if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, newItemExtraInfo))
                 {
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                     return false;
                 }          
                 break;
                          
             case "npc_sloth":
-                printToFile.printDebugLine("Not sure about sloth - check to see if both dir and instanceProps.dir are set to be the same " + itemTSID, 3);
+                printToFile.printDebugLine(this, "Not sure about sloth - check to see if both dir and instanceProps.dir are set to be the same " + itemTSID, 3);
                 return false;
                        
             case "marker_qurazy":
@@ -644,7 +645,7 @@ class ItemInfo
                  
             default:
                 // Should never reach here
-                printToFile.printDebugLine("Unrecognised classTSID in setItemInfoInJson - " + itemClassTSID, 3);
+                printToFile.printDebugLine(this, "Unrecognised classTSID in setItemInfoInJson - " + itemClassTSID, 3);
                 return false;
 
          }
@@ -669,15 +670,15 @@ class ItemInfo
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Failed to open samples.json file", 3);
+            printToFile.printDebugLine(this, "Failed to open samples.json file", 3);
             return false;
         }
         
         values = Utils.readJSONArray(json, "fragments", true);
         if (!Utils.readOkFlag())
         {
-            printToFile.printDebugLine(Utils.readErrMsg(), 3);
-            printToFile.printDebugLine("Failed to read fragments array in samples.json file", 3);
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, "Failed to read fragments array in samples.json file", 3);
             return false;
         }
         
@@ -687,16 +688,16 @@ class ItemInfo
             String tsid = Utils.readJSONString(fragment, "class_tsid", true);
             if (!Utils.readOkFlag() || tsid.length() == 0)
             {
-                printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                printToFile.printDebugLine("Failed to read class_tsid in fragments array in samples.json file", 3);
+                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                printToFile.printDebugLine(this, "Failed to read class_tsid in fragments array in samples.json file", 3);
                 return false;
             }
             String info = Utils.readJSONString(fragment, "info", true);
             // Is OK if set to ""
             if (!Utils.readOkFlag())
             {
-                printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                printToFile.printDebugLine("Failed to read info in fragments array in samples.json file", 3);
+                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                printToFile.printDebugLine(this, "Failed to read info in fragments array in samples.json file", 3);
                 return false;
             }
             
@@ -706,15 +707,15 @@ class ItemInfo
                 fragOffsetX = Utils.readJSONInt(fragment, "offset_x", true);
                 if (!okFlag)
                 {
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine("Failed to read offset_x in fragments array in samples.json file", 3);
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to read offset_x in fragments array in samples.json file", 3);
                     return false;
                 }
                 fragOffsetY = Utils.readJSONInt(fragment, "offset_y", true);
                 if (!okFlag)
                 {
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine("Failed to read offset_y in fragments array in samples.json file", 3);
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to read offset_y in fragments array in samples.json file", 3);
                     return false;
                 }
                 return true;
@@ -722,7 +723,7 @@ class ItemInfo
         }
         
         // If we reach here then missing item from json file
-        printToFile.printDebugLine("Missing class_tsid " + itemClassTSID + " and/or info field <" + origItemExtraInfo + "> in samples.json", 3);
+        printToFile.printDebugLine(this, "Missing class_tsid " + itemClassTSID + " and/or info field <" + origItemExtraInfo + "> in samples.json", 3);
         return false;
     }
     
@@ -742,7 +743,7 @@ class ItemInfo
         {
             if (!Utils.setJSONInt(itemJSON, "x", newItemX))
             {
-                printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                 return false;
             }
             // Show JSON file needs saving after processing done
@@ -753,7 +754,7 @@ class ItemInfo
         {
             if (!Utils.setJSONInt(itemJSON, "y", newItemY))
             {
-                printToFile.printDebugLine(Utils.readErrMsg(), 3);
+                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                 return false;
             }
             // Show JSON file needs saving after processing done
@@ -815,7 +816,7 @@ class ItemInfo
                 s = s + " (inserting/updating  dir field in JSON file)";
             }
             printToFile.printOutputLine(s);
-            printToFile.printDebugLine(s, 2);
+            printToFile.printDebugLine(this, s, 2);
                 
             // Write the JSON file out to temporary place before checking that the new file length = old one plus calculated diff
             try
@@ -825,7 +826,7 @@ class ItemInfo
             catch(Exception e)
             {
                 println(e);
-                printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + dataPath("") + "/NewJSONs/", 3);
+                printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + dataPath("") + "/NewJSONs/", 3);
                 printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + dataPath("") + "/NewJSONs/");
                 return false;
             }
@@ -852,12 +853,12 @@ class ItemInfo
                 catch(Exception e)
                 {
                     println(e);
-                    printToFile.printDebugLine("Error writing " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
+                    printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
                     printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
                     return false;
                 }
                 
-                printToFile.printDebugLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
+                printToFile.printDebugLine(this, "SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
                 printToFile.printOutputLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
             }
          } // end if changes to save to JSON file
@@ -882,7 +883,7 @@ class ItemInfo
                 }
             }
             printToFile.printOutputLine(s);
-            printToFile.printDebugLine(s, 2);
+            printToFile.printDebugLine(this, s, 2);
         }
         
         // Now clean up the copies of the old/new JSONs if they exist
@@ -907,7 +908,7 @@ class ItemInfo
         return true;
     }
        
-    public void searchSnapForImage()
+    public boolean searchSnapForImage()
     { 
         if (fragFind.readSearchDone())
         {
@@ -924,14 +925,14 @@ class ItemInfo
                     if (newItemY < fragFind.readNewItemY())
                     {
                         s = "SEARCH DONE Resetting y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " from " + newItemY + " to " + fragFind.readNewItemY();
-                        printToFile.printDebugLine(s, 2);
+                        printToFile.printDebugLine(this, s, 2);
                         
                         newItemY = fragFind.readNewItemY();
                     }
                     else
                     {
                         s = "SEARCH DONE Ignoring y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " remains at " + newItemY + "(new = " + fragFind.readNewItemY() + ")";
-                        printToFile.printDebugLine(s, 1);
+                        printToFile.printDebugLine(this, s, 1);
                     }
                     
                 }
@@ -958,7 +959,7 @@ class ItemInfo
                         }
                     }
                     printToFile.printOutputLine(s);
-                    printToFile.printDebugLine(s, 2);
+                    printToFile.printDebugLine(this, s, 2);
                 }
             }
             else
@@ -974,7 +975,7 @@ class ItemInfo
                         s = s + " (" + origItemClassName + ")";
                     }
                 }
-                printToFile.printDebugLine(s, 1);
+                printToFile.printDebugLine(this, s, 1);
             }
             itemFinished = true;
 
@@ -986,112 +987,13 @@ class ItemInfo
         }
         else
         {
-            fragFind.searchForFragment();
-        }
-            
-   /*         
-            
-            // Search has completed - either run out of streets or was successful
-            newItemX = fragFind.readNewItemX();
-            newItemY = fragFind.readNewItemY();
-            newItemExtraInfo = fragFind.readNewItemExtraInfo();
-            
-            if (!fragFind.readItemFound() && newItemX == missCoOrds)
+            // Kick off the seach using the current street snap and set of item images
+            if (!fragFind.searchForFragment())
             {
-                // Item wasn't found on the snaps (quoins handled differently as are defaulted to mystery quoins if not found, so never go through this bit of code)
-                // So don't update the JSON at all in this case (even though inserted dir in shrines for example earlier) - discard any changes
-                s = "Item NOT FOUND (";
-                s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
-                if (origItemExtraInfo.length() > 0)
-                {
-                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
-                }
-                printToFile.printOutputLine(s);
-                printToFile.printDebugLine(s, 2);
-
-                itemFinished = true;
-                return;
-            }
-            
-        
-            if (newItemX != origItemX)
-            {
-                if (!Utils.setJSONInt(itemJSON, "x", newItemX))
-                {
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    failNow = true;
-                    return;
-                }
-                // Show JSON file needs saving after processing done
-                saveChangedJSONfile = true;
-            }
-            
-            if (newItemY != origItemY)
-            {
-                if (!Utils.setJSONInt(itemJSON, "y", newItemY))
-                {
-                    printToFile.printDebugLine(Utils.readErrMsg(), 3);
-                    failNow = true;
-                    return;
-                }
-                // Show JSON file needs saving after processing done
-                saveChangedJSONfile = true;
-            }
-            
-            // Sets up the special fields e.g. 'dir' or 'type' fields based on ExtraInfo field
-            // Only do this if not doing an x,y_only kind of search - which leaves the special fields
-            // as originally set
-            if (!configInfo.readChangeXYOnly())
-            {
-                if (!setItemInfoInJSON())
-                {
-                        failNow = true;
-                        return;
-                }
-            }
-
-            if (saveChangedJSONfile)
-            {
-                 
-
-            }
-            else
-            {
-                if (fragFind.readItemFound())
-                {
-                    s = "Unchanged (found) item (";
-                }
-                else
-                {
-                    s = "Unchanged (not found) item (";
-                }
-                s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
-                if (origItemExtraInfo.length() > 0)
-                {
-                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
-                    if (itemClassTSID.equals("quoin"))
-                    {
-                        s = s + " (" + origItemClassName + ")";
-                    }
-                }
-                printToFile.printOutputLine(s);
-                printToFile.printDebugLine(s, 2);
-            }
-            itemFinished = true;
-            
-  
-                     
-            // If an item was found, then delay the image for a second before continuing - for debug onl
-            if (doDelay && newItemX != missCoOrds)
-            {
-                delay(1000);
+                return false;
             }
         }
-        else
-        {
-            fragFind.searchForFragment();
-        }
-        */
+        return true;
     }
     
     public boolean resetReadyForNewItemSearch()

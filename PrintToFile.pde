@@ -23,7 +23,7 @@ class PrintToFile {
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Failed to open output file " + configInfo.readOutputFilename(), 3);
+            printToFile.printDebugLine(this, "Failed to open output file " + configInfo.readOutputFilename(), 3);
             return false;
         }
         
@@ -50,7 +50,7 @@ class PrintToFile {
  
     // Used to just print debug information - so can filter out minor messages
     // if not needed
-    public void printDebugLine(String lineToWrite, int severity)
+    public void printDebugLine(Object callingClass, String lineToWrite, int severity)
     {
         // Do nothing if not yet initialised this object
         if (!initDone)
@@ -66,14 +66,16 @@ class PrintToFile {
         
         if (severity >= debugLevel)
         {
+            String s = callingClass.getClass().getName().replace("sketch_QA_tool$", " ") + "::\t";
+            
             // Do we need to print this line to the console
             if (debugToConsole)
             {
-                println(lineToWrite);
+                println(s + lineToWrite);
             }
         
             // Output line 
-            debugOutput.println(lineToWrite);
+            debugOutput.println(s + lineToWrite);
             debugOutput.flush();
         }
         

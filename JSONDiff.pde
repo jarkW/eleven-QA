@@ -59,7 +59,7 @@ class JSONDiff
         File file = new File(newFileName);
         if (!file.exists())
         {
-            printToFile.printDebugLine("JSONDIFF: Temporary copy of new JSON file " + newFileName + " does not exist", 3);
+            printToFile.printDebugLine(this, "JSONDIFF: Temporary copy of new JSON file " + newFileName + " does not exist", 3);
             return false;
         }
         
@@ -70,14 +70,14 @@ class JSONDiff
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Failed to load new JSON file " + newFileName, 3);
+            printToFile.printDebugLine(this, "Failed to load new JSON file " + newFileName, 3);
             return false;
         }
         
         file = new File(origFileName);
         if (!file.exists())
         {
-            printToFile.printDebugLine("Temporary copy of original JSON file " + newFileName + " does not exist", 3);
+            printToFile.printDebugLine(this, "Temporary copy of original JSON file " + newFileName + " does not exist", 3);
             return false;
         }
         try
@@ -87,7 +87,7 @@ class JSONDiff
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Failed to load original JSON file " + newFileName, 3);
+            printToFile.printDebugLine(this, "Failed to load original JSON file " + newFileName, 3);
             return false;
         }
         
@@ -435,14 +435,14 @@ class JSONDiff
     {
         if (infoMsgList.size() == 0)
         {
-            printToFile.printDebugLine("JSONDIFF: No changes for item" + itemTSID, 3);
+            printToFile.printDebugLine(this, "JSONDIFF: No changes for item" + itemTSID, 3);
             printToFile.printOutputLine("JSONDIFF: No changes for item" + itemTSID);
             return;
         }
         // Changes found for street - print them all out
         for (int i = 0; i < infoMsgList.size(); i++)
         {
-            printToFile.printDebugLine("JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i), 3);
+            printToFile.printDebugLine(this, "JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i), 3);
             printToFile.printOutputLine("JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i));
         }
         

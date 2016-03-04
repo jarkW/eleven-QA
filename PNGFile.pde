@@ -65,7 +65,7 @@ class PNGFile
         {
             // Image has already been loaded into memory
             return true;
-        }
+        } 
         
         if (isStreetSnapFlag)
         {
@@ -78,7 +78,7 @@ class PNGFile
         File file = new File(fullFileName);
         if (!file.exists())
         {
-            printToFile.printDebugLine("Missing file - " + fullFileName, 3);
+            printToFile.printDebugLine(this, "Missing file - " + fullFileName, 3);
             return false;
         }
         
@@ -91,7 +91,7 @@ class PNGFile
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Fail to load image for " + PNGImageName, 3);
+            printToFile.printDebugLine(this, "Fail to load image for " + PNGImageName, 3);
             return false;
         }         
         try
@@ -102,11 +102,11 @@ class PNGFile
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine("Fail to load image pixels for " + PNGImageName, 3);
+            printToFile.printDebugLine(this, "Fail to load image pixels for " + PNGImageName, 3);
             return false;
         } 
         
-        printToFile.printDebugLine("Loading image from " + fullFileName + " with width " + PNGImage.height + " height " + PNGImage.width, 1);
+        printToFile.printDebugLine(this, "Loading image from " + fullFileName + " with width " + PNGImage.height + " height " + PNGImage.width, 1);
         
         return true;
     }
@@ -114,7 +114,7 @@ class PNGFile
     public void unloadPNGImage()
     {
         PNGImage = null;
-        printToFile.printDebugLine("Unloading image " + PNGImageName, 1);
+        printToFile.printDebugLine(this, "Unloading image " + PNGImageName, 1);
     }
 
 }

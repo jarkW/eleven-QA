@@ -253,7 +253,7 @@ static class Utils
             // OK for key to be absent, will just be inserted
             //if (jsonFile.isNull(key) == true) 
             //{
-            //    printToFile.printDebugLine("Missing key " + key + " in json file", 3);
+            //    printToFile.printDebugLine(this, "Missing key " + key + " in json file", 3);
             //    return false;
             //}
             jsonFile.setInt(key, value);
@@ -285,7 +285,7 @@ static class Utils
             // OK for key to be absent, will just be inserted
             //if (jsonFile.isNull(key) == true) 
             //{
-            //    printToFile.printDebugLine("Missing key " + key + " in json file", 3);
+            //    printToFile.printDebugLine(this, "Missing key " + key + " in json file", 3);
             //    return false;
             //}
             jsonFile.setString(key, value);

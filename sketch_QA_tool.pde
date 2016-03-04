@@ -182,7 +182,7 @@ public void setup()
     if (configInfo.readTotalJSONStreetCount() < 1)
     {
         // No streets to process - exit
-        printToFile.printDebugLine("No streets to process - exiting", 3);
+        printToFile.printDebugLine(this, "No streets to process - exiting", 3);
         failNow = true;
         return;
     }
@@ -214,30 +214,31 @@ public void draw()
     {
         println("failNow flag set - exiting with errors");
         printToFile.printOutputLine("failNow flag set - exiting with errors");
-        printToFile.printDebugLine("failNow flag set - exiting with errors", 3);
+        printToFile.printDebugLine(this, "failNow flag set - exiting with errors", 3);
         exit();
     }
     else if (exitNow && !doNothing)
     {
         display.showSkippedStreetsMsg();
         printToFile.printOutputLine("All processing completed");
-        printToFile.printDebugLine("Exit now - All processing completed", 3);
+        printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
         doNothing = true;
         exit();
     }
     
     // Carry out processing depending on whether setting up the street or processing it
+    println("nextAction is ", nextAction);
     switch (nextAction)
     {
         case loadItemImages:
             // Validates/loads all item images 
             if(!allItemImages.loadAllItemImages())
             {
-                printToFile.printDebugLine("Error loading image snaps", 3);
+                printToFile.printDebugLine(this, "Error loading image snaps", 3);
                 failNow = true;
                 return;
             }
-            printToFile.printDebugLine("All item images now loaded", 1);
+            printToFile.printDebugLine(this, "All item images now loaded", 1);
             
             memory.printMemoryUsage();
             
@@ -246,6 +247,7 @@ public void draw()
             
         case initStreet:
             // Carries out the setting up of the street and associated items 
+            
             if (!initialiseStreet())
             {
                 // fatal error
@@ -258,19 +260,29 @@ public void draw()
                 return;
             }
             
-            // Reset the item done flags 
-            streetInfo.initStreetItemVars();
-           
             // Reload up the first street image ready to go
             if (!streetInfo.loadStreetImage(0))
             {
                 failNow = true;
                 return;
             }
+            
+            if (!streetInfo.readStreetItemData())
+            {
+                printToFile.printDebugLine(this, "Error in readStreetItemData", 3);
+                failNow = true;
+                return;
+            }
+            
+            // Reset the item done flags 
+            streetInfo.initStreetItemVars();
+            
+            // IS THIS BEING LOADED CORRECTLY - as not seem to be when then attempts to search later (for first time through?)
+            
 
             memory.printMemoryUsage();
             
-            printToFile.printDebugLine("street initialised is " + configInfo.readStreetTSID(streetBeingProcessed) + " (" + streetBeingProcessed + ")", 1);
+            printToFile.printDebugLine(this, "street initialised is " + configInfo.readStreetTSID(streetBeingProcessed) + " (" + streetBeingProcessed + ")", 1);
             
             nextAction = processStreet;
             break;
@@ -279,7 +291,7 @@ public void draw()
             // Process the street, one street snap at a time, going over each item in turn 
         
             // Process street item unless due to move on to next street
-            printToFile.printDebugLine("streetBeingProcessed is  " + streetBeingProcessed + " streetFinished flag is " + streetInfo.readStreetFinished(), 1);
+            printToFile.printDebugLine(this, "Processing street  " + streetBeingProcessed + " streetFinished flag is " + streetInfo.readStreetFinished(), 1);
             if (streetInfo.readStreetFinished())
             {            
                 streetBeingProcessed++;
@@ -304,7 +316,7 @@ public void draw()
            
         default:
             // Error condition
-            printToFile.printDebugLine("Unexpected next action - " + nextAction, 3);
+            printToFile.printDebugLine(this, "Unexpected next action - " + nextAction, 3);
             exit();
     }
 }
@@ -317,7 +329,7 @@ boolean initialiseStreet()
     if (streetTSID.length() == 0)
     {
         // Failure to retrieve TSID
-        printToFile.printDebugLine("Failed to read street TSID number " + str(streetBeingProcessed) + " from config.json", 3); 
+        printToFile.printDebugLine(this, "Failed to read street TSID number " + str(streetBeingProcessed) + " from config.json", 3); 
         return false;
     }
     
@@ -326,16 +338,16 @@ boolean initialiseStreet()
     // Now read the error flag for the street array added
     if (!streetInfo.readOkFlag())
     {
-       printToFile.printDebugLine("Error creating street data structure", 3);
+       printToFile.printDebugLine(this, "Error creating street data structure", 3);
        return false;
     }
         
-    printToFile.printDebugLine("Read street data for TSID " + streetTSID, 2);
+    printToFile.printDebugLine(this, "Read street data for TSID " + streetTSID, 2);
             
     // Now populate the street information
     if (!streetInfo.initialiseStreetData())
     {
-        printToFile.printDebugLine("Error populating street data structure", 3);
+        printToFile.printDebugLine(this, "Error populating street data structure", 3);
         return false;
     }
     
