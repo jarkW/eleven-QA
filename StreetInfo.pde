@@ -128,6 +128,7 @@ class StreetInfo
         }
         
         // Now fill in the all the rest of the item information for this street
+        int skippedItemCount = 0;
         for (int i = 0; i < streetItems.size(); i++) 
         {                                  
             if (!itemInfo.get(i).initialiseItemInfo())
@@ -136,10 +137,14 @@ class StreetInfo
                 printToFile.printDebugLine(this, "Error reading in additional information for item from I* file", 3);
                 return false;
             }
+            if (itemInfo.get(i).readSkipThisItem())
+            {
+                skippedItemCount++;
+            }
         }
- 
+
         // Everything OK
-        printToFile.printDebugLine(this, " Initialised street = " + streetName + " street TSID = " + streetTSID + " with item count " + str(itemInfo.size()), 2);  
+        printToFile.printDebugLine(this, " Initialised street = " + streetName + " street TSID = " + streetTSID + " with item count " + str(itemInfo.size()) + " of which " + skippedItemCount + " will be skipped", 2);  
         return true;
     }
     
@@ -318,86 +323,134 @@ MOVE TO TOP LEVEL SO CAN LOAD STREET SNAP BEFORE CALLING THIS
     
     public void processItem()
     {
+
+        if (itemInfo.get(itemBeingProcessed).readSkipThisItem() || itemInfo.get(itemBeingProcessed).readItemFound())
+        {
+            // Item needs to be skipped/or has already been found
+            // Move onto next one
+            printToFile.printDebugLine(this, "Skipping item " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
+                                       itemInfo.get(itemBeingProcessed).readOrigItemExtraInfo() + ") " + 
+                                       itemInfo.get(itemBeingProcessed).readItemTSID(), 1); 
+            (void) moveToNextItem();
+            return;
+        }
+        
+        //printToFile.printDebugLine(this, "Enter processItem memory ", 1);
+        //memory.printMemoryUsage();
+        
         // Does the main work - passes control down to the item structure
-        ItemInfo itemData = itemInfo.get(itemBeingProcessed);
+        //ItemInfo itemData = itemInfo.get(itemBeingProcessed);      
         
         // Display information
         display.clearDisplay();
         display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
-        display.setItemProgress(itemData.itemClassTSID, itemData.itemTSID, itemBeingProcessed+1, itemInfo.size());
+        display.setItemProgress(itemInfo.get(itemBeingProcessed).itemClassTSID, itemInfo.get(itemBeingProcessed).itemTSID, itemBeingProcessed+1, itemInfo.size());
         
-        if (!itemData.searchSnapForImage())
+        // Search the snap for this image/item
+        if (!itemInfo.get(itemBeingProcessed).searchSnapForImage())
         {
              failNow = true;
              return;
         }
         
-        if (failNow)
-        {
-            return;
-        }
-        
-        if (itemData.readItemFinished())
+        if (itemInfo.get(itemBeingProcessed).readItemFinished())
         {            
             // Move onto next one
-            itemBeingProcessed++;
-            if (itemBeingProcessed >= itemInfo.size())
+            if (!moveToNextItem())
             {
-                // Finished all items on the street
-                // So move onto the next street snap after unloading the current one
-                streetSnaps.get(streetSnapBeingUsed).unloadPNGImage();
-               
-                streetSnapBeingUsed++;
-                if (streetSnapBeingUsed >= streetSnaps.size())
+                // Either error condition or at end of street/items - so need to return to top level to start over with new snap/street
+                //failNow = true;
+                return;
+            }
+            else
+            {
+                // Next item is safe to procced to
+                       
+                // Set up fragFind in item ready to start the next item/streetsnap search combo
+                // i.e. loads up pointers to correct street snap and item images
+                // Only do this for items we still need to search for
+                if (!itemInfo.get(itemBeingProcessed).readSkipThisItem() && !itemInfo.get(itemBeingProcessed).readItemFound())
                 {
-                    // Reached end of street snaps so mark street as finished
-                    // First need to write all the item changes to file
-                    for (int i = 0; i < itemInfo.size(); i++)
-                    {
-                        if (!itemInfo.get(i).saveItemChanges())
-                        {
-                            failNow = true;
-                            return; 
-                        }
-                    }
-                    streetFinished = true;
-                    return;
-                }
-                else
-                {
-                    // Start with the first item again on the new street snap
-                    if (!loadStreetImage(streetSnapBeingUsed))
+                    if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
                     {
                         failNow = true;
                         return;
                     }
-                    itemBeingProcessed = 0;
-                    printToFile.printDebugLine(this, "STARTING WITH FIRST ITEM ON STREET SNAP " + streetSnapBeingUsed, 1);
+                    printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " ON STREET SNAP " + streetSnapBeingUsed, 1);
                 }
-            }
-            
-            // Set up fragFind in item ready to start the next item/streetsnap search combo
-            // i.e. loads up pointers to correct street snap and item images
-            // Only do this for items we still need to search for
-            if (!itemInfo.get(itemBeingProcessed).readSkipThisItem())
-            {
-                if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
+                else
                 {
-                    failNow = true;
-                    return;
+                   printToFile.printDebugLine(this, "Skipping item/item Found " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
+                                               itemInfo.get(itemBeingProcessed).readOrigItemExtraInfo() + ") " + 
+                                               itemInfo.get(itemBeingProcessed).readItemTSID(), 1); 
                 }
-                printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " ON STREET SNAP " + streetSnapBeingUsed, 1);
-            }
-            else
-            {
-               printToFile.printDebugLine(this, "Skipping item " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
-                                           itemInfo.get(itemBeingProcessed).readOrigItemExtraInfo() + ") " + 
-                                           itemInfo.get(itemBeingProcessed).readItemTSID(), 1); 
             }
             
         }
+        //printToFile.printDebugLine(this, "Exit 2 processItem memory ", 1);
+        //memory.printMemoryUsage();
     }
     
+    boolean moveToNextItem()
+    {
+        // Handles all the checking to see if past end of of item count, and whether more snaps to process
+        // Returns true - if OK to handle the next item on the street
+        // Returns false for error conditions, or if moving on to next street/street snap - calling function needs to check failNow flag
+        itemBeingProcessed++;
+        if (itemBeingProcessed >= itemInfo.size())
+        {
+            // Finished all items on the street
+            // So move onto the next street snap after unloading the current one
+            streetSnaps.get(streetSnapBeingUsed).unloadPNGImage();
+              
+            streetSnapBeingUsed++;
+            if (streetSnapBeingUsed >= streetSnaps.size() || ifAllItemsFound())
+            //if (streetSnapBeingUsed >= streetSnaps.size())
+            {
+                // Reached end of street snaps so mark street as finished OR all the valid items have been found
+                // First need to write all the item changes to file
+                for (int i = 0; i < itemInfo.size(); i++)
+                {
+                    if (!itemInfo.get(i).saveItemChanges())
+                    {
+                        failNow = true;
+                        return false;
+                    }
+                }
+                streetFinished = true;
+                //printToFile.printDebugLine(this, "Exit 1 processItem memory ", 1);
+                //memory.printMemoryUsage();
+                return false;
+            }
+            else
+            {
+                // Start with the first item again on the new street snap
+                if (!loadStreetImage(streetSnapBeingUsed))
+                {
+                    failNow = true;
+                    return false;
+                }
+                itemBeingProcessed = 0;
+                printToFile.printDebugLine(this, "STARTING WITH FIRST ITEM ON STREET SNAP " + streetSnapBeingUsed, 1);
+            }
+            return false;
+        }
+        return true;
+    }
+    
+    boolean ifAllItemsFound()
+    {
+        boolean allFound = true;
+        for (int i = 0; i < itemInfo.size(); i++)
+        {
+           if (!itemInfo.get(i).readSkipThisItem() && !itemInfo.get(i).readItemFound())
+           {
+               // Item is valid for searching BUT has not been found
+               allFound = false;
+           }
+        }
+        return allFound;
+    }
     
     // Simple functions to read/set variables
     public boolean readStreetFinished()

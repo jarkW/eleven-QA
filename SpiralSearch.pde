@@ -124,7 +124,7 @@ class SpiralSearch
 
         noMoreValidFragments = false; 
         
-        printToFile.printDebugLine(this, "Continuing search for " + classTSID + " at snap x,y " + x + "," + y + " with search box wxh " + widthBox + "x" + heightBox, 1);
+        //printToFile.printDebugLine(this, "Continuing search for " + classTSID + " at snap x,y " + x + "," + y + " with search box wxh " + widthBox + "x" + heightBox, 1);
         //printHashCodes(this);
     }
     
@@ -184,9 +184,9 @@ class SpiralSearch
            " (lowest RGB diff = " + int(lowestTotalRGBDiff) + 
             //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) + 
             ") avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
-            " su_rgb_dmTotalRGBDiff=" + int(sumTotalRGBDiff) +
+            " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
             " RGBDiffCount = " + RGBDiffCount +
-            " spiralCount = " + spiralCount, 2);  
+            " spiralCount = " + spiralCount, 1);  
             foundStepX = missCoOrds;
             foundStepY = missCoOrds;
         }

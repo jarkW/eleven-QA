@@ -115,6 +115,8 @@ class PNGFile
     {
         PNGImage = null;
         printToFile.printDebugLine(this, "Unloading image " + PNGImageName, 1);
+        // Need this to force the garbage collection to free up the memory associated with the image
+        System.gc();
     }
 
 }

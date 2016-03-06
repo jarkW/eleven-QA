@@ -1,6 +1,7 @@
 class DisplayMgr
 {
     boolean okFlag;
+   
     
     // Add in list of failed streets - can be display at the end when program ends
     // is street + reason why failed (missing L*, missing snaps)
@@ -8,6 +9,9 @@ class DisplayMgr
     
     String streetNameMsg;
     String itemNameMsg;
+    
+    // for testing (use 'set' instead of 'image' - might use less memory
+    boolean USE_SET_FOR_DISPLAY = false;
     
     public DisplayMgr()
     {
@@ -71,7 +75,14 @@ class DisplayMgr
         String s = "Searching for " + itemNameMsg + " at (" + itemCoordStr + ")";
         fill(50);
         text(s, 10, 30, width, 50);
-        image(itemImage, 50, 100);
+        if (USE_SET_FOR_DISPLAY)
+        {
+            set(50, 100, itemImage);
+        }
+        else
+        {
+            image(itemImage, 50, 100);
+        }
         
         // draw box around image to delineate item
         noFill();
@@ -80,12 +91,26 @@ class DisplayMgr
         rect(50, 100, itemImage.width, itemImage.height);
     }
     
-    public void showStreetImage(PImage streetImage, int itemBoxWidth, int itemBoxHeight, int centreX, int centreY)
+    public void showStreetImage(PImage streetImage, String streetImageName)
+    {
+        float scaledSnapHeight = streetImage.height * (width-100) / streetImage.width;
+        image(streetImage, 50, height - 50 - int(scaledSnapHeight), width-100, scaledSnapHeight);
+        showInfoMsg("Using " + streetImageName);
+    }
+    
+    public void showStreetFragmentImage(PImage streetImage, int itemBoxWidth, int itemBoxHeight, int centreX, int centreY)
     {
         int streetFragHeight = 200;
         int streetFragWidth = 200;
-        PImage streetFragment = streetImage.get(centreX - 100, centreY - 100, streetFragWidth, streetFragHeight);      
-        image(streetFragment, 200, 100);
+        PImage streetFragment = streetImage.get(centreX - 100, centreY - 100, streetFragWidth, streetFragHeight);
+        if (USE_SET_FOR_DISPLAY)
+        {
+            set(200, 100, streetFragment);
+        }
+        else
+        {
+            image(streetFragment, 200, 100);
+        }
 
         // Also need to show a red box which matches the item fragment size
         noFill();

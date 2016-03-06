@@ -3,7 +3,8 @@ class ItemInfo
     boolean okFlag;
     boolean itemFinished; // searched the street snap for this item - could be success or failure
     
-    boolean skipThisItem; // Either item we are not scanning for, or item which has already had its position/type determined, so don't need to search again
+    boolean skipThisItem; // Item we are not scanning for
+    boolean itemFound;
     
     // Read in from I* file
     JSONObject itemJSON;
@@ -58,6 +59,7 @@ class ItemInfo
         newItemClassName = "";
         
         skipThisItem = false;
+        itemFound = false;
         saveChangedJSONfile = false;
         alreadySetDirField = false;
         
@@ -731,14 +733,60 @@ class ItemInfo
     {
         // Called once all the street snaps have been searched for this item
         String s;
-        // First need to reset the quoin type if the x,y was not found - set to mystery, with the existing x,y
-        if (itemClassTSID.equals("quoin") && (newItemX == missCoOrds))
-        {
-            newItemX = origItemX;
-            newItemY = origItemY;
-            newItemExtraInfo = "mystery";
-        }
+        File f;
         
+        // Need to handle the missing items first
+        if (newItemX == missCoOrds)
+        {
+            if (!itemClassTSID.equals("quoin"))
+            {
+                // For all non-quoins, items that are not found/skipped will not cause any file changes - so clean up and return here
+                s = "No changes written - ";
+                if (skipThisItem)
+                {
+                    s = s + "SKIPPED item (";
+                }
+                else if (!itemFound)
+                {
+                    s = s + "MISSING item (";
+                }
+                else
+                {
+                    s = s + "UNRECOGNISED REASON (";
+                }
+    
+                s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+                if (origItemExtraInfo.length() > 0)
+                {
+                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                }
+                printToFile.printOutputLine(s);
+                printToFile.printDebugLine(this, s, 2);         
+                if (!configInfo.readDebugSaveOrigAndNewJSONs())
+                {
+                    // Now remove the file from the temporary directories.
+                    f = new File(dataPath("") + "/OrigJSONs/" + itemTSID + ".json");
+                    if (f.exists())
+                    {
+                        f.delete();
+                    }
+                }
+                // nothing else to do for these missing/skipped items
+                return true;
+            }
+            else
+            {
+                 // Reset the quoin type if the x,y was not found - set to mystery, with the existing x,y
+                 printToFile.printDebugLine(this, "Set missing quoin " + itemTSID + " to be type = mystery", 1);
+                newItemX = origItemX;
+                newItemY = origItemY;
+                newItemExtraInfo = "mystery";
+                
+                // OK to then carry on in this function
+            }
+        }    
+        
+        // Item has been found or has been reset as mystery quoin - so changes to write
         if (newItemX != origItemX)
         {
             if (!Utils.setJSONInt(itemJSON, "x", newItemX))
@@ -871,7 +919,7 @@ class ItemInfo
             }
             else
             {
-                s = "No changes - not found item (";
+                s = "No changes - not found item ERROR SHOULD NOT REACH THIS LEG (";
             }
             s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
             if (origItemExtraInfo.length() > 0)
@@ -891,7 +939,7 @@ class ItemInfo
         if (!configInfo.readDebugSaveOrigAndNewJSONs())
         {
             // Now remove the file from the temporary directories.
-            File f = new File(dataPath("") + "/OrigJSONs/" + itemTSID + ".json");
+            f = new File(dataPath("") + "/OrigJSONs/" + itemTSID + ".json");
             if (f.exists())
             {
                 f.delete();
@@ -918,7 +966,7 @@ class ItemInfo
             if (fragFind.readItemFound())
             {
                 // Item was successfully found on the street
-                if (itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy") && newItemX != missCoOrds)
+                if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy")) && newItemX != missCoOrds)
                 {
                     // This is the 2nd time or more that we've found this quoin/QQ
                     // Only save the Y-cord if lower than the one we already have
@@ -934,10 +982,11 @@ class ItemInfo
                         s = "SEARCH DONE Ignoring y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " remains at " + newItemY + "(new = " + fragFind.readNewItemY() + ")";
                         printToFile.printDebugLine(this, s, 1);
                     }
-                    
+                    // continue on to next snap for quoins/QQ
                 }
                 else
                 {
+                    // Enter here for non quoins/QQ or for quoins/QQ when first found
                     // Save the information
                     newItemX = fragFind.readNewItemX();
                     newItemY = fragFind.readNewItemY();
@@ -946,10 +995,10 @@ class ItemInfo
                     // For all non-quoins/QQ, we only need to do the search once, so on future street snaps, skip this item
                     if (!itemClassTSID.equals("quoin") && !itemClassTSID.equals("marker_qurazy"))
                     {
-                        skipThisItem = true;
+                        itemFound = true;
                     }
                     
-                    s = "SEARCH FOUND " + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+                    s = "SEARCH FOUND " + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY + "(found item (skip in future) = " + itemFound + ")";             
                     if (origItemExtraInfo.length() > 0)
                     {
                         s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
@@ -999,11 +1048,14 @@ class ItemInfo
     public boolean resetReadyForNewItemSearch()
     {
         fragFind = null;
+        System.gc();
         fragFind = new FragmentFind(this);
         if (!fragFind.readOkFlag())
         {
             return false;
         }
+        //memory.printMemoryUsage();
+        
         itemFinished = false;
         return true;
     }
@@ -1095,6 +1147,11 @@ class ItemInfo
     public boolean readSkipThisItem()
     {
         return skipThisItem;
+    }
+    
+    public boolean readItemFound()
+    {
+        return itemFound;
     }
     
     public boolean readOkFlag()

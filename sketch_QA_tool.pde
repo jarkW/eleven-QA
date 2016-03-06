@@ -126,6 +126,7 @@ int nextAction;
 final int loadItemImages = 10;
 final int initStreet = 20;
 final int processStreet = 30;
+final int idling = 100;
 
 // Differentiate between error/normal endings
 boolean failNow = false;    // abnormal ending/error
@@ -137,7 +138,7 @@ boolean okToContinue = true;
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 1;
+int debugLevel = 2;
 boolean debugToConsole = true;
 boolean doDelay = true;
 boolean writeJSONsToPersdata = false;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
@@ -148,7 +149,8 @@ public void setup()
 {
     // Set size of Processing window
     // width, height
-    size(750,550);
+    // Must be first line in setup()
+    size(1200,800);
     
     nextAction = 0;
     
@@ -195,8 +197,7 @@ public void setup()
     nextAction = loadItemImages;
     
     // Display start up msg
-    display.showInfoMsg("Loading item images for comparison");
-    delay(500);
+    display.showInfoMsg("Loading item images for comparison ... please wait");
     
     memory.printMemoryUsage();
 }
@@ -208,6 +209,7 @@ public void draw()
     if (!okToContinue)
     {
         // Problem during validation of street - waiting for user to press c or any other key
+        nextAction = idling;
         return;
     }
     else if (failNow)
@@ -215,6 +217,7 @@ public void draw()
         println("failNow flag set - exiting with errors");
         printToFile.printOutputLine("failNow flag set - exiting with errors");
         printToFile.printDebugLine(this, "failNow flag set - exiting with errors", 3);
+        nextAction = idling;
         exit();
     }
     else if (exitNow && !doNothing)
@@ -222,14 +225,19 @@ public void draw()
         display.showSkippedStreetsMsg();
         printToFile.printOutputLine("All processing completed");
         printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
+        memory.printMemoryUsage();
         doNothing = true;
+        nextAction = idling;
         exit();
     }
     
     // Carry out processing depending on whether setting up the street or processing it
-    println("nextAction is ", nextAction);
+    //println("nextAction is ", nextAction);
     switch (nextAction)
     {
+        case idling:
+            break;
+            
         case loadItemImages:
             // Validates/loads all item images 
             if(!allItemImages.loadAllItemImages())
@@ -239,7 +247,6 @@ public void draw()
                 return;
             }
             printToFile.printDebugLine(this, "All item images now loaded", 1);
-            
             memory.printMemoryUsage();
             
             nextAction = initStreet;
@@ -276,12 +283,7 @@ public void draw()
             
             // Reset the item done flags 
             streetInfo.initStreetItemVars();
-            
-            // IS THIS BEING LOADED CORRECTLY - as not seem to be when then attempts to search later (for first time through?)
-            
-
-            memory.printMemoryUsage();
-            
+             
             printToFile.printDebugLine(this, "street initialised is " + configInfo.readStreetTSID(streetBeingProcessed) + " (" + streetBeingProcessed + ")", 1);
             
             nextAction = processStreet;
@@ -298,7 +300,11 @@ public void draw()
                 if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
                 {
                     // Reached end of list of streets - normal ending
+                    streetInfo = null;
+                    System.gc();
+                    memory.printMemoryUsage();
                     exitNow = true;
+                    return;
                 }
                 else
                 {
@@ -311,7 +317,8 @@ public void draw()
                 // Street yet not finished - move on to the next item and/or snap
                 streetInfo.processItem();
             }
-            memory.printMemoryUsage();
+            //printToFile.printDebugLine(this, "End top level processStreet memory", 1);
+            //memory.printMemoryUsage();
             break;
            
         default:
@@ -333,6 +340,8 @@ boolean initialiseStreet()
         return false;
     }
     
+    streetInfo = null;
+    System.gc();
     streetInfo = new StreetInfo(streetTSID); 
             
     // Now read the error flag for the street array added
