@@ -20,6 +20,13 @@ class StreetInfo
     int itemBeingProcessed;
     ArrayList<ItemInfo> itemInfo;
     
+    // Data read in from G* 
+    int geoTintColor;
+    int geoContrast;
+    int geoTintAmount;
+    int geoSaturation;
+    int geoBrightness;
+    
     // constructor/initialise fields
     public StreetInfo(String tsid)
     {
@@ -33,6 +40,12 @@ class StreetInfo
         streetTSID = tsid;       
         itemInfo = new ArrayList<ItemInfo>();
         streetSnaps = new ArrayList<PNGFile>();
+        
+        geoTintColor = 0;
+        geoContrast = 0;
+        geoTintAmount = 0;
+        geoSaturation = 0;
+        geoBrightness = 0;
     }
     
     boolean readStreetData()
@@ -145,6 +158,110 @@ class StreetInfo
 
         // Everything OK
         printToFile.printDebugLine(this, " Initialised street = " + streetName + " street TSID = " + streetTSID + " with item count " + str(itemInfo.size()) + " of which " + skippedItemCount + " will be skipped", 2);  
+        return true;
+    }
+    
+    boolean readStreetGeoInfo()
+    {
+        // Now read in information about contrast etc from the G* file if it exists
+        String geoFileName = configInfo.readPersdataPath() + "/" + streetTSID.replaceFirst("L", "G") + ".json";
+   
+        // First check G* file exists
+        File file = new File(geoFileName);
+        if (!file.exists())
+        {
+            // Retrieve from fixtures
+            geoFileName = configInfo.readFixturesPath() + "/locations-json/" + streetTSID.replaceFirst("L", "G") + ".json";
+            file = new File(geoFileName);
+            if (!file.exists())
+            {
+                printToFile.printDebugLine(this, "SKIPPING MISSING street geo file - " + geoFileName, 3);
+                display.setSkippedStreetsMsg("Skipping street - Missing geo JSON file for TSID " + streetTSID);
+                invalidStreet = true;
+                return false;
+            }
+        } 
+                
+        JSONObject json;
+        try
+        {
+            // load G* file
+            json = loadJSONObject(geoFileName);
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "Fail to load street geo JSON file " + geoFileName, 3);
+            return false;
+        } 
+        printToFile.printDebugLine(this, "Reading geo file " + geoFileName, 2);
+
+        // Now chain down to get at the fields in the geo file
+        geoTintColor = 0;
+        geoContrast = 0;
+        geoTintAmount = 0;
+        geoSaturation = 0;
+        geoBrightness = 0;
+         
+        JSONObject dynamic = Utils.readJSONObject(json, "dynamic", true);
+        if (!Utils.readOkFlag() || dynamic == null)
+        {
+            // the dynamic level is sometimes missing ... so just set it to point at the original json object and continue on
+            printToFile.printDebugLine(this, "Reading geo file - failed to read dynamic " + geoFileName, 2);
+            dynamic = json;
+        }
+        JSONObject layers = Utils.readJSONObject(dynamic, "layers", true);
+        if (Utils.readOkFlag() && layers != null)
+        {
+            JSONObject middleground = Utils.readJSONObject(layers, "middleground", true);
+            if (Utils.readOkFlag() && middleground != null)
+            {
+                JSONObject filtersNEW = Utils.readJSONObject(layers, "filtersNEW", true);
+                if (Utils.readOkFlag() && filtersNEW != null)
+                {
+                    // extract the fields inside
+                    JSONObject filtersNewObject = Utils.readJSONObject(filtersNEW, "tintColor", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {
+                        geoTintColor = filtersNewObject.getInt("value", 0);
+                    }
+                    filtersNewObject = Utils.readJSONObject(filtersNEW, "contrast", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {
+                        geoContrast = filtersNewObject.getInt("value", 0);
+                    }
+                    filtersNewObject = Utils.readJSONObject(filtersNEW, "tintAmount", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {
+                        geoTintAmount = filtersNewObject.getInt("value", 0);
+                    } 
+                    filtersNewObject = Utils.readJSONObject(filtersNEW, "saturation", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {
+                        geoSaturation = filtersNewObject.getInt("value", 0);
+                    } 
+                    filtersNewObject = Utils.readJSONObject(filtersNEW, "brightness", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {
+                        geoBrightness = filtersNewObject.getInt("value", 0);
+                    } 
+                }
+                else
+                {
+                    printToFile.printDebugLine(this, "Reading geo file - failed to read filtersNEW " + geoFileName, 2);
+                }
+            }
+            else
+            {
+                 printToFile.printDebugLine(this, "Reading geo file - failed to read middleground " + geoFileName, 2);
+            }
+         }
+         else
+         {
+             printToFile.printDebugLine(this, "Reading geo file - failed to read layers " + geoFileName, 2);
+         }
+  
+         // Everything OK   
         return true;
     }
     
@@ -291,6 +408,24 @@ class StreetInfo
 
         display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
         
+        // Read in the G* file and load up the contrast settings etc
+        if (!readStreetGeoInfo())
+        {
+            if (invalidStreet)
+            {
+                // i.e. need to skip this street as location information not available
+                printToFile.printDebugLine(this, "Skipping missing geo JSON file", 3);
+                return true; // continue
+            }
+            else
+            {
+                // error - need to stop
+                printToFile.printDebugLine(this, "Error in readStreetGeoInfo", 3);
+                okFlag = false;
+                return false;
+            }
+        }
+        
         if (!validateStreetSnaps())
         {
             if (invalidStreet)
@@ -426,6 +561,17 @@ class StreetInfo
                 }
                 itemBeingProcessed = 0;
                 printToFile.printDebugLine(this, "STARTING WITH FIRST ITEM ON STREET SNAP " + streetSnapBeingUsed, 1);
+                
+                if (!itemInfo.get(itemBeingProcessed).readSkipThisItem() && !itemInfo.get(itemBeingProcessed).readItemFound())
+                {
+                    if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
+                    {
+                        failNow = true;
+                        return false;
+                    }
+                    printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " ON STREET SNAP " + streetSnapBeingUsed, 1);
+                }
+                
             }
             return false;
         }
@@ -506,6 +652,31 @@ class StreetInfo
     public boolean readInvalidStreet()
     {
         return invalidStreet;
+    }
+    
+    public int readGeoTintColor()
+    {
+            return geoTintColor;
+    }
+
+    public int readGeoContrast()
+    {
+        return geoContrast;
+    }
+    
+    public int readGeoTintAmount()
+    {
+        return geoTintAmount;
+    }
+     
+    public int readGeoSaturation()
+    {
+        return geoSaturation;
+    }
+    
+    public int readGeoBrightness()
+    {
+        return geoBrightness;
     }
     
 }

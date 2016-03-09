@@ -955,8 +955,14 @@ class ItemInfo
                     }
                 }
                 printToFile.printDebugLine(this, s, 1);
+                
+
+                
             }
             itemFinished = true;
+            
+            // Clear the flag ready for when we come around again
+            
 
              // If an item was found, then delay the image for a second before continuing - for debug onl
             if (doDelay && newItemX != missCoOrds)

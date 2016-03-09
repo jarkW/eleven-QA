@@ -66,7 +66,8 @@ class PrintToFile {
         
         if (severity >= debugLevel)
         {
-            String s = callingClass.getClass().getName().replace("sketch_QA_tool$", " ") + "::\t";
+            String s = callingClass.getClass().getName().replace("sketch_QA_tool$", " ") + "::";
+            String methodName = Thread.currentThread().getStackTrace()[2].getMethodName();
             
             // Do we need to print this line to the console
             if (debugToConsole)
@@ -75,7 +76,7 @@ class PrintToFile {
             }
         
             // Output line 
-            debugOutput.println(s + lineToWrite);
+            debugOutput.println(s + methodName + ":\t" + lineToWrite);
             debugOutput.flush();
         }
         

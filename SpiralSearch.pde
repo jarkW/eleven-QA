@@ -53,9 +53,7 @@ class SpiralSearch
     // but then it takes much longer to run. 
     // Too big - risk false positives
     // NB QQ change shape as bounces, so need to be more generous
-    //final float goodEnoughTotalRGB = 20000; // but means some quoins mis-recognised.
-    //final float goodEnoughTotalRGB = 13000;
-    final float goodEnoughTotalRGB = 5000; //Missed some trees/shrines, but needed for quoins?
+    final float goodEnoughTotalRGB = 5000; 
     //final float goodEnoughTotalRGB = 1000;
 
     //final float goodEnoughQQTotalRGB = 3 * goodEnoughTotalRGB;
@@ -69,6 +67,18 @@ class SpiralSearch
         // Initialise variables      
         thisItemImage = itemImage;
         thisStreetImage = streetImage;
+       
+        // Adjust each item image
+        // Do we need to look at middleground?
+        // in G* dynamic -> layers -> middleground -> filtersNEW e,g, brightness, contrast, saturation, hue
+        // for original shrines - brightness is 1, contrast 20 and saturation -20
+        // for original trees - brightness is 1, contrast 20 and  saturation -20
+        // for quoins - nothing set i.e. all 0
+        // for original rocks - brightness is 5, contrast 20 and  saturation -20
+        // Would be best to read the G* JSON file and then change the setting son the item Image to match
+        //thisItemImage.filter(POSTERIZE, 8);
+        //thisStreetImage.filter(POSTERIZE, 8);
+        println("streetInfo saturation is ", streetInfo.readGeoSaturation(), " brightness is ", streetInfo.readGeoBrightness());
         
         if (thisStreetImage == null)
         {
@@ -148,6 +158,7 @@ class SpiralSearch
     
     public boolean searchForItem()
     {        
+        printToFile.printDebugLine(this, "Enter searchForItem " + thisItemClassTSID + " (" + itemJSONX + "," + itemJSONY, 1);
         noMoreValidFragments = false;
 
         for (spiralCount = 0; spiralCount < maxSpiralCount && !noMoreValidFragments; spiralCount++)

@@ -29,6 +29,22 @@
  *
  */
  
+ // Consider redoing the item fragments - after setting all the tint/brightness on those 
+ // streets to be 0 - could just delete the filtersNEW from the middle layer?
+ // Would then make the correct more straight forward.
+ 
+ // BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
+ //
+         // Adjust each item image
+        // Do we need to look at middleground?
+        // in G* dynamic -> layers -> middleground -> filtersNEW e,g, brightness, contrast, saturation, hue
+        // for original shrines - brightness is 1, contrast 20 and saturation -20
+        // for original trees - brightness is 1, contrast 20 and  saturation -20
+        // for quoins - nothing set i.e. all 0
+        // for original rocks - brightness is 5, contrast 20 and  saturation -20
+        // Would be best to read the G* JSON file and then change the setting son the item Image to match
+        
+ 
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
  // Rather than failing after an hour.
  
@@ -105,7 +121,6 @@
 ConfigInfo configInfo;
 
 // Information for this street i.e. the snaps of the street, items on the street
-//ArrayList<StreetInfo> streetInfoArray;
 StreetInfo streetInfo;
 
 // Keep track of which street we are on in the list from the config.json file
