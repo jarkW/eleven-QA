@@ -29,6 +29,9 @@
  *
  */
  
+ // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
+ // Rather than failing after an hour.
+ 
  // Need to see if know where the config.json is - if not, then dialog box so user can select.
  // Next time run program, screen shows the path of the json and gives user chance to change/accept
  
@@ -65,10 +68,6 @@
 // RUN TOOL TWICE FOR STREETS ALREADY/NOT DONE WITH OPTION SET DIFFERENTLY.
 
 
-// adding keys (dir/state) to visiting stone (so can count diff expected?)
-// adding keys (dir) to shrines if not read in 'dir'
-// NB Need to change how done - reset orig_ fields for dir, set flags for 'add dir' and 'add state'
-// and then set these fields when all other changed fields set. 
 //
 //  Need to read in street region - to know if black/white or AL (changes the quoin settings). 
 // And other different quoin regions (party?)
@@ -115,6 +114,9 @@ int streetBeingProcessed;
 // Hash map of all the item images needed to validate this street - will be used by all streets
 ItemImages allItemImages;
 
+// Hash map of all the item images needed to validate this street - will be used by all streets
+FragmentOffsets allFragmentOffsets;
+
 // Handles all output to screen
 DisplayMgr display;
 
@@ -124,6 +126,7 @@ final int missCoOrds = 32700;
 // States - used to determine next actions
 int nextAction;
 final int loadItemImages = 10;
+final int loadFragmentOffsets = 11;
 final int initStreet = 20;
 final int processStreet = 30;
 final int idling = 100;
@@ -138,7 +141,7 @@ boolean okToContinue = true;
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 2;
+int debugLevel = 1;
 boolean debugToConsole = true;
 boolean doDelay = true;
 boolean writeJSONsToPersdata = false;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
@@ -192,9 +195,12 @@ public void setup()
     //Set up ready to start adding images to this 
     allItemImages = new ItemImages();
     
+    // Set up ready to start adding offsets to this
+    allFragmentOffsets = new FragmentOffsets();
+    
     // Ready to start with first street
     streetBeingProcessed = 0;
-    nextAction = loadItemImages;
+    nextAction = loadFragmentOffsets;
     
     // Display start up msg
     display.showInfoMsg("Loading item images for comparison ... please wait");
@@ -237,6 +243,20 @@ public void draw()
     {
         case idling:
             break;
+                 
+        case loadFragmentOffsets:
+            // Validates/loads all item images 
+            if(!allFragmentOffsets.loadFragmentDefaultsForItems())
+            {
+                printToFile.printDebugLine(this, "Error loading fragment offsets for images", 3);
+                failNow = true;
+                return;
+            }
+            printToFile.printDebugLine(this, allFragmentOffsets.sizeOf() + " offsets for fragment images now loaded", 1);
+            memory.printMemoryUsage();
+            
+            nextAction = loadItemImages;
+            break;
             
         case loadItemImages:
             // Validates/loads all item images 
@@ -246,7 +266,7 @@ public void draw()
                 failNow = true;
                 return;
             }
-            printToFile.printDebugLine(this, "All item images now loaded", 1);
+            printToFile.printDebugLine(this, allItemImages.sizeOf() + " sets of item images now loaded", 1);
             memory.printMemoryUsage();
             
             nextAction = initStreet;
@@ -316,6 +336,8 @@ public void draw()
             {
                 // Street yet not finished - move on to the next item and/or snap
                 streetInfo.processItem();
+                
+                //okToContinue = false;
             }
             //printToFile.printDebugLine(this, "End top level processStreet memory", 1);
             //memory.printMemoryUsage();
@@ -366,6 +388,7 @@ boolean initialiseStreet()
         okToContinue = false;
         
         // Display the start up error messages
+        display.clearDisplay();
         display.showSkippedStreetsMsg();
         display.showInfoMsg("Errors during initial processing of street - press 'c' to continue, 'x' to exit");
         return true;
@@ -381,11 +404,25 @@ void keyPressed()
     {
         okToContinue = true;
         streetBeingProcessed++;
+        if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
+        {
+            // Reached end of list of streets - normal ending
+            exitNow = true;
+        }
         return;
     }
     else if ((key == 'x') || (key == 'X'))
     {
         exit();
+    }
+    
+    else if (key == CODED && keyCode == RIGHT)
+    {
+        // debugging through images - need to set okToContinue flag after processItem call above
+        okToContinue = true;
+        nextAction = processStreet;
+        return;
+        
     }
 }
 

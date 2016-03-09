@@ -27,12 +27,7 @@ class ItemInfo
     // show if need to write out changed JSON file
     boolean saveChangedJSONfile;
     boolean alreadySetDirField;
-    
-    // defaults for fragment
-    // Offset from the actual x,y of the item for this fragment
-    int fragOffsetX;
-    int fragOffsetY;
-    
+      
     FragmentFind fragFind;
     
     // Contains the item fragments used to search the snap
@@ -171,15 +166,8 @@ class ItemInfo
             printToFile.printDebugLine(this, "Failed to extract info for class_tsid " + itemClassTSID, 3);
             return false;
         }
-        
-        // Populate the fragment information for this item (deduced using the save_fragments tool)
-        if (!setFragmentDefaultsForItem())
-        {
-            printToFile.printDebugLine(this, "Error defaulting fragment defaults for class_tsid " + itemClassTSID, 3); 
-            return false;
-        }
-        
-        // Load up the item images which will be used to search the snap
+                
+        // Point to the item images which will be used to search the snap
         if (!getThisItemImages())
         {
             printToFile.printDebugLine(this, "Error getting item images for class_tsid " + itemClassTSID, 3); 
@@ -656,85 +644,13 @@ class ItemInfo
         saveChangedJSONfile = true;
         return true;
     } 
-    
-    boolean setFragmentDefaultsForItem()
-    {
-        JSONObject json;
-        JSONArray values;
-        JSONObject fragment = null;
         
-        // Read in from samples.json file - created by the save_fragments tool. Easier to read in/update
-        try
-        {
-            // Read in stuff from the existing file
-            json = loadJSONObject(dataPath("samples.json"));
-        }
-        catch(Exception e)
-        {
-            println(e);
-            printToFile.printDebugLine(this, "Failed to open samples.json file", 3);
-            return false;
-        }
-        
-        values = Utils.readJSONArray(json, "fragments", true);
-        if (!Utils.readOkFlag())
-        {
-            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-            printToFile.printDebugLine(this, "Failed to read fragments array in samples.json file", 3);
-            return false;
-        }
-        
-        for (int i = 0; i < values.size(); i++) 
-        {
-            fragment = values.getJSONObject(i);
-            String tsid = Utils.readJSONString(fragment, "class_tsid", true);
-            if (!Utils.readOkFlag() || tsid.length() == 0)
-            {
-                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                printToFile.printDebugLine(this, "Failed to read class_tsid in fragments array in samples.json file", 3);
-                return false;
-            }
-            String info = Utils.readJSONString(fragment, "info", true);
-            // Is OK if set to ""
-            if (!Utils.readOkFlag())
-            {
-                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                printToFile.printDebugLine(this, "Failed to read info in fragments array in samples.json file", 3);
-                return false;
-            }
-            
-            if ((tsid.equals(itemClassTSID)) && (info.equals(origItemExtraInfo)))
-            {
-                // Found fragment for this item
-                fragOffsetX = Utils.readJSONInt(fragment, "offset_x", true);
-                if (!okFlag)
-                {
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine(this, "Failed to read offset_x in fragments array in samples.json file", 3);
-                    return false;
-                }
-                fragOffsetY = Utils.readJSONInt(fragment, "offset_y", true);
-                if (!okFlag)
-                {
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine(this, "Failed to read offset_y in fragments array in samples.json file", 3);
-                    return false;
-                }
-                return true;
-            }
-        }
-        
-        // If we reach here then missing item from json file
-        printToFile.printDebugLine(this, "Missing class_tsid " + itemClassTSID + " and/or info field <" + origItemExtraInfo + "> in samples.json", 3);
-        return false;
-    }
-    
     public boolean saveItemChanges()
     {
         // Called once all the street snaps have been searched for this item
         String s;
         File f;
-        
+
         // Need to handle the missing items first
         if (newItemX == missCoOrds)
         {
@@ -785,7 +701,7 @@ class ItemInfo
                 // OK to then carry on in this function
             }
         }    
-        
+
         // Item has been found or has been reset as mystery quoin - so changes to write
         if (newItemX != origItemX)
         {
@@ -996,9 +912,23 @@ class ItemInfo
                     if (!itemClassTSID.equals("quoin") && !itemClassTSID.equals("marker_qurazy"))
                     {
                         itemFound = true;
+                        s = "SEARCH FOUND (skip in future) (";
+                    }
+                    else
+                    {
+                        s = "SEARCH FOUND (but keep looking) (";
                     }
                     
-                    s = "SEARCH FOUND " + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY + "(found item (skip in future) = " + itemFound + ")";             
+                    s = s + itemTSID + ") " + itemClassTSID + " x,y = " + newItemX + "," + newItemY;             
+                    if (newItemExtraInfo.length() > 0)
+                    {
+                        s = s + " " + itemExtraInfoKey + " = " + newItemExtraInfo;
+                        if (itemClassTSID.equals("quoin"))
+                        {
+                            s = s + " (" + newItemClassName + ")";
+                        }
+                    }
+                    s = s + " was x,y = " + origItemX + "," + origItemY;;             
                     if (origItemExtraInfo.length() > 0)
                     {
                         s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
@@ -1041,6 +971,7 @@ class ItemInfo
             {
                 return false;
             }
+            delay(1000);
         }
         return true;
     }
@@ -1134,15 +1065,6 @@ class ItemInfo
     {
         return newItemY;
     }
-    
-    public int readFragOffsetX()
-    {
-        return fragOffsetX;
-    }
-    public int readFragOffsetY()
-    {
-        return fragOffsetY;
-    }
    
     public boolean readSkipThisItem()
     {
@@ -1157,6 +1079,7 @@ class ItemInfo
     public boolean readOkFlag()
     {
         return okFlag;
-    }     
+    }  
+   
 
 }

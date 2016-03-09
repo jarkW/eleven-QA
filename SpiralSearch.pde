@@ -18,6 +18,12 @@ class SpiralSearch
     int startY;
     String thisItemClassTSID;
     
+    // For debug info?
+    int itemJSONX;
+    int itemJSONY;
+    int fragOffsetX;
+    int fragOffsetY;
+    
     // (dStepX, dStepY) is a vector - direction in which we move right now
     int dStepX;
     int dStepY;
@@ -47,13 +53,15 @@ class SpiralSearch
     // but then it takes much longer to run. 
     // Too big - risk false positives
     // NB QQ change shape as bounces, so need to be more generous
-    final float goodEnoughTotalRGB = 5000;
+    //final float goodEnoughTotalRGB = 20000; // but means some quoins mis-recognised.
+    //final float goodEnoughTotalRGB = 13000;
+    final float goodEnoughTotalRGB = 5000; //Missed some trees/shrines, but needed for quoins?
     //final float goodEnoughTotalRGB = 1000;
 
     //final float goodEnoughQQTotalRGB = 3 * goodEnoughTotalRGB;
     final float goodEnoughQQTotalRGB = 5 * goodEnoughTotalRGB;
 
-    public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int x, int y, int widthBox, int heightBox)
+    public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int itemX, int itemY, int offsetX, int offsetY, int widthBox, int heightBox)
     {
         okFlag = true;
         
@@ -70,14 +78,22 @@ class SpiralSearch
         }
 
         thisItemClassTSID = classTSID;
-        startX = x;
-        startY = y;
+        
+        // Work out the startX/startY - need to convert from the game JSON x,y to the Processing system
+        // Save in case we need them for reporting
+        itemJSONX = itemX;
+        itemJSONY = itemY;
+        fragOffsetX = offsetX;
+        fragOffsetY = offsetY;        
+        
+        startX = itemX + thisStreetImage.width/2 + offsetX;
+        startY = itemY + thisStreetImage.height + offsetY;
         
         spiralCount = 0; 
         RGBDiffCount = 0;
          
-        widthSearchBox = widthBox;
-        heightSearchBox = heightBox;
+        widthSearchBox = widthBox + 10;
+        heightSearchBox = heightBox + 10;
         
          // convert the searchbox to be even numbers
          // deal with odd sizes of box - by adding 1 before do divide so box
@@ -100,7 +116,9 @@ class SpiralSearch
         else
         {
            maxSpiralCount = (widthSearchBox+1) * (widthSearchBox+1);
-        }   
+        } 
+        
+        maxSpiralCount = 4000 * maxSpiralCount;
         
         // spiral variables
         dStepX = 1;
@@ -124,21 +142,22 @@ class SpiralSearch
 
         noMoreValidFragments = false; 
         
-        //printToFile.printDebugLine(this, "Continuing search for " + classTSID + " at snap x,y " + x + "," + y + " with search box wxh " + widthBox + "x" + heightBox, 1);
+        printToFile.printDebugLine(this, "Continuing search for " + classTSID + " at snap x,y " + itemX + "," + itemY + " with search box wxh " + widthBox + "x" + heightBox + " maxSpiralCount = " + maxSpiralCount, 1);
         //printHashCodes(this);
     }
     
     public boolean searchForItem()
     {        
-        noMoreValidFragments = false; 
+        noMoreValidFragments = false;
 
         for (spiralCount = 0; spiralCount < maxSpiralCount && !noMoreValidFragments; spiralCount++)
         {
             if (checkFragmentsMatch())
             {
-                printToFile.printDebugLine(this, "OK/perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
+                //printToFile.printDebugLine(this, "OK/perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 foundStepX = stepX;
                 foundStepY = stepY;
+                printToFile.printDebugLine(this, "OK/perfect Match found at  x,y " +(itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 return true;
             }
             else 
@@ -162,28 +181,31 @@ class SpiralSearch
         {
             percentagePass = 10;
         }
-
+        
+        printToFile.printDebugLine(this, " RGBDiffCount is " + RGBDiffCount + " TotalRGBDiff is " + sumTotalRGBDiff + " so " + percentagePass + "% of TotalRGBDiff is " + int(percentagePass * sumTotalRGBDiff/float(100*RGBDiffCount)), 1);
+        
         if (lowestTotalRGBDiff < (percentagePass * sumTotalRGBDiff/float(100*RGBDiffCount)))
         {
-            printToFile.printDebugLine(this, "Good enough % match found at step X " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
-            "(lowest RGB diff = " + int(lowestTotalRGBDiff) + 
+            foundStepX = lowestTotalRGBDiffStepX;
+            foundStepY = lowestTotalRGBDiffStepY;
+            printToFile.printDebugLine(this, "Good enough % match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
+            " at x,y " + (itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) +
+            //" equivalent to changes in x,y of " + readDiffX() + "," + readDiffY() +
+            //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY +
             //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) +
-            ") avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
+            " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
             " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
             " RGBDiffCount = " + RGBDiffCount +
             " spiralCount = " + spiralCount, 2);  
-          
-            foundStepX = lowestTotalRGBDiffStepX;
-            foundStepY = lowestTotalRGBDiffStepY;
             return true;
         }
         else
         {
             // Consider item not found
-            printToFile.printDebugLine(this, "No match found, for reference, lowest RGB Diffstep X" + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
-           " (lowest RGB diff = " + int(lowestTotalRGBDiff) + 
+            printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) + 
+            //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
             //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) + 
-            ") avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
+            " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
             " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
             " RGBDiffCount = " + RGBDiffCount +
             " spiralCount = " + spiralCount, 1);  
@@ -228,7 +250,7 @@ class SpiralSearch
                 (stepY < startY - heightSearchBox/2) || (stepY > startY + heightSearchBox/2))
             {
                 // invalid value - off edge of archive snap, or outside searchbox area so skip this one and continue
-                printToFile.printDebugLine(this, "Off edge of street snap/outside search box - skip this RGB comparison (stepX = " + stepX + " stepY = " + stepY + ")", 1);    
+                //printToFile.printDebugLine(this, "Off edge of street snap/outside search box - skip this RGB comparison (stepX = " + stepX + " stepY = " + stepY + ")", 1);    
                 spiralCount++;
             }            
             else
@@ -376,12 +398,15 @@ class SpiralSearch
             percentagePass = 10;
         }
         String s = "lowest RGB was " + lowestTotalRGBDiff + 
-                    " lowestTotalRGBDiffStepX = " + lowestTotalRGBDiffStepX + " lowestTotalRGBDiffStepY = " + lowestTotalRGBDiffStepY + 
+                    //" lowestTotalRGBDiffStepX = " + lowestTotalRGBDiffStepX + 
+                    //" lowestTotalRGBDiffStepY = " + lowestTotalRGBDiffStepY + 
                     " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
                     " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
                     " RGBDiffCount = " + RGBDiffCount +
-                    " foundStepX = " + foundStepX + 
-                    " foundStepY = " + foundStepY + 
+                    //" foundStepX = " + foundStepX + 
+                    //" foundStepY = " + foundStepY + 
+                    " at x,y " + (itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) +
+                    //" equivalent to changes in x,y of " + readDiffX() + "," + readDiffY() +
                     " spiralCount = " + spiralCount;
 
         return s;

@@ -435,15 +435,15 @@ class JSONDiff
     {
         if (infoMsgList.size() == 0)
         {
-            printToFile.printDebugLine(this, "JSONDIFF: No changes for item" + itemTSID, 3);
-            printToFile.printOutputLine("JSONDIFF: No changes for item" + itemTSID);
+            printToFile.printDebugLine(this, "JSONDIFF: No changes for item" + itemTSID, 1);
+            //printToFile.printOutputLine("JSONDIFF: No changes for item" + itemTSID);
             return;
         }
         // Changes found for street - print them all out
         for (int i = 0; i < infoMsgList.size(); i++)
         {
-            printToFile.printDebugLine(this, "JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i), 3);
-            printToFile.printOutputLine("JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i));
+            printToFile.printDebugLine(this, "JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i), 1);
+            //printToFile.printOutputLine("JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i));
         }
         
     }

@@ -83,7 +83,9 @@ class FragmentFindOld
         spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
                                         streetSnaps.get(streetImageBeingUsed).readPNGImage(), 
                                         thisItemInfo.readItemClassTSID(),
-                                        startX, startY, defSearchBox, defSearchBox);
+                                        thisItemInfo.readOrigItemX(), thisItemInfo.readOrigItemY(), 
+                                        itemImages.get(itemImageBeingUsed).readPNGImage(), 
+                                        defSearchBox, defSearchBox);
                        
         printToFile.printDebugLine(this, "Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY), 2);
     }

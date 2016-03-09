@@ -307,16 +307,7 @@ class StreetInfo
                 return false;
             }
         }
-
-/*
-MOVE TO TOP LEVEL SO CAN LOAD STREET SNAP BEFORE CALLING THIS
-        if (!readStreetItemData())
-        {
-            printToFile.printDebugLine(this, "Error in readStreetItemData", 3);
-            okFlag = false;
-            return false;
-        }
-*/       
+       
         return true;
     }
     
@@ -329,12 +320,15 @@ MOVE TO TOP LEVEL SO CAN LOAD STREET SNAP BEFORE CALLING THIS
             // Item needs to be skipped/or has already been found
             // Move onto next one
             printToFile.printDebugLine(this, "Skipping item " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
-                                       itemInfo.get(itemBeingProcessed).readOrigItemExtraInfo() + ") " + 
-                                       itemInfo.get(itemBeingProcessed).readItemTSID(), 1); 
-            (void) moveToNextItem();
+                                       itemInfo.get(itemBeingProcessed).readOrigItemExtraInfo() + ") " + itemInfo.get(itemBeingProcessed).readItemTSID(), 1);
+                                       
+            // As we just want to pass control back up, don't care about the succes/failure - top level will handle that
+            if (moveToNextItem())
+            {
+            }
             return;
         }
-        
+       
         //printToFile.printDebugLine(this, "Enter processItem memory ", 1);
         //memory.printMemoryUsage();
         
@@ -389,6 +383,7 @@ MOVE TO TOP LEVEL SO CAN LOAD STREET SNAP BEFORE CALLING THIS
         }
         //printToFile.printDebugLine(this, "Exit 2 processItem memory ", 1);
         //memory.printMemoryUsage();
+
     }
     
     boolean moveToNextItem()
@@ -405,7 +400,6 @@ MOVE TO TOP LEVEL SO CAN LOAD STREET SNAP BEFORE CALLING THIS
               
             streetSnapBeingUsed++;
             if (streetSnapBeingUsed >= streetSnaps.size() || ifAllItemsFound())
-            //if (streetSnapBeingUsed >= streetSnaps.size())
             {
                 // Reached end of street snaps so mark street as finished OR all the valid items have been found
                 // First need to write all the item changes to file
@@ -513,21 +507,5 @@ MOVE TO TOP LEVEL SO CAN LOAD STREET SNAP BEFORE CALLING THIS
     {
         return invalidStreet;
     }
-    
-    /*
-    public ArrayList<PNGFile> getItemImages(String itemClassTSID)
-    {
-         // Passes this down to the item image handler
-         return (itemImagesHashMap.getItemImages(itemClassTSID));
-    }
-    
-    public boolean loadItemImages(String itemClassTSID)
-    {
-         // Passes this down to the item image handler
-         return (itemImagesHashMap.loadItemImages(itemClassTSID));
-    }
-    */
-    
-    
     
 }

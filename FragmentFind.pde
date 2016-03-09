@@ -11,9 +11,9 @@ class FragmentFind
     SpiralSearch spiralSearch;
     ItemInfo thisItemInfo;
     
-    // x,y on street where need to start the item search (i.e. converted item JSON x,y)
-    int startX;
-    int startY;
+    // x,y on street where need to start the item search - might be the original x,y or new x,y for a quoin (as have to keep searching snaps for quoins)
+    int startItemX;
+    int startItemY;
     
     int newItemX;
     int newItemY;
@@ -84,31 +84,38 @@ class FragmentFind
         // For most items, the search will only be done once so the starting point is the JSON x,y. And the search box will be the default
         // 20x20 size. But for quoins/QQ the search is done on all streets even if a match is found - to find the y variation. In this case
         // is more efficient to start the search with the latest x,y co-ords.
+
+        
         if ((thisItemInfo.readItemClassTSID().equals("quoin") || thisItemInfo.readItemClassTSID().equals("marker_qurazy")) && thisItemInfo.readNewItemX() != missCoOrds)
         {
             // Already have the co-ordinates for a matching quoin/QQ - so use those
-            startX = thisItemInfo.readNewItemX() + streetSnapImage.readPNGImageWidth()/2 + thisItemInfo.readFragOffsetX();
-            startY = thisItemInfo.readNewItemY() + streetSnapImage.readPNGImageHeight() + thisItemInfo.readFragOffsetY();
+            startItemX = thisItemInfo.readNewItemX();
+            startItemY = thisItemInfo.readNewItemY();
             searchBoxWidth = narrowSearchWidthBox;
             searchBoxHeight = defSearchBox;
-            printToFile.printDebugLine(this, "Continuing search for quoin/QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY), 2);
+            printToFile.printDebugLine(this, "Continuing search for quoin/QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + startItemX + "," + startItemY, 2);
         }
         else
         {
             // First time through for QQ/quoins and for all other items - use default 20x20 box and start at JSON x,y
-            startX = thisItemInfo.readOrigItemX() + streetSnapImage.readPNGImageWidth()/2 + thisItemInfo.readFragOffsetX();
-            startY = thisItemInfo.readOrigItemY() + streetSnapImage.readPNGImageHeight() + thisItemInfo.readFragOffsetY();
+            startItemX = thisItemInfo.readOrigItemX();
+            startItemY = thisItemInfo.readOrigItemY();
             searchBoxWidth = defSearchBox;
             searchBoxHeight = defSearchBox;
-            printToFile.printDebugLine(this, "Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + str(startX) + "," + str(startY), 2);
+            printToFile.printDebugLine(this, "Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY(), 2);
         }
-        
+        // Set up the structure to actually do the search
         spiralSearch = null;
         System.gc();
         spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
-                            streetSnapImage.readPNGImage(), 
-                            thisItemInfo.readItemClassTSID(),
-                            startX, startY, searchBoxWidth, searchBoxHeight);
+            streetSnapImage.readPNGImage(), 
+            thisItemInfo.readItemClassTSID(),
+            startItemX,
+            startItemY, 
+            itemImages.get(itemImageBeingUsed).readFragOffsetX(),
+            itemImages.get(itemImageBeingUsed).readFragOffsetY(),
+            searchBoxWidth, searchBoxHeight);
+
         if (!spiralSearch.readOkFlag()) 
         {
             okFlag = false;
@@ -129,14 +136,13 @@ class FragmentFind
         display.showStreetFragmentImage(streetSnapImage.readPNGImage(), 
                                 itemImages.get(itemImageBeingUsed).readPNGImageWidth(), 
                                 itemImages.get(itemImageBeingUsed).readPNGImageHeight(),
-                                startX, startY);
-                                
+                                startItemX + streetSnapImage.readPNGImage().width/2 + itemImages.get(itemImageBeingUsed).readFragOffsetX(),
+                                startItemY + streetSnapImage.readPNGImage().height + itemImages.get(itemImageBeingUsed).readFragOffsetY());
         display.showStreetImage(streetSnapImage.readPNGImage(), streetSnapImage.readPNGImageName());
         
         // Carry out the search for the item and depending on the result might then move on to look at the next image
         if (spiralSearch.searchForItem())
         {   
-            printToFile.printDebugLine(this, "searchForFragment - Item found", 1);
             // Item was found so save the new x,y and other information
             itemFound = true;
             // Match has been found - might be perfect or good enough - so save the information 
@@ -146,6 +152,7 @@ class FragmentFind
             newItemExtraInfo = extractItemInfoFromItemImageFilename();
             debugInfo = spiralSearch.debugRGBInfo(); 
             searchDone = true;
+            printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY, 1);
         }
         else
         {
@@ -174,7 +181,12 @@ class FragmentFind
                     spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
                     streetSnapImage.readPNGImage(), 
                     thisItemInfo.readItemClassTSID(),
-                    startX, startY, searchBoxWidth, searchBoxHeight);
+                    startItemX,
+                    startItemY,
+                    itemImages.get(itemImageBeingUsed).readFragOffsetX(),
+                    itemImages.get(itemImageBeingUsed).readFragOffsetY(),
+                    searchBoxWidth, searchBoxHeight);                    
+
                     if (!spiralSearch.readOkFlag()) 
                     {
                         return false;
@@ -182,7 +194,7 @@ class FragmentFind
                 }
             }
         }
-           
+        
         if (searchDone)
         {
             // Dump out debug info to give me some idea of whether I've gotten the searchbox the right size or not

@@ -18,6 +18,7 @@ class ItemImages
   
     public boolean loadAllItemImages()
     { 
+        int imageCount = 0;
         // This function initialises and then loads all images - done at start of program
         ArrayList<PNGFile> itemImages = new ArrayList<PNGFile>();       
         
@@ -33,6 +34,7 @@ class ItemImages
         {
             return false;
         }
+        imageCount = imageCount + itemImages.size();
         
         itemImages = new ArrayList<PNGFile>();
         itemImages.add(new PNGFile("marker_qurazy.png", false));  
@@ -42,6 +44,7 @@ class ItemImages
         {
             return false;
         }
+        imageCount = imageCount + itemImages.size();
         
         itemImages = new ArrayList<PNGFile>();
         itemImages.add(new PNGFile("trant_bean.png", false));
@@ -60,6 +63,7 @@ class ItemImages
         {
             return false;
         }
+        imageCount = imageCount + itemImages.size();
         
         itemImages = new ArrayList<PNGFile>();
         itemImages.add(new PNGFile("visiting_stone_left.png", false));  
@@ -70,6 +74,7 @@ class ItemImages
         {
             return false;
         }
+        imageCount = imageCount + itemImages.size();
   
         itemImages = new ArrayList<PNGFile>();
         itemImages.add(new PNGFile("npc_mailbox_mailboxLeft.png", false));  
@@ -80,6 +85,7 @@ class ItemImages
         {
             return false;
         }
+        imageCount = imageCount + itemImages.size();
         
         itemImages = new ArrayList<PNGFile>();
         itemImages.add(new PNGFile("paper_tree.png", false));  
@@ -89,6 +95,7 @@ class ItemImages
         {
             return false;
         }
+        imageCount = imageCount + itemImages.size();
         
         // Now create one entry for each of the rock snaps
         String [] imageFilenames = null;
@@ -109,6 +116,7 @@ class ItemImages
             {
                 return false;
             }
+            imageCount = imageCount + itemImages.size();
         } 
         
 
@@ -132,6 +140,7 @@ class ItemImages
             {
                 return false;
             }
+            imageCount = imageCount + itemImages.size();
         } 
 
 // TO DO
@@ -150,125 +159,10 @@ class ItemImages
             // jellisac_*
             // ice_knob_*
             // dust_trap_*
-        
+        printToFile.printDebugLine(this, "Loaded " + imageCount + "images in hashmap", 1);
         return true;
     }
-    /*
-    public boolean loadItemImages(String itemClassTSID, String origItemExtraInfo)
-    {
-        // IS THIS EVER USED???
-        
-        
-        // NB this function just loads up the file image names - they are not loaded into memory. This is done separately by calling function.
-        ArrayList<PNGFile> itemImages = new ArrayList<PNGFile>();
-        PNGFile itemPNG;
-        int i;
-        
-        // First check to see if the item has already been loaded up for this street
-        if (itemImageHashMap.get(itemClassTSID) != null)
-        {
-            printToFile.printDebugLine(this, "Already loaded images for " + itemClassTSID + "(" + origItemExtraInfo + ")", 1);
-            return true;
-        }
-        
-        // The names of the images are deduced from the classTSID and info fields.
-        // For some items, additional checks are done so that the most likely snap is
-        // the first one to be used. 
-        
-        // First set create all the entries in the itemImages - loading the snaps will be done later
-        if (itemClassTSID.indexOf("npc_sloth", 0) == 0)
-        {
-            printToFile.printDebugLine(this, "NEED TO CONFIGURE SLOTH in setupItemImages ", 3);
-            return false;
-        }
-        else if (itemClassTSID.indexOf("quoin", 0) == 0)
-        {
-            if (!configInfo.readChangeXYOnly())
-            {
-                // As we are setting quoins from the snap, load up the most common quoins first
-                itemImages.add(new PNGFile("quoin_xp.png", false));
-                itemImages.add(new PNGFile("quoin_energy.png", false));
-                itemImages.add(new PNGFile("quoin_mood.png", false));
-                itemImages.add(new PNGFile("quoin_currants.png", false));
-                itemImages.add(new PNGFile("quoin_favor.png", false));
-                itemImages.add(new PNGFile("quoin_time.png", false));
-            }
-            else
-            {
-                // As only changing the x,y can just load up the relevant snap (including mystery quoins)
-                itemImages.add(new PNGFile(itemClassTSID + "_" + origItemExtraInfo + ".png", false));
-            }
-        }
-        else if ((itemClassTSID.indexOf("wood_tree", 0) == 0) || (itemClassTSID.indexOf("trant_", 0) == 0))
-        {
-            // Are dealing with a tree but this probably doesn't match the snap
-            // Therefore OK to just load up the tree images in order of occurrence 
-            // and hope that is not too slow. 
-            // Paper trees are done separately as they can never be replanted as something else.
-            itemImages.add(new PNGFile("trant_bean.png", false));
-            itemImages.add(new PNGFile("trant_fruit.png", false));
-            itemImages.add(new PNGFile("trant_bubble.png", false));
-            itemImages.add(new PNGFile("trant_spice.png", false));
-            itemImages.add(new PNGFile("trant_gas.png", false));
-            itemImages.add(new PNGFile("trant_egg.png", false));
-            itemImages.add(new PNGFile("wood_tree_1.png", false));    
-            itemImages.add(new PNGFile("wood_tree_2.png", false));  
-            itemImages.add(new PNGFile("wood_tree_3.png", false));  
-            itemImages.add(new PNGFile("wood_tree_4.png", false));             
-        }
-        else
-        {
-            // Can search for images based on the class_tsid and info fields
-            // Rest of items do not have a dir field (or in case of shrines, only ever set to right, so only one image to load
-            // npc_shrine_* (will only ever be _right variety)
-            // visiting_stone (just load up both variants)
-            // wall_button (load up both variants, left will be first, which suits us)
-            // npc_mailbox (load up both variants)
-            // sloth_knocker
-            // patch
-            // patch_dark
-            // party_atm
-            // race_ticket_dispenser
-            // rock_*
-            // peat_*
-            // marker_qurazy
-            // paper_tree (as can only ever be a paper tree/not planted by player)
-            // dirt_pile
-            // mortar_barnacle
-            // jellisac
-            // ice_knob
-            // dust_trap
-            String itemImagePNGName = itemClassTSID;
-            if (origItemExtraInfo.length() > 0)
-            {
-                itemImagePNGName = itemImagePNGName + "_" + origItemExtraInfo;
-            }
-            
-            // Work out how many item images exist
-            String [] imageFilenames = null;
-            imageFilenames = Utils.loadFilenames(dataPath(""), itemImagePNGName);
-
-            if ((imageFilenames == null) || (imageFilenames.length == 0))
-            {
-                printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for item/info " + itemImagePNGName, 3);
-                return false;
-            }
-       
-            // Now create am entry for each of the snaps
-            for (i = 0; i < imageFilenames.length; i++) 
-            {
-                // This currently never returns an error
-                itemImages.add(new PNGFile(imageFilenames[i], false));
-            } 
-        }
-
-        // Images have all been added (although not loaded into memory) - add the images for this item to the hash map
-        itemImageHashMap.put(itemClassTSID, itemImages);
-        printToFile.printDebugLine(this, "Loaded images for " + itemClassTSID + "(" + origItemExtraInfo + ")", 1);
-        
-        return true;
-    }
-   */    
+    
     public ArrayList<PNGFile> getItemImages(String itemClassTSID)
     {
         // Up to the calling function to make sure this is not null 
@@ -301,6 +195,7 @@ class ItemImages
        return true; 
     }
     
+    
     public void unloadItemImages(String itemClassTSID)
     {
         ArrayList<PNGFile> itemImages = itemImageHashMap.get(itemClassTSID);
@@ -320,4 +215,10 @@ class ItemImages
             }
         }
     }
+    
+     public int sizeOf()
+    {
+        return itemImageHashMap.size();
+    }
+    
 }

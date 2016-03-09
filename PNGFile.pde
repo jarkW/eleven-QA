@@ -5,6 +5,10 @@ class PNGFile
     PImage PNGImage;
     int PNGImageHeight;
     int PNGImageWidth;
+
+    // Offset from the actual x,y of the item for this fragment
+    int fragOffsetX;
+    int fragOffsetY;
     
     boolean okFlag;
     boolean isStreetSnapFlag;
@@ -17,12 +21,29 @@ class PNGFile
         isStreetSnapFlag = isStreetSnap;
         PNGImage = null;
     }
-    
+        
     public boolean setupPNGImage()
     {
         if (!loadPNGImage())
         {
             return false;
+        }
+        
+        if (!isStreetSnapFlag)
+        {
+            // set up the offset values for item images
+            
+            // From the file name - use the first bit as the key to the offset array (as is classTSID "_" info)
+            // Save the shifting from item x,y in order to use this item image as a search tool
+            // Varies between snaps e.g. of quoins or trees. 
+            Offsets fragOffsets = allFragmentOffsets.getFragmentOffsets(PNGImageName.replace(".png", ""));
+            if (fragOffsets == null)
+            {
+                printToFile.printDebugLine(this, "Unable to access fragment offsets for item image " + PNGImageName, 3);
+                return false;
+            }
+            fragOffsetX = fragOffsets.readOffsetX();
+            fragOffsetY = fragOffsets.readOffsetY();
         }
                
         PNGImageWidth = PNGImage.width;
@@ -34,6 +55,16 @@ class PNGFile
     public boolean readOkFlag()
     {
         return okFlag;
+    }
+    
+    public int readFragOffsetX()
+    {
+        return fragOffsetX;
+    }
+    
+    public int readFragOffsetY()
+    {
+        return fragOffsetY;
     }
     
     public String readPNGImageName()

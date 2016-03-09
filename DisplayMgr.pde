@@ -24,10 +24,12 @@ class DisplayMgr
     
     public void showInfoMsg(String info)
     {
+        String s = "                                                                                                 ";
         fill(50);
         textSize(14);
         // Want text to go along bottom - so set relative to height of display
         //text( x, y, width, height)
+        text(s, 10, height - 50, width, 50);  // Text wraps within text box
         text(info, 10, height - 50, width, 50);  // Text wraps within text box
     }
     
