@@ -148,6 +148,14 @@ class ItemInfo
             return false;
         }
         
+        // Populate the info field for some items e.g. quoins, dirt etc
+        if (!extractItemInfoFromJson())
+        {
+            // Error populating info field
+            printToFile.printDebugLine(this, "Failed to extract info for class_tsid " + itemClassTSID, 3);
+            return false;
+        }
+        
         // Before proceeding any further need to check if this is an item we are
         // scanning for - skip if not
         if (!validItemToCheckFor())
@@ -158,15 +166,7 @@ class ItemInfo
             skipThisItem = true;
             return true;
         }
-                          
-        // Populate the info field for some items e.g. quoins, dirt etc
-        if (!extractItemInfoFromJson())
-        {
-            // Error populating info field
-            printToFile.printDebugLine(this, "Failed to extract info for class_tsid " + itemClassTSID, 3);
-            return false;
-        }
-                
+                                
         // Point to the item images which will be used to search the snap
         if (!getThisItemImages())
         {
@@ -212,7 +212,6 @@ class ItemInfo
         
         switch (itemClassTSID)
         {
-            case "quoin":
             case "marker_qurazy":
             case "wood_tree":
             case "paper_tree":
@@ -235,6 +234,15 @@ class ItemInfo
             case "bag_notice_board":
                 return true;
                 
+            case "quoin":
+                // Do not want to search for temporary qurazy quoin as we use the marker_qurazy instead
+                if (origItemExtraInfo.equals("qurazy"))
+                {
+                    printToFile.printDebugLine(this, "Skipping item " + itemTSID + " quoin (qurazy)", 2);
+                    return false;
+                }
+                return true;
+
             default:
                 // Unexpected class tsid - so skip the item
                 printToFile.printDebugLine(this, "Skipping item " + itemTSID + " class tsid " + itemClassTSID, 2);
@@ -389,6 +397,8 @@ class ItemInfo
                 {
                     return false;
                 }
+                
+                
                 break;
    
             case "wall_button":

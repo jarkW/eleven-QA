@@ -41,6 +41,9 @@ class SpiralSearch
     int lowestTotalRGBDiffStepX;
     int lowestTotalRGBDiffStepY;
     
+    // Test using either % pass or simple numerical boundary 
+    boolean usePercentageMethod = false;
+    
     // final found difference in x,y
     int foundStepX;
     int foundStepY;
@@ -152,7 +155,7 @@ class SpiralSearch
 
         noMoreValidFragments = false; 
         
-        printToFile.printDebugLine(this, "Continuing search for " + classTSID + " at snap x,y " + itemX + "," + itemY + " with search box wxh " + widthBox + "x" + heightBox + " maxSpiralCount = " + maxSpiralCount, 1);
+        printToFile.printDebugLine(this, "New SpiralSearch for " + classTSID + " at snap x,y " + itemX + "," + itemY + " with search box wxh " + widthBox + "x" + heightBox + " maxSpiralCount = " + maxSpiralCount, 1);
         //printHashCodes(this);
     }
     
@@ -165,10 +168,11 @@ class SpiralSearch
         {
             if (checkFragmentsMatch())
             {
-                //printToFile.printDebugLine(this, "OK/perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
+                // This only returns true for a perfect match - for everything else do a full search and then just take the smallest RGBDiff as the result
+                //printToFile.printDebugLine(this, "Perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 foundStepX = stepX;
                 foundStepY = stepY;
-                printToFile.printDebugLine(this, "OK/perfect Match found at  x,y " +(itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
+                printToFile.printDebugLine(this, "Perfect Match found at  x,y " +(itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 return true;
             }
             else 
@@ -179,49 +183,86 @@ class SpiralSearch
         }
         
         // Reached end of matching QA fragment against archive snap - need to see if the lowest RGB diff is good enough to be a match
-        // Assume good enough if less than 10% of average total_rgb_diff measured
+        
+        if (usePercentageMethod)
+        {
+            // Assume good enough if less than 10% of average total_rgb_diff measured
                    
-        // Need to be more generous for QQ because shape changes as bounces
-        float percentagePass;
-        if (thisItemClassTSID == "marker_qurazy")
-        {
-            //percentagePass = 15;
-            percentagePass = 25;
+            // Need to be more generous for QQ because shape changes as bounces
+            float percentagePass;
+            if (thisItemClassTSID == "marker_qurazy")
+            {
+                //percentagePass = 15;
+                percentagePass = 25;
+            }
+            else
+            {
+                percentagePass = 10;
+            }
+        
+            printToFile.printDebugLine(this, " RGBDiffCount is " + RGBDiffCount + " TotalRGBDiff is " + sumTotalRGBDiff + " so " + percentagePass + "% of TotalRGBDiff is " + int(percentagePass * sumTotalRGBDiff/float(100*RGBDiffCount)), 1);
+        
+            if (lowestTotalRGBDiff < (percentagePass * sumTotalRGBDiff/float(100*RGBDiffCount)))
+            {
+                foundStepX = lowestTotalRGBDiffStepX;
+                foundStepY = lowestTotalRGBDiffStepY;
+                printToFile.printDebugLine(this, "Good enough % match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
+                " at x,y " + (itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) +
+                //" equivalent to changes in x,y of " + readDiffX() + "," + readDiffY() +
+                //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY +
+                //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) +
+                " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
+                " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
+                " RGBDiffCount = " + RGBDiffCount +
+                " spiralCount = " + spiralCount, 2);  
+                return true;
+            }
+            else
+            {
+                // Consider item not found
+                printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) + 
+                //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
+                //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) + 
+                " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
+                " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
+                " RGBDiffCount = " + RGBDiffCount +
+                " spiralCount = " + spiralCount, 1);  
+                foundStepX = missCoOrds;
+                foundStepY = missCoOrds;
+            }
         }
         else
         {
-            percentagePass = 10;
-        }
-        
-        printToFile.printDebugLine(this, " RGBDiffCount is " + RGBDiffCount + " TotalRGBDiff is " + sumTotalRGBDiff + " so " + percentagePass + "% of TotalRGBDiff is " + int(percentagePass * sumTotalRGBDiff/float(100*RGBDiffCount)), 1);
-        
-        if (lowestTotalRGBDiff < (percentagePass * sumTotalRGBDiff/float(100*RGBDiffCount)))
-        {
-            foundStepX = lowestTotalRGBDiffStepX;
-            foundStepY = lowestTotalRGBDiffStepY;
-            printToFile.printDebugLine(this, "Good enough % match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
-            " at x,y " + (itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) +
-            //" equivalent to changes in x,y of " + readDiffX() + "," + readDiffY() +
-            //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY +
-            //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) +
-            " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
-            " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
-            " RGBDiffCount = " + RGBDiffCount +
-            " spiralCount = " + spiralCount, 2);  
-            return true;
-        }
-        else
-        {
-            // Consider item not found
-            printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) + 
-            //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
-            //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) + 
-            " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
-            " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
-            " RGBDiffCount = " + RGBDiffCount +
-            " spiralCount = " + spiralCount, 1);  
-            foundStepX = missCoOrds;
-            foundStepY = missCoOrds;
+            // Just do simple compare to boundary level - treat QQ differently to other items           
+            if ((thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < goodEnoughQQTotalRGB)) || 
+                (!thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < goodEnoughTotalRGB)))
+            {
+                foundStepX = lowestTotalRGBDiffStepX;
+                foundStepY = lowestTotalRGBDiffStepY;
+                printToFile.printDebugLine(this, "Good enough % match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
+                " at x,y " + (itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) +
+                //" equivalent to changes in x,y of " + readDiffX() + "," + readDiffY() +
+                //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY +
+                //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) +
+                " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
+                " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
+                " RGBDiffCount = " + RGBDiffCount +
+                " spiralCount = " + spiralCount, 2);  
+                return true;
+            }
+            else
+            {
+                // Consider item not found
+                printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) + 
+                //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
+                //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) + 
+                " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
+                " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
+                " RGBDiffCount = " + RGBDiffCount +
+                " spiralCount = " + spiralCount, 1);  
+                foundStepX = missCoOrds;
+                foundStepY = missCoOrds;
+            }
         }
              
         // If reached this stage - failed to find item
@@ -346,11 +387,12 @@ class SpiralSearch
         {
             return true;
         }
-        else if (totalRGBDiff < goodEnoughTotalRGB)
-        {
-            sumTotalRGBDiff += totalRGBDiff;
-            return true;
-        }
+        // leave this check out - only return true if perfect match, otherwise search the entire snap and take the lowest value
+        //else if (totalRGBDiff < goodEnoughTotalRGB)
+        //{
+            //sumTotalRGBDiff += totalRGBDiff;
+           //return true;
+        //}
         else
         {
             if ((stepX == startX) && (stepY == startY))

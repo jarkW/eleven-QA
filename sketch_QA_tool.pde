@@ -43,8 +43,8 @@
         // for quoins - nothing set i.e. all 0
         // for original rocks - brightness is 5, contrast 20 and  saturation -20
         // Would be best to read the G* JSON file and then change the setting son the item Image to match
-        
- 
+    
+
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
  // Rather than failing after an hour.
  

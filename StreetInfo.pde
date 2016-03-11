@@ -208,17 +208,27 @@ class StreetInfo
         {
             // the dynamic level is sometimes missing ... so just set it to point at the original json object and continue on
             printToFile.printDebugLine(this, "Reading geo file - failed to read dynamic " + geoFileName, 2);
+            if (dynamic == null)
+            {
+                printToFile.printDebugLine(this, "Reading geo file - dynamic 1 is null " + geoFileName, 2);
+            }
             dynamic = json;
+            if (dynamic == null)
+            {
+                printToFile.printDebugLine(this, "Reading geo file - dynamic 2 is null " + geoFileName, 2);
+            }
         }
         JSONObject layers = Utils.readJSONObject(dynamic, "layers", true);
+        
         if (Utils.readOkFlag() && layers != null)
         {
             JSONObject middleground = Utils.readJSONObject(layers, "middleground", true);
             if (Utils.readOkFlag() && middleground != null)
             {
-                JSONObject filtersNEW = Utils.readJSONObject(layers, "filtersNEW", true);
+                JSONObject filtersNEW = Utils.readJSONObject(middleground, "filtersNEW", true);
                 if (Utils.readOkFlag() && filtersNEW != null)
                 {
+                    printToFile.printDebugLine(this, "size of filtersNew is " + filtersNEW.size() + " in " + geoFileName, 2);
                     // extract the fields inside
                     JSONObject filtersNewObject = Utils.readJSONObject(filtersNEW, "tintColor", true);
                     if (Utils.readOkFlag() && filtersNewObject != null)
@@ -248,7 +258,7 @@ class StreetInfo
                 }
                 else
                 {
-                    printToFile.printDebugLine(this, "Reading geo file - failed to read filtersNEW " + geoFileName, 2);
+                    printToFile.printDebugLine(this, "Reading geo file - failed to read filtersNEW " + geoFileName, 1);
                 }
             }
             else
@@ -260,7 +270,9 @@ class StreetInfo
          {
              printToFile.printDebugLine(this, "Reading geo file - failed to read layers " + geoFileName, 2);
          }
-  
+         printToFile.printDebugLine(this, "After reading geo file  " + geoFileName + " TintColor = " + geoTintColor + " TintAmount = " + geoTintAmount +
+                                         " geoContrast = " + geoContrast + " geoSaturation = " + geoSaturation + " Brightness = " + geoBrightness, 1);  
+          
          // Everything OK   
         return true;
     }
