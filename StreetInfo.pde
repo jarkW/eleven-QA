@@ -285,7 +285,7 @@ class StreetInfo
         // Work out how many street snaps exist
         String [] snapFilenames = Utils.loadFilenames(configInfo.readStreetSnapPath(), streetName);
 
-        if (snapFilenames.length == 0)
+        if (snapFilenames == null || snapFilenames.length == 0)
         {
             printToFile.printDebugLine(this, "SKIPPING STREET - No street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
             display.setSkippedStreetsMsg("Skipping street " + streetName + ": No street snaps found");

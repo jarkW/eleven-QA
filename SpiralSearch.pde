@@ -1,5 +1,8 @@
 class SpiralSearch
 {
+    //flag to show if using normal colour matching or black/white to counteract contrast/tint on street
+    boolean doBlackWhiteComparison = true;
+    
     // Number of times attempt search has been carried out on street snap
     int spiralCount;
     // As the spiral path is sometimes outside the search box, this is the actual count of
@@ -14,6 +17,7 @@ class SpiralSearch
     
     PImage thisItemImage;
     PImage thisStreetImage;
+    PImage modStreetImage;
     int startX;
     int startY;
     String thisItemClassTSID;
@@ -70,19 +74,7 @@ class SpiralSearch
         // Initialise variables      
         thisItemImage = itemImage;
         thisStreetImage = streetImage;
-       
-        // Adjust each item image
-        // Do we need to look at middleground?
-        // in G* dynamic -> layers -> middleground -> filtersNEW e,g, brightness, contrast, saturation, hue
-        // for original shrines - brightness is 1, contrast 20 and saturation -20
-        // for original trees - brightness is 1, contrast 20 and  saturation -20
-        // for quoins - nothing set i.e. all 0
-        // for original rocks - brightness is 5, contrast 20 and  saturation -20
-        // Would be best to read the G* JSON file and then change the setting son the item Image to match
-        //thisItemImage.filter(POSTERIZE, 8);
-        //thisStreetImage.filter(POSTERIZE, 8);
-        println("streetInfo saturation is ", streetInfo.readGeoSaturation(), " brightness is ", streetInfo.readGeoBrightness());
-        
+               
         if (thisStreetImage == null)
         {
             printToFile.printDebugLine(this, "Null street image passed in to new SpiralSearch", 1);
@@ -104,7 +96,8 @@ class SpiralSearch
         
         spiralCount = 0; 
         RGBDiffCount = 0;
-         
+        
+         // DO WE NEED TO DO THIS???
         widthSearchBox = widthBox + 10;
         heightSearchBox = heightBox + 10;
         
@@ -172,7 +165,7 @@ class SpiralSearch
                 //printToFile.printDebugLine(this, "Perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 foundStepX = stepX;
                 foundStepY = stepY;
-                printToFile.printDebugLine(this, "Perfect Match found at  x,y " +(itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
+                printToFile.printDebugLine(this, "Perfect Match found at  x,y " +(itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) + " with lowestTotalRGBDiff = " + int(lowestTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 return true;
             }
             else 
@@ -239,7 +232,7 @@ class SpiralSearch
             {
                 foundStepX = lowestTotalRGBDiffStepX;
                 foundStepY = lowestTotalRGBDiffStepY;
-                printToFile.printDebugLine(this, "Good enough % match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
+                printToFile.printDebugLine(this, "Good enough match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
                 " at x,y " + (itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) +
                 //" equivalent to changes in x,y of " + readDiffX() + "," + readDiffY() +
                 //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY +
@@ -248,6 +241,15 @@ class SpiralSearch
                 " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
                 " RGBDiffCount = " + RGBDiffCount +
                 " spiralCount = " + spiralCount, 2);  
+                
+                PImage streetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
+                image(thisItemImage, 750, 100, 50, 50);
+                image(streetFragment, 650, 100, 50, 50);
+                fill(50);
+                text("good enough fit (RGBDiff = " + int(lowestTotalRGBDiff) + ")  step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
+                
+                
+                
                 return true;
             }
             else
@@ -317,7 +319,7 @@ class SpiralSearch
             }
         }
     }
-    
+
     boolean checkFragmentsMatch()
     {
     
@@ -338,6 +340,17 @@ class SpiralSearch
     
         // Register fact that doing another RGB comparison
         RGBDiffCount++;
+                
+        PImage streetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
+        PImage itemFragment = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
+        // Draw out image pre-conversion  
+        streetFragment = convertImage(streetFragment);
+        itemFragment = convertImage(itemFragment);
+        
+        // Don't draw these out now - only want to show the closest match ones.
+        //image(streetFragment, 650, 100, 50, 50);
+        //image(itemFragment, 750, 100, 50, 50);
+        
         
         for (int pixelYPosition = 0; pixelYPosition < thisItemImage.height; pixelYPosition++) 
         {
@@ -347,30 +360,27 @@ class SpiralSearch
                 //int loc = pixelXPosition + (pixelYPosition * streetItemInfo[streetItemCount].sampleWidth);
                         
                 // For street snap
-                locStreet = (stepX + pixelXPosition) + ((stepY + pixelYPosition) * thisStreetImage.width);
-                rStreet = red(thisStreetImage.pixels[locStreet]);
-                gStreet = green(thisStreetImage.pixels[locStreet]);
-                bStreet = blue(thisStreetImage.pixels[locStreet]);
+                locStreet = pixelXPosition + (pixelYPosition * thisItemImage.width);
+                rStreet = red(streetFragment.pixels[locStreet]);
+                gStreet = green(streetFragment.pixels[locStreet]);
+                bStreet = blue(streetFragment.pixels[locStreet]);
             
                 // for Item snap
                 locItem = pixelXPosition + (pixelYPosition * thisItemImage.width);
-                rItem = red(thisItemImage.pixels[locItem]);
-                gItem = green(thisItemImage.pixels[locItem]);
-                bItem = blue(thisItemImage.pixels[locItem]);
+                rItem = red(itemFragment.pixels[locItem]);
+                gItem = green(itemFragment.pixels[locItem]);
+                bItem = blue(itemFragment.pixels[locItem]);
                   
                 RGBDiff = abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
                 totalRGBDiff += abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
             
-                /*
                 if (debugRGB)
                 {
                     s = "Frag Xpos,YPos = " + pixelXPosition + "," + pixelYPosition;
                     s = s + "    RGB street = " + int(rStreet) + ":" + int(gStreet) + ":" + int(bStreet);
                     s = s + "    RGB item = " + int(rItem) + ":" + int(gItem) + ":" + int(bItem);
-                    printToFile.printDebugLine(this, s, 1);                    
-                    //println("RGB archive = ", int(rStreet), ":",int(gStreet), ":", int(bStreet),"    RGB Item = ", int(rItem), ":", int(gItem), ":", int(bItem));
+                    //printToFile.printDebugLine(this, s, 1);                    
                 }
-                */
             }
         }
     
@@ -385,6 +395,23 @@ class SpiralSearch
             
         if (totalRGBDiff == 0)
         {
+            lowestTotalRGBDiff = totalRGBDiff;
+            lowestTotalRGBDiffStepX = stepX;
+            lowestTotalRGBDiffStepY = stepY;
+            image(streetFragment, 650, 100, 50, 50);
+            image(itemFragment, 750, 100, 50, 50);
+            fill(50);
+            if (doBlackWhiteComparison)
+            {
+                printToFile.printDebugLine(this, "perfect/grey " + stepX + "," + stepY, 1);
+                text("Perfect fit/grey step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
+            }
+            else
+            {
+                printToFile.printDebugLine(this, "perfect/colour " + stepX + "," + stepY, 1);
+                text("Perfect fit/colour step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
+            }
+            
             return true;
         }
         // leave this check out - only return true if perfect match, otherwise search the entire snap and take the lowest value
@@ -412,6 +439,59 @@ class SpiralSearch
             sumTotalRGBDiff += totalRGBDiff;
             return false;
         }
+    }
+   
+    PImage convertImage(PImage fragment)
+    {
+        if (!doBlackWhiteComparison)
+        {
+            return (fragment);
+        }
+        
+        // Convert image to be greyscale
+        fragment.filter(GRAY);
+
+        
+        // Now find what the rgb value is for the median bright pixel in the fragment
+        // Now it is greyscale, r = g = b
+        int[] brightCount = new int[256];
+        int i;
+        int j;
+        int locItem;
+        float r;
+        for (i = 0; i < fragment.height; i++) 
+        {
+            for (j = 0; j < fragment.width; j++)
+            {
+                //int loc = pixelXPosition + (pixelYPosition * streetItemInfo[streetItemCount].sampleWidth);
+                locItem = j + (i * fragment.width);
+                r = red(fragment.pixels[locItem]);
+                
+                //Increment the count for the array entry matching this rgb value
+                brightCount[int(r)]++;
+            }
+        }
+        
+        // Now find the median brightness this array
+        int medianRGB = 0;
+        int count = 0;
+        boolean found = false;
+        for (i = 0; i < 256 && !found; i++) 
+        {
+           count = count + brightCount[i];
+           if (count > fragment.width * fragment.height / 2)
+           {
+               medianRGB = i;
+               found = true;
+           }
+        }
+         
+        
+        // Now make the image black/white using this median RGB
+        fragment.filter(THRESHOLD, map(medianRGB, 0, 255, 0, 1)); 
+        
+        return (fragment);
+        
     }
     
     public int readDiffX()

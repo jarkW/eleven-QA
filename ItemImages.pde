@@ -28,6 +28,7 @@ class ItemImages
         itemImages.add(new PNGFile("quoin_currants.png", false));
         itemImages.add(new PNGFile("quoin_favor.png", false));
         itemImages.add(new PNGFile("quoin_time.png", false));
+        itemImages.add(new PNGFile("quoin_mystery.png", false));
         itemImageHashMap.put("quoin", itemImages);
         // Now load the images into memory
         if (!loadItemImages("quoin"))

@@ -29,20 +29,16 @@
  *
  */
  
- // Consider redoing the item fragments - after setting all the tint/brightness on those 
- // streets to be 0 - could just delete the filtersNEW from the middle layer?
- // Would then make the correct more straight forward.
+ // BUG need to rework the skipItem/finishedItem etc - not sure that resetReadyForNewItemSearch() is
+ // being called each time when it should. E.g. when just skipped past something. Might need to rejig
+ // the variables being set in street/item/fragment level
+ // Need to distinguish, item found (once, and many times (quoin)), not found, toBeSkipped (e.g. street spirit)
+ // Maybe need an enum - itemFoundButStillSearch, itemFound, itemToSkip, itemNotFound, or something? In conjunction with Fragmentsearch
+ // returning SearchDone to indicate that done everything it can with all the item images on that street snap/item combo
  
  // BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
- //
-         // Adjust each item image
-        // Do we need to look at middleground?
-        // in G* dynamic -> layers -> middleground -> filtersNEW e,g, brightness, contrast, saturation, hue
-        // for original shrines - brightness is 1, contrast 20 and saturation -20
-        // for original trees - brightness is 1, contrast 20 and  saturation -20
-        // for quoins - nothing set i.e. all 0
-        // for original rocks - brightness is 5, contrast 20 and  saturation -20
-        // Would be best to read the G* JSON file and then change the setting son the item Image to match
+ // Currently I am doing this with simple black/white setting.
+ // But at some point might need to be more sophisticated - see eleven-client/src/com/quasimodo/geom/ColorMatrix.as
     
 
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 

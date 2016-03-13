@@ -71,6 +71,54 @@ class FragmentOffsets
                 return false;
             }
             
+            // Need to correct these offsets for quoins/QQ to compensate for original item images being recorded
+            // at extremes of the actual range of the quoin (measured over 15 snaps)
+            switch (tsid)
+            {
+                case "marker_qurazy":
+                    fragOffsetY = fragOffsetY - 2;
+                    printToFile.printDebugLine(this, "Resetting QQ y-offset by -2 from value in samples.json file", 1);
+                    break;
+                case "quoin":
+                    switch (info)
+                    {
+                        case "xp":
+                            //fragOffsetY = fragOffsetY;
+                            break;
+                        case "energy":
+                            fragOffsetY = fragOffsetY - 4;
+                            printToFile.printDebugLine(this, "Resetting quoin " + info + " y-offset by -4 from value in samples.json file", 1);
+                            break;
+                        case "mood":
+                            fragOffsetY = fragOffsetY - 3;
+                            printToFile.printDebugLine(this, "Resetting quoin " + info + " y-offset by -3 from value in samples.json file", 1);
+                            break;
+                        case "currants":
+                            fragOffsetY = fragOffsetY - 3;
+                            printToFile.printDebugLine(this, "Resetting quoin " + info + " y-offset by -3 from value in samples.json file", 1);
+                            break;
+                        case "favor":
+                            fragOffsetY = fragOffsetY  - 1;
+                            printToFile.printDebugLine(this, "Resetting quoin " + info + " y-offset by -1 from value in samples.json file", 1);
+                            break;
+                        case "time":
+                            fragOffsetY = fragOffsetY - 4;
+                            printToFile.printDebugLine(this, "Resetting quoin " + info + " y-offset by -4 from value in samples.json file", 1);
+                            break;
+                        case "mystery":
+                            fragOffsetY = fragOffsetY - 3; 
+                            printToFile.printDebugLine(this, "Resetting quoin " + info + " y-offset by -3 from value in samples.json file", 1);
+                            break;
+                        default:
+                            // unexpected
+                            printToFile.printDebugLine(this, "Unexpected type of quoin " + info + " in fragments array in samples.json file", 3);
+                            return false;                            
+                    }
+                    break;
+                default:
+                    break;
+            }
+                         
             // Now add into the hashmap - using classTSID/info as the key
             Offsets itemOffsets = new Offsets(fragOffsetX, fragOffsetY);
             if (info.length() > 0)

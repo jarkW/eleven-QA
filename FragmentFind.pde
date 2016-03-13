@@ -179,13 +179,13 @@ class FragmentFind
                     spiralSearch = null; 
                     System.gc();
                     spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
-                    streetSnapImage.readPNGImage(), 
-                    thisItemInfo.readItemClassTSID(),
-                    startItemX,
-                    startItemY,
-                    itemImages.get(itemImageBeingUsed).readFragOffsetX(),
-                    itemImages.get(itemImageBeingUsed).readFragOffsetY(),
-                    searchBoxWidth, searchBoxHeight);                    
+                        streetSnapImage.readPNGImage(), 
+                        thisItemInfo.readItemClassTSID(),
+                        startItemX,
+                        startItemY,
+                        itemImages.get(itemImageBeingUsed).readFragOffsetX(),
+                        itemImages.get(itemImageBeingUsed).readFragOffsetY(),
+                        searchBoxWidth, searchBoxHeight);                    
 
                     if (!spiralSearch.readOkFlag()) 
                     {

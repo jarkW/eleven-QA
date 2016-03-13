@@ -12,8 +12,8 @@ public class Memory {
         // available memory
         printToFile.printDebugLine(this, "Total Memory: " + instance.totalMemory() / mb + 
                                     "  Free Memory: " + instance.freeMemory() / mb +
-                                    //"  Used Memory: " + (instance.totalMemory() - instance.freeMemory()) / mb +
-                                    "  Used Memory: " + (instance.totalMemory() - instance.freeMemory()) +
+                                    "  Used Memory: " + (instance.totalMemory() - instance.freeMemory()) / mb +
+                                    //"  Used Memory: " + (instance.totalMemory() - instance.freeMemory()) +
                                     "   Max Memory: " + instance.maxMemory() / mb + (instance.totalMemory() - instance.freeMemory()) / mb, 3);
     }
 }

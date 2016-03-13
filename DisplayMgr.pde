@@ -95,8 +95,26 @@ class DisplayMgr
     
     public void showStreetImage(PImage streetImage, String streetImageName)
     {
-        float scaledSnapHeight = streetImage.height * (width-100) / streetImage.width;
-        image(streetImage, 50, height - 50 - int(scaledSnapHeight), width-100, scaledSnapHeight);
+        // scale down the street so fits in bottom of window
+        float maxWidth = width-100;
+        float maxHeight = 200;
+        float scaledSnapWidth;
+        float scaledSnapHeight;
+        
+        float scalar = maxWidth / streetImage.width;
+        
+        scaledSnapWidth = maxWidth;
+        scaledSnapHeight= streetImage.height * scalar;
+        if (scaledSnapHeight > maxHeight)
+        {
+            scalar = maxHeight / scaledSnapHeight;
+            scaledSnapHeight = maxHeight;
+            scaledSnapWidth = scaledSnapWidth * scalar;
+        }
+  
+        //float scaledSnapHeight = streetImage.height * (width-100) / streetImage.width;
+        //image(streetImage, 50, height - 50 - int(scaledSnapHeight), width-100, scaledSnapHeight);
+        image(streetImage, 50, height - 50 - int(scaledSnapHeight), scaledSnapWidth, scaledSnapHeight);
         showInfoMsg("Using " + streetImageName);
     }
     

@@ -33,6 +33,10 @@ class ItemInfo
     // Contains the item fragments used to search the snap
     ArrayList<PNGFile> itemImages;
     
+    // Only used for debug purposes - to collect y values on the street with reference quoins on
+    IntList itemYValues;
+    boolean collectItemYValues = false;
+    
     // ARE THESE EVER USED HERE?
     //int itemImageBeingUsed;
     //int streetImageBeingUsed;
@@ -57,6 +61,8 @@ class ItemInfo
         itemFound = false;
         saveChangedJSONfile = false;
         alreadySetDirField = false;
+        
+        itemYValues = new IntList();
         
         initItemVars();
 
@@ -658,7 +664,7 @@ class ItemInfo
     public boolean saveItemChanges()
     {
         // Called once all the street snaps have been searched for this item
-        String s;
+        String s = "";
         File f;
 
         // Need to handle the missing items first
@@ -710,7 +716,31 @@ class ItemInfo
                 
                 // OK to then carry on in this function
             }
-        }    
+        } 
+        
+        // dump out all the y values nb 'max y' is the most negative
+        // Only do this occasionally when want to correct the quoin images offset manually
+        // as have to allow for bounce.
+        if (collectItemYValues)
+        {
+            int minY = -1000;
+            int maxY = 0;
+            String s1 = "";
+            for (int i = 0; i < itemYValues.size(); i++)
+            {
+                s1 = s1 + " " + itemYValues.get(i);
+                if (itemYValues.get(i) < maxY)
+                {
+                    maxY = itemYValues.get(i);
+                }
+                else if (itemYValues.get(i) > minY)
+                {
+                    minY = itemYValues.get(i);
+                }
+            }
+            printToFile.printOutputLine("Y values for " + itemTSID + "(" + newItemExtraInfo + ") x,y " + origItemX + "," + origItemY + " range of y = " + minY + " to " + maxY);
+            printToFile.printOutputLine("Y values for " + itemTSID + "(" + newItemExtraInfo + ") x,y " + origItemX + "," + origItemY + " are " + s1);
+        }
 
         // Item has been found or has been reset as mystery quoin - so changes to write
         if (newItemX != origItemX)
@@ -751,11 +781,11 @@ class ItemInfo
         if (saveChangedJSONfile)
         {
             // First tell the user what has changed
-             s = "Changed item (" + itemTSID + ") " + itemClassTSID;
             if (newItemExtraInfo.length() > 0)
             {
                 if (newItemExtraInfo.equals(origItemExtraInfo) && newItemClassName.equals(origItemClassName))
                 {
+                    s = "Saving change - unchanged item (" + itemTSID + ") " + itemClassTSID;
                     s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
                     if (itemClassTSID.equals("quoin"))
                     {
@@ -764,7 +794,21 @@ class ItemInfo
                 }
                 else
                 {
-                    s = s + " changed " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    s = "";
+                    if (newItemExtraInfo.length() > 0)
+                    {
+                        if (newItemExtraInfo.equals("mystery"))
+                        {
+                            s = "Saving change - missing quoin - (" + itemTSID + ") " + itemClassTSID;
+                        }
+                    }
+                    if (s.length() == 0)
+                    {
+                        // I.e. not a change due to a missing quoin set to mystery
+                        s = "Saving change - changed item (" + itemTSID + ") " + itemClassTSID;
+                    }
+                    
+                    s = s + itemExtraInfoKey + " = " + origItemExtraInfo;
                     if (itemClassTSID.equals("quoin"))
                     {
                         s = s + " (" + origItemClassName + ")";
@@ -896,6 +940,10 @@ class ItemInfo
                 {
                     // This is the 2nd time or more that we've found this quoin/QQ
                     // Only save the Y-cord if lower than the one we already have
+                    if (collectItemYValues)
+                    {
+                        itemYValues.append(fragFind.readNewItemY());
+                    }
                     if (newItemY < fragFind.readNewItemY())
                     {
                         s = "SEARCH DONE Resetting y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " from " + newItemY + " to " + fragFind.readNewItemY();
@@ -905,7 +953,7 @@ class ItemInfo
                     }
                     else
                     {
-                        s = "SEARCH DONE Ignoring y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " remains at " + newItemY + "(new = " + fragFind.readNewItemY() + ")";
+                        s = "SEARCH DONE Ignoring y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " remains at " + newItemY + " (new = " + fragFind.readNewItemY() + ")";
                         printToFile.printDebugLine(this, s, 1);
                     }
                     // continue on to next snap for quoins/QQ
@@ -927,6 +975,10 @@ class ItemInfo
                     else
                     {
                         s = "SEARCH FOUND (but keep looking) (";
+                        if (collectItemYValues)
+                        {
+                            itemYValues.append(fragFind.readNewItemY());
+                        }
                     }
                     
                     s = s + itemTSID + ") " + itemClassTSID + " x,y = " + newItemX + "," + newItemY;             
@@ -988,6 +1040,7 @@ class ItemInfo
                 return false;
             }
             delay(1000);
+            //delay(5000);
         }
         return true;
     }
