@@ -73,6 +73,9 @@ class FragmentOffsets
             
             // Need to correct these offsets for quoins/QQ to compensate for original item images being recorded
             // at extremes of the actual range of the quoin (measured over 15 snaps)
+            // Doesn't seem to make much difference, but worth keeping.
+            // NB if recreate the images, will need to adjust these offsets ...
+            /*
             switch (tsid)
             {
                 case "marker_qurazy":
@@ -118,7 +121,7 @@ class FragmentOffsets
                 default:
                     break;
             }
-                         
+             */            
             // Now add into the hashmap - using classTSID/info as the key
             Offsets itemOffsets = new Offsets(fragOffsetX, fragOffsetY);
             if (info.length() > 0)

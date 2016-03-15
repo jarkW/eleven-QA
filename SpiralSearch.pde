@@ -1,7 +1,5 @@
 class SpiralSearch
 {
-    //flag to show if using normal colour matching or black/white to counteract contrast/tint on street
-    boolean doBlackWhiteComparison = true;
     
     // Number of times attempt search has been carried out on street snap
     int spiralCount;
@@ -70,7 +68,7 @@ class SpiralSearch
     {
         okFlag = true;
         
-        printToFile.printDebugLine(this, "Create New SpiralSearch", 1);
+        //printToFile.printDebugLine(this, "Create New SpiralSearch", 1);
         // Initialise variables      
         thisItemImage = itemImage;
         thisStreetImage = streetImage;
@@ -97,9 +95,9 @@ class SpiralSearch
         spiralCount = 0; 
         RGBDiffCount = 0;
         
-         // DO WE NEED TO DO THIS???
-        widthSearchBox = widthBox + 10;
-        heightSearchBox = heightBox + 10;
+        // Set the search width to whatever was specified in the config.json file
+        widthSearchBox = widthBox + configInfo.readSearchRadius();
+        heightSearchBox = heightBox + configInfo.readSearchRadius();
         
          // convert the searchbox to be even numbers
          // deal with odd sizes of box - by adding 1 before do divide so box
@@ -148,13 +146,13 @@ class SpiralSearch
 
         noMoreValidFragments = false; 
         
-        printToFile.printDebugLine(this, "New SpiralSearch for " + classTSID + " at snap x,y " + itemX + "," + itemY + " with search box wxh " + widthBox + "x" + heightBox + " maxSpiralCount = " + maxSpiralCount, 1);
+        //printToFile.printDebugLine(this, "New SpiralSearch for " + classTSID + " at snap x,y " + itemX + "," + itemY + " with search box wxh " + widthBox + "x" + heightBox + " maxSpiralCount = " + maxSpiralCount, 1);
         //printHashCodes(this);
     }
     
     public boolean searchForItem()
     {        
-        printToFile.printDebugLine(this, "Enter searchForItem " + thisItemClassTSID + " (" + itemJSONX + "," + itemJSONY, 1);
+        //printToFile.printDebugLine(this, "Enter searchForItem " + thisItemClassTSID + " (" + itemJSONX + "," + itemJSONY, 1);
         noMoreValidFragments = false;
 
         for (spiralCount = 0; spiralCount < maxSpiralCount && !noMoreValidFragments; spiralCount++)
@@ -247,9 +245,7 @@ class SpiralSearch
                 image(streetFragment, 650, 100, 50, 50);
                 fill(50);
                 text("good enough fit (RGBDiff = " + int(lowestTotalRGBDiff) + ")  step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
-                
-                
-                
+
                 return true;
             }
             else
@@ -401,14 +397,14 @@ class SpiralSearch
             image(streetFragment, 650, 100, 50, 50);
             image(itemFragment, 750, 100, 50, 50);
             fill(50);
-            if (doBlackWhiteComparison)
+            if (!usingGeoInfo)
             {
-                printToFile.printDebugLine(this, "perfect/grey " + stepX + "," + stepY, 1);
+                //printToFile.printDebugLine(this, "perfect/grey " + stepX + "," + stepY, 1);
                 text("Perfect fit/grey step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
             }
             else
             {
-                printToFile.printDebugLine(this, "perfect/colour " + stepX + "," + stepY, 1);
+                //printToFile.printDebugLine(this, "perfect/colour " + stepX + "," + stepY, 1);
                 text("Perfect fit/colour step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
             }
             
@@ -443,7 +439,7 @@ class SpiralSearch
    
     PImage convertImage(PImage fragment)
     {
-        if (!doBlackWhiteComparison)
+        if (usingGeoInfo)
         {
             return (fragment);
         }

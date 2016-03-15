@@ -402,12 +402,11 @@ class ItemInfo
                 if (origItemExtraInfo.length() == 0)
                 {
                     return false;
-                }
-                
+                }                
                 
                 break;
    
-            case "wall_button":
+            case "subway_gate": 
                 // Read in the dir field 
                 itemExtraInfoKey = "dir";
                 origItemExtraInfo = Utils.readJSONString(itemJSON, itemExtraInfoKey, true);
@@ -420,8 +419,40 @@ class ItemInfo
                 break;
                          
             case "npc_sloth":
-                printToFile.printDebugLine(this, "Not sure about sloth - check to see if both dir and instanceProps.dir are set to be the same " + itemTSID, 3);
-                return false;
+                // Read in the dir field - is in two places - overwrite with the one from instanceProps if necessary
+                // Read in the instanceProps array - failure is always an error
+                instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
+                if (!Utils.readOkFlag())
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to get instanceProps from item JSON file " + itemTSID, 3);
+                    return false;
+                }
+                              
+                itemExtraInfoKey = "dir";
+                
+                origItemExtraInfo = Utils.readJSONString(instanceProps, itemExtraInfoKey, true);
+                if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to get from instanceProps." + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
+                    return false;
+                }
+
+                String dir = Utils.readJSONString(itemJSON, itemExtraInfoKey, true);
+                if (!Utils.readOkFlag() || dir.length() == 0)
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to read dir field from item JSON file " + itemTSID, 3);
+                    return false;
+                }
+                
+                if (!origItemExtraInfo.equals(dir))
+                {
+                    // Should never happen - just flag up an error and continue
+                    printToFile.printDebugLine(this, "Sloth " + itemTSID + " has inconsistent dir settings in JSON files. Using value of " + origItemExtraInfo + " from instanceProps", 3);
+                }
+               break;
             
             case "visiting_stone":
                 // Read in the dir field 
@@ -506,6 +537,83 @@ class ItemInfo
         switch (itemClassTSID)
         {
             case "quoin":     
+                // Read in the instanceProps array - failure is always an error
+                instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
+                if (!Utils.readOkFlag())
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to get instanceProps from item JSON file " + itemTSID, 3);
+                    return false;
+                }
+
+                // Now need to set up the type and class_name field in the JSON structure
+                // First determine the default quoin fields assocated with this type
+                QuoinFields quoinInstanceProps = new QuoinFields();                   
+                if (!quoinInstanceProps.defaultFields(streetInfo.readHubID(), streetInfo.readStreetTSID(), newItemExtraInfo))
+                {
+                    printToFile.printDebugLine(this, "Error defaulting fields in quoin instanceProps structure", 3);
+                    return false;
+                }
+                newItemClassName = quoinInstanceProps.readClassName();
+                 
+                if (newItemClassName.equals(origItemClassName))
+                {
+                    // Nothing to save so return without setting flag
+                    return true;
+                }
+                // Now save the fields in instanceProps
+                if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                }
+                                         
+                if (!Utils.setJSONString(instanceProps, "class_name", newItemClassName))
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                }
+                    
+                if (!Utils.setJSONInt(instanceProps, "respawn_time", quoinInstanceProps.readRespawnTime()))
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                }
+                    
+                if (!Utils.setJSONString(instanceProps, "is_random", quoinInstanceProps.readIsRandom()))
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                }
+                    
+                if (!Utils.setJSONString(instanceProps, "benefit", quoinInstanceProps.readBenefit()))
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                }
+                    
+                if (!Utils.setJSONString(instanceProps, "benefit_floor", quoinInstanceProps.readBenefitFloor()))
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                }
+                    
+                if (!Utils.setJSONString(instanceProps, "benefit_ceil", quoinInstanceProps.readBenefitCeiling()))
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                }
+                    
+                if (newItemExtraInfo.equals("favor"))
+                {
+                    if (!Utils.setJSONString(instanceProps, "giant", quoinInstanceProps.readGiant()))
+                    {
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                }                    
+                break;
+                    
             case "wood_tree":
             case "npc_mailbox":
             case "dirt_pile":
@@ -521,88 +629,14 @@ class ItemInfo
                     printToFile.printDebugLine(this, "Failed to get instanceProps from item JSON file " + itemTSID, 3);
                     return false;
                 }
-
-                if (itemClassTSID.equals("quoin"))
+                if (!Utils.setJSONString(instanceProps, itemExtraInfoKey, newItemExtraInfo))
                 {
-                    // Now need to set up the type and class_name field in the JSON structure
-                    // First determine the default quoin fields assocated with this type
-                    QuoinFields quoinInstanceProps = new QuoinFields();                   
-                    if (!quoinInstanceProps.defaultFields(streetInfo.readHubID(), streetInfo.readStreetTSID(), newItemExtraInfo))
-                    {
-                        printToFile.printDebugLine(this, "Error defaulting fields in quoin instanceProps structure", 3);
-                        return false;
-                    }
-                    newItemClassName = quoinInstanceProps.readClassName();
-                    
-                    if (newItemClassName.equals(origItemClassName))
-                    {
-                        // Nothing to save so return without setting flag
-                        return true;
-                    }
-                    // Now save the fields in instanceProps
-                    if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
-                    {
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        return false;
-                    }
-                                            
-                    if (!Utils.setJSONString(instanceProps, "class_name", newItemClassName))
-                    {
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        return false;
-                    }
-                    
-                    if (!Utils.setJSONInt(instanceProps, "respawn_time", quoinInstanceProps.readRespawnTime()))
-                    {
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        return false;
-                    }
-                    
-                    if (!Utils.setJSONString(instanceProps, "is_random", quoinInstanceProps.readIsRandom()))
-                    {
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        return false;
-                    }
-                    
-                    if (!Utils.setJSONString(instanceProps, "benefit", quoinInstanceProps.readBenefit()))
-                    {
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        return false;
-                    }
-                    
-                    if (!Utils.setJSONString(instanceProps, "benefit_floor", quoinInstanceProps.readBenefitFloor()))
-                    {
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        return false;
-                    }
-                    
-                    if (!Utils.setJSONString(instanceProps, "benefit_ceil", quoinInstanceProps.readBenefitCeiling()))
-                    {
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        return false;
-                    }
-                    
-                    if (newItemExtraInfo.equals("favor"))
-                    {
-                        if (!Utils.setJSONString(instanceProps, "giant", quoinInstanceProps.readGiant()))
-                        {
-                            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                            return false;
-                        }
-                    }                    
-                                   
-                }
-                else 
-                {                            
-                    if (!Utils.setJSONString(instanceProps, itemExtraInfoKey, newItemExtraInfo))
-                    {
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        return false;
-                    }             
-                }
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                }             
                 break;
    
-            case "wall_button":
+            case "subway_gate":
             case "visiting_stone":
                 if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, newItemExtraInfo))
                 {
@@ -612,9 +646,27 @@ class ItemInfo
                 break;
                          
             case "npc_sloth":
-                printToFile.printDebugLine(this, "Not sure about sloth - check to see if both dir and instanceProps.dir are set to be the same " + itemTSID, 3);
-                return false;
-                       
+                // Read in the instanceProps array - failure is always an error
+                instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
+                if (!Utils.readOkFlag())
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to get instanceProps from item JSON file " + itemTSID, 3);
+                    return false;
+                }
+                if (!Utils.setJSONString(instanceProps, itemExtraInfoKey, newItemExtraInfo))
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                } 
+                // Also need to set the dir key at the root level
+                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, newItemExtraInfo))
+                {
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    return false;
+                } 
+                break;          
+        
             case "marker_qurazy":
             case "trant_bean":
             case "trant_egg":
@@ -643,7 +695,7 @@ class ItemInfo
             case "sloth_knocker":
             case "party_atm":
             case "race_ticket_dispenser":
-            case "subway_gate":
+            case "wall_button":
             case "subway_map":
             case "bag_notice_board":
                 // Don't have any additional information such as 'dir' - so return
@@ -785,7 +837,7 @@ class ItemInfo
             {
                 if (newItemExtraInfo.equals(origItemExtraInfo) && newItemClassName.equals(origItemClassName))
                 {
-                    s = "Saving change - unchanged item (" + itemTSID + ") " + itemClassTSID;
+                    s = "Saving change - unchanged item info/class (" + itemTSID + ") " + itemClassTSID;
                     s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
                     if (itemClassTSID.equals("quoin"))
                     {
@@ -805,7 +857,7 @@ class ItemInfo
                     if (s.length() == 0)
                     {
                         // I.e. not a change due to a missing quoin set to mystery
-                        s = "Saving change - changed item (" + itemTSID + ") " + itemClassTSID;
+                        s = "Saving change - changed item info/class (" + itemTSID + ") " + itemClassTSID;
                     }
                     
                     s = s + itemExtraInfoKey + " = " + origItemExtraInfo;
@@ -820,6 +872,11 @@ class ItemInfo
                     }
                 }
             }
+            else
+            {
+                s = "Saving change - item (" + itemTSID + ") " + itemClassTSID;
+            }
+            
             if ((origItemX == newItemX) && (origItemY == newItemY))
             {
                 s = s + " with unchanged x,y = " + origItemX + "," + origItemY;
@@ -939,7 +996,7 @@ class ItemInfo
                 if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy")) && newItemX != missCoOrds)
                 {
                     // This is the 2nd time or more that we've found this quoin/QQ
-                    // Only save the Y-cord if lower than the one we already have
+                    // Only save the Y-cord if lower than the one we already have i.e. less negative
                     if (collectItemYValues)
                     {
                         itemYValues.append(fragFind.readNewItemY());
@@ -999,7 +1056,7 @@ class ItemInfo
                             s = s + " (" + origItemClassName + ")";
                         }
                     }
-                    printToFile.printOutputLine(s);
+                    //printToFile.printOutputLine(s);
                     printToFile.printDebugLine(this, s, 2);
                 }
             }
@@ -1039,8 +1096,12 @@ class ItemInfo
             {
                 return false;
             }
-            delay(1000);
-            //delay(5000);
+            if (doDelay)
+            {
+                delay(1000);
+                //delay(5000);
+            }
+
         }
         return true;
     }

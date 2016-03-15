@@ -30,7 +30,7 @@ class FragmentFind
     // constructor
     public FragmentFind(ItemInfo itemInfo)
     {
-        printToFile.printDebugLine(this, "Create New FragmentFind", 1);
+        //printToFile.printDebugLine(this, "Create New FragmentFind", 1);
         okFlag = true;
         
         searchDone = false;
@@ -88,7 +88,7 @@ class FragmentFind
         
         if ((thisItemInfo.readItemClassTSID().equals("quoin") || thisItemInfo.readItemClassTSID().equals("marker_qurazy")) && thisItemInfo.readNewItemX() != missCoOrds)
         {
-            // Already have the co-ordinates for a matching quoin/QQ - so use those
+            // Already have the co-ordinates for a matching quoin/QQ - so use those to start this search
             startItemX = thisItemInfo.readNewItemX();
             startItemY = thisItemInfo.readNewItemY();
             searchBoxWidth = narrowSearchWidthBox;
@@ -141,6 +141,7 @@ class FragmentFind
         display.showStreetImage(streetSnapImage.readPNGImage(), streetSnapImage.readPNGImageName());
         
         // Carry out the search for the item and depending on the result might then move on to look at the next image
+        printToFile.printDebugLine(this, "Search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " using item image " + itemImages.get(itemImageBeingUsed).readPNGImageName() , 1);
         if (spiralSearch.searchForItem())
         {   
             // Item was found so save the new x,y and other information
@@ -156,19 +157,25 @@ class FragmentFind
         }
         else
         {
-            // Move on to the next image to search
-            if ((thisItemInfo.readItemClassTSID().equals("quoin") && (configInfo.readChangeXYOnly()) || thisItemInfo.readNewItemX() != missCoOrds))
+            // Item was not found on this image, so move on to the next image to search
+            // However no point doing this in the case where only looking to update x,y values for quoins (and so won't change their type, are using
+            // the JSON as the expected type), or if the quoin has been previously found on a street snap (and so we know what to look for from then onwards).
+            if (thisItemInfo.readItemClassTSID().equals("quoin") && (configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != missCoOrds))
             {
                 // We only ever search on one image in this case - as we know what the quoin looks like, so can ignore the other quoin images
+                // Won't reach this leg of the code for any other items - as once
+                
                 searchDone = true;
                 printToFile.printDebugLine(this, "searchForFragment - found 1 item, no more images to search", 1);
             }
             else
             {
+                // Move on to search with the next image in the set
                 itemImageBeingUsed++;
                 if (itemImageBeingUsed >= itemImages.size())
                 {
                     // Have searched using all the item images
+                    // This will include the case of the QQ - as only has one image (but will be searched for as special case on next street snap)
                     printToFile.printDebugLine(this, "searchForFragment - no more images to search", 1);
                     searchDone = true;
                 }
@@ -189,6 +196,7 @@ class FragmentFind
 
                     if (!spiralSearch.readOkFlag()) 
                     {
+                        // error
                         return false;
                     }
                 }

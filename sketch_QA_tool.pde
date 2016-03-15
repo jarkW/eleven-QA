@@ -35,10 +35,28 @@
  // Need to distinguish, item found (once, and many times (quoin)), not found, toBeSkipped (e.g. street spirit)
  // Maybe need an enum - itemFoundButStillSearch, itemFound, itemToSkip, itemNotFound, or something? In conjunction with Fragmentsearch
  // returning SearchDone to indicate that done everything it can with all the item images on that street snap/item combo
+ // NB Might also be worth considering removing all skipped items once determine this fact - could be done as a loop over all street items 
+ // as part of the initialiseStreetItems stuff???
+ 
+ // Add option to append to output file
+ 
+ // Create new outputInfo class - contains pointer to item, status (found, skipped etc), newItemX
+ // Then at end of street, can output useful info to output file - output items from L to R (-ve x to +x) as can sort an array list easily
+ // Also give neat list of 'MISSING' items so easy for user to find.Also list of SKIPPED items (as reminder of what they need to change?)
+ // Can also give a count of different kinds of quoins written out? (for validation?)
  
  // BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
  // Currently I am doing this with simple black/white setting.
+ // Butdo collect the values in readStreetGeoInfo() even though not used. usingGeoInfo flag
  // But at some point might need to be more sophisticated - see eleven-client/src/com/quasimodo/geom/ColorMatrix.as
+ // Might need to apply
+ // cm.colorize(tin colour, tint amount/100)  tint colour is the RGB but in decimal (in the G* file)
+ // cm.adjustContrast(contrast/100)
+ // cm.adjustSaturation(saturation/100)
+ // cm.adjustBrightness(brightness)
+ // restore? cm.filter
+ // Basically I think the code just creates a matrix which is then applied to each pixel (in my case the item fragment)
+ // in turn.
     
 
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
@@ -92,6 +110,8 @@
 
 // NB Need to credit all people's code I use e.g. sftp (?) when submit to github
 // 
+
+// NB TEST WHAT HAPPENS IF TRY TO FIND DUST trap of type B on a street - does it reset it to A and give msg???
 
 // STILL MISSING:
 //Mortar Barnacle:mortar_barnacle (instanceProps.blister 1-6), no dir
@@ -154,8 +174,9 @@ PrintToFile printToFile;
 // 2= general tracing info 3= error debug info only
 int debugLevel = 1;
 boolean debugToConsole = true;
-boolean doDelay = true;
-boolean writeJSONsToPersdata = false;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
+boolean doDelay = false;
+boolean writeJSONsToPersdata = true;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
+boolean usingGeoInfo = false; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
 
 Memory memory = new Memory();
 

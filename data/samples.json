@@ -211,68 +211,458 @@
   },
   {
     "class_tsid": "trant_bean",
-    "offset_x": -24,
-    "offset_y": -79,
+    "offset_x": -27,
+    "offset_y": -103,
     "info": ""
   },
   {
     "class_tsid": "trant_egg",
-    "offset_x": -20,
-    "offset_y": -46,
+    "offset_x": -34,
+    "offset_y": -121,
     "info": ""
   },
   {
     "class_tsid": "trant_bubble",
-    "offset_x": -7,
-    "offset_y": -52,
+    "offset_x": -6,
+    "offset_y": -111,
     "info": ""
   },
   {
     "class_tsid": "wood_tree",
-    "offset_x": -8,
-    "offset_y": -65,
+    "offset_x": -10,
+    "offset_y": -98,
     "info": "1"
   },
   {
     "class_tsid": "wood_tree",
-    "offset_x": -13,
-    "offset_y": -63,
+    "offset_x": -11,
+    "offset_y": -72,
     "info": "2"
   },
   {
     "class_tsid": "wood_tree",
-    "offset_x": -4,
-    "offset_y": -44,
+    "offset_x": -9,
+    "offset_y": -93,
     "info": "3"
   },
   {
     "class_tsid": "wood_tree",
-    "offset_x": -8,
-    "offset_y": -67,
+    "offset_x": -2,
+    "offset_y": -84,
     "info": "4"
   },
   {
     "class_tsid": "trant_gas",
-    "offset_x": -5,
-    "offset_y": -49,
+    "offset_x": -7,
+    "offset_y": -53,
     "info": ""
   },
   {
     "class_tsid": "trant_spice",
-    "offset_x": -36,
-    "offset_y": -42,
+    "offset_x": -22,
+    "offset_y": -81,
     "info": ""
   },
   {
     "class_tsid": "paper_tree",
-    "offset_x": 0,
-    "offset_y": -56,
+    "offset_x": 1,
+    "offset_y": -99,
     "info": ""
   },
   {
     "class_tsid": "trant_fruit",
-    "offset_x": 0,
+    "offset_x": 2,
+    "offset_y": -75,
+    "info": ""
+  },
+  {
+    "class_tsid": "npc_sloth",
+    "offset_x": -55,
+    "offset_y": -102,
+    "info": "left"
+  },
+  {
+    "class_tsid": "npc_sloth",
+    "offset_x": -43,
+    "offset_y": -106,
+    "info": "right"
+  },
+  {
+    "class_tsid": "sloth_knocker",
+    "offset_x": -9,
+    "offset_y": -37,
+    "info": ""
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_alph",
+    "offset_x": -14,
+    "offset_y": -183,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_alph",
+    "offset_x": -11,
+    "offset_y": -171,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_alph",
+    "offset_x": -9,
+    "offset_y": -66,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_cosma",
+    "offset_x": -13,
+    "offset_y": -178,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_cosma",
+    "offset_x": -12,
     "offset_y": -65,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_cosma",
+    "offset_x": -12,
+    "offset_y": -172,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_friendly",
+    "offset_x": -14,
+    "offset_y": -177,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_friendly",
+    "offset_x": -9,
+    "offset_y": -169,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_friendly",
+    "offset_x": -12,
+    "offset_y": -63,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_grendaline",
+    "offset_x": -9,
+    "offset_y": -172,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_grendaline",
+    "offset_x": -11,
+    "offset_y": -183,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_grendaline",
+    "offset_x": -11,
+    "offset_y": -69,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_humbaba",
+    "offset_x": -12,
+    "offset_y": -174,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_humbaba",
+    "offset_x": -11,
+    "offset_y": -60,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_humbaba",
+    "offset_x": -13,
+    "offset_y": -169,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_lem",
+    "offset_x": -15,
+    "offset_y": -179,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_lem",
+    "offset_x": -12,
+    "offset_y": -167,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_lem",
+    "offset_x": -14,
+    "offset_y": -65,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_mab",
+    "offset_x": -11,
+    "offset_y": -169,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_mab",
+    "offset_x": -10,
+    "offset_y": -67,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_mab",
+    "offset_x": -12,
+    "offset_y": -181,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_pot",
+    "offset_x": -12,
+    "offset_y": -67,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_pot",
+    "offset_x": -13,
+    "offset_y": -180,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_pot",
+    "offset_x": -9,
+    "offset_y": -168,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_spriggan",
+    "offset_x": -10,
+    "offset_y": -173,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_spriggan",
+    "offset_x": -13,
+    "offset_y": -182,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_spriggan",
+    "offset_x": -9,
+    "offset_y": -69,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_tii",
+    "offset_x": -17,
+    "offset_y": -178,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_ti",
+    "offset_x": -15,
+    "offset_y": -62,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_ti",
+    "offset_x": -13,
+    "offset_y": -171,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_uralia_zille",
+    "offset_x": -14,
+    "offset_y": -64,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_firebog_zille",
+    "offset_x": -17,
+    "offset_y": -178,
+    "info": "right"
+  },
+  {
+    "class_tsid": "npc_shrine_ix_zille",
+    "offset_x": -13,
+    "offset_y": -173,
+    "info": "right"
+  },
+  {
+    "class_tsid": "peat_1",
+    "offset_x": 3,
+    "offset_y": -25,
+    "info": ""
+  },
+  {
+    "class_tsid": "peat_2",
+    "offset_x": -41,
+    "offset_y": -29,
+    "info": ""
+  },
+  {
+    "class_tsid": "peat_3",
+    "offset_x": 25,
+    "offset_y": -35,
+    "info": ""
+  },
+  {
+    "class_tsid": "jellisac",
+    "offset_x": -13,
+    "offset_y": -33,
+    "info": "1"
+  },
+  {
+    "class_tsid": "jellisac",
+    "offset_x": -11,
+    "offset_y": -37,
+    "info": "2"
+  },
+  {
+    "class_tsid": "jellisac",
+    "offset_x": -10,
+    "offset_y": -32,
+    "info": "3"
+  },
+  {
+    "class_tsid": "jellisac",
+    "offset_x": -11,
+    "offset_y": -29,
+    "info": "4"
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "offset_x": -12,
+    "offset_y": -35,
+    "info": "1"
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "offset_x": -18,
+    "offset_y": -30,
+    "info": "2"
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "offset_x": -10,
+    "offset_y": -32,
+    "info": "3"
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "offset_x": -18,
+    "offset_y": -31,
+    "info": "4"
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "offset_x": -10,
+    "offset_y": -35,
+    "info": "5"
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "offset_x": -15,
+    "offset_y": -39,
+    "info": "6"
+  },
+  {
+    "class_tsid": "ice_knob",
+    "offset_x": -12,
+    "offset_y": -36,
+    "info": "1"
+  },
+  {
+    "class_tsid": "ice_knob",
+    "offset_x": -19,
+    "offset_y": -39,
+    "info": "2"
+  },
+  {
+    "class_tsid": "ice_knob",
+    "offset_x": -14,
+    "offset_y": -26,
+    "info": "3"
+  },
+  {
+    "class_tsid": "ice_knob",
+    "offset_x": -18,
+    "offset_y": -29,
+    "info": "4"
+  },
+  {
+    "class_tsid": "dirt_pile",
+    "offset_x": -28,
+    "offset_y": -49,
+    "info": "dirt1"
+  },
+  {
+    "class_tsid": "dirt_pile",
+    "offset_x": -17,
+    "offset_y": -49,
+    "info": "dirt2"
+  },
+  {
+    "class_tsid": "patch_dark",
+    "offset_x": -18,
+    "offset_y": -21,
+    "info": ""
+  },
+  {
+    "class_tsid": "patch",
+    "offset_x": -10,
+    "offset_y": -19,
+    "info": ""
+  },
+  {
+    "class_tsid": "dust_trap",
+    "offset_x": -2,
+    "offset_y": -100,
+    "info": "A"
+  },
+  {
+    "class_tsid": "party_atm",
+    "offset_x": -7,
+    "offset_y": -95,
+    "info": ""
+  },
+  {
+    "class_tsid": "race_ticket_dispenser",
+    "offset_x": -15,
+    "offset_y": -33,
+    "info": ""
+  },
+  {
+    "class_tsid": "wall_button",
+    "offset_x": -7,
+    "offset_y": -27,
+    "info": ""
+  },
+  {
+    "class_tsid": "subway_map",
+    "offset_x": -13,
+    "offset_y": -145,
+    "info": ""
+  },
+  {
+    "class_tsid": "subway_gate",
+    "offset_x": -8,
+    "offset_y": -35,
+    "info": "left"
+  },
+  {
+    "class_tsid": "subway_gate",
+    "offset_x": -9,
+    "offset_y": -29,
+    "info": "right"
+  },
+  {
+    "class_tsid": "bag_notice_board",
+    "offset_x": -102,
+    "offset_y": -91,
     "info": ""
   }
 ]}

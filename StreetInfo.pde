@@ -163,6 +163,7 @@ class StreetInfo
     
     boolean readStreetGeoInfo()
     {
+        
         // Now read in information about contrast etc from the G* file if it exists
         String geoFileName = configInfo.readPersdataPath() + "/" + streetTSID.replaceFirst("L", "G") + ".json";
    
@@ -203,7 +204,7 @@ class StreetInfo
         geoSaturation = 0;
         geoBrightness = 0;
          
-        JSONObject dynamic = Utils.readJSONObject(json, "dynamic", true);
+        JSONObject dynamic = Utils.readJSONObject(json, "dynamic", false);
         if (!Utils.readOkFlag() || dynamic == null)
         {
             // the dynamic level is sometimes missing ... so just set it to point at the original json object and continue on
@@ -225,7 +226,9 @@ class StreetInfo
             JSONObject middleground = Utils.readJSONObject(layers, "middleground", true);
             if (Utils.readOkFlag() && middleground != null)
             {
-                JSONObject filtersNEW = Utils.readJSONObject(middleground, "filtersNEW", true);
+                // Don't always have a filtersNew on this layer
+                JSONObject filtersNEW = Utils.readJSONObject(middleground, "filtersNEW", false);
+                
                 if (Utils.readOkFlag() && filtersNEW != null)
                 {
                     printToFile.printDebugLine(this, "size of filtersNew is " + filtersNEW.size() + " in " + geoFileName, 2);
@@ -420,21 +423,24 @@ class StreetInfo
 
         display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
         
-        // Read in the G* file and load up the contrast settings etc
-        if (!readStreetGeoInfo())
+        // Read in the G* file and load up the contrast settings etc - if this feature has been implemented
+        if (usingGeoInfo)
         {
-            if (invalidStreet)
+            if (!readStreetGeoInfo())
             {
-                // i.e. need to skip this street as location information not available
-                printToFile.printDebugLine(this, "Skipping missing geo JSON file", 3);
-                return true; // continue
-            }
-            else
-            {
-                // error - need to stop
-                printToFile.printDebugLine(this, "Error in readStreetGeoInfo", 3);
-                okFlag = false;
-                return false;
+                if (invalidStreet)
+                {
+                    // i.e. need to skip this street as location information not available
+                    printToFile.printDebugLine(this, "Skipping missing geo JSON file", 3);
+                    return true; // continue
+                }
+                else
+                {
+                    // error - need to stop
+                    printToFile.printDebugLine(this, "Error in readStreetGeoInfo", 3);
+                    okFlag = false;
+                    return false;
+                }
             }
         }
         
@@ -585,7 +591,21 @@ class StreetInfo
                 }
                 
             }
-            return false;
+            //return false;
+            
+        } // if past end of item list
+        else
+        {
+            // Valid next item found - reset ready for the search to happen
+            if (!itemInfo.get(itemBeingProcessed).readSkipThisItem() && !itemInfo.get(itemBeingProcessed).readItemFound())
+            {
+                if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
+                {
+                    failNow = true;
+                    return false;
+                }
+                printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " ON STREET SNAP " + streetSnapBeingUsed, 1);
+            }
         }
         return true;
     }

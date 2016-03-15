@@ -8,6 +8,7 @@ class ConfigInfo {
     String streetSnapPath;
     boolean changeXYOnly;
     boolean debugSaveOrigAndNewJSONs;
+    int searchRadius;
     
     StringList streetTSIDs = new StringList();
     String outputFile;
@@ -84,6 +85,14 @@ class ConfigInfo {
         {
             println(Utils.readErrMsg());
             println("Failed to read change_xy_only in config.json file");
+            return false;
+        }
+        
+        searchRadius = Utils.readJSONInt(json, "search_radius", true);
+        if (!Utils.readOkFlag())
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read search_radius in config.json file");
             return false;
         }
         
@@ -196,5 +205,10 @@ class ConfigInfo {
     {
         return outputFile;
     } 
+    
+    public int readSearchRadius()
+    {
+        return searchRadius;
+    }
     
 }
