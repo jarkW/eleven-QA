@@ -16,6 +16,9 @@ class StreetInfo
     ArrayList<PNGFile> streetSnaps;
     int streetSnapBeingUsed;
     
+    // List of item results - so can sort e.g. on skipped items
+    ArrayList<SummaryChanges> itemResults;
+    
     // Data read in from each I* file
     int itemBeingProcessed;
     ArrayList<ItemInfo> itemInfo;
@@ -40,7 +43,8 @@ class StreetInfo
         streetTSID = tsid;       
         itemInfo = new ArrayList<ItemInfo>();
         streetSnaps = new ArrayList<PNGFile>();
-        
+        itemResults = new ArrayList<SummaryChanges>();
+         
         geoTintColor = 0;
         geoContrast = 0;
         geoTintAmount = 0;
@@ -558,13 +562,27 @@ class StreetInfo
                 // First need to write all the item changes to file
                 for (int i = 0; i < itemInfo.size(); i++)
                 {
+                    
+                    // Now save the item changes
                     if (!itemInfo.get(i).saveItemChanges())
                     {
                         failNow = true;
                         return false;
                     }
+                    // Add info to the results array for subsequent printing out
+                    itemResults.add(new SummaryChanges(itemInfo.get(i)));
                 }
+                
+                
                 streetFinished = true;
+                
+                // Now print out the summary array
+                if (! printToFile.printSummary(itemResults))
+                {
+                    failNow = true;
+                    return false;
+                }
+
                 //printToFile.printDebugLine(this, "Exit 1 processItem memory ", 1);
                 //memory.printMemoryUsage();
                 return false;

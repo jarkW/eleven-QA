@@ -152,15 +152,15 @@ FragmentOffsets allFragmentOffsets;
 DisplayMgr display;
 
 // missing item co-ordinates - if set to this, know not found
-final int missCoOrds = 32700;
+final static int MISSING_COORDS = 32700;
 
 // States - used to determine next actions
 int nextAction;
-final int loadItemImages = 10;
-final int loadFragmentOffsets = 11;
-final int initStreet = 20;
-final int processStreet = 30;
-final int idling = 100;
+final static int LOAD_ITEM_IMAGES = 10;
+final static int LOAD_FRAGMENT_OFFSETS = 11;
+final static int INIT_STREET = 20;
+final static int PROCESS_STREET = 30;
+final static int IDLING = 100;
 
 // Differentiate between error/normal endings
 boolean failNow = false;    // abnormal ending/error
@@ -175,7 +175,7 @@ PrintToFile printToFile;
 int debugLevel = 1;
 boolean debugToConsole = true;
 boolean doDelay = false;
-boolean writeJSONsToPersdata = true;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
+boolean writeJSONsToPersdata = false;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
 boolean usingGeoInfo = false; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
 
 Memory memory = new Memory();
@@ -232,7 +232,7 @@ public void setup()
     
     // Ready to start with first street
     streetBeingProcessed = 0;
-    nextAction = loadFragmentOffsets;
+    nextAction = LOAD_FRAGMENT_OFFSETS;
     
     // Display start up msg
     display.showInfoMsg("Loading item images for comparison ... please wait");
@@ -247,7 +247,7 @@ public void draw()
     if (!okToContinue)
     {
         // Problem during validation of street - waiting for user to press c or any other key
-        nextAction = idling;
+        nextAction = IDLING;
         return;
     }
     else if (failNow)
@@ -255,7 +255,7 @@ public void draw()
         println("failNow flag set - exiting with errors");
         printToFile.printOutputLine("failNow flag set - exiting with errors");
         printToFile.printDebugLine(this, "failNow flag set - exiting with errors", 3);
-        nextAction = idling;
+        nextAction = IDLING;
         exit();
     }
     else if (exitNow && !doNothing)
@@ -265,7 +265,7 @@ public void draw()
         printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
         memory.printMemoryUsage();
         doNothing = true;
-        nextAction = idling;
+        nextAction = IDLING;
         exit();
     }
     
@@ -273,10 +273,10 @@ public void draw()
     //println("nextAction is ", nextAction);
     switch (nextAction)
     {
-        case idling:
+        case IDLING:
             break;
                  
-        case loadFragmentOffsets:
+        case LOAD_FRAGMENT_OFFSETS:
             // Validates/loads all item images 
             if(!allFragmentOffsets.loadFragmentDefaultsForItems())
             {
@@ -287,10 +287,10 @@ public void draw()
             printToFile.printDebugLine(this, allFragmentOffsets.sizeOf() + " offsets for fragment images now loaded", 1);
             memory.printMemoryUsage();
             
-            nextAction = loadItemImages;
+            nextAction = LOAD_ITEM_IMAGES;
             break;
             
-        case loadItemImages:
+        case LOAD_ITEM_IMAGES:
             // Validates/loads all item images 
             if(!allItemImages.loadAllItemImages())
             {
@@ -301,10 +301,10 @@ public void draw()
             printToFile.printDebugLine(this, allItemImages.sizeOf() + " sets of item images now loaded", 1);
             memory.printMemoryUsage();
             
-            nextAction = initStreet;
+            nextAction = INIT_STREET;
             break;
             
-        case initStreet:
+        case INIT_STREET:
             // Carries out the setting up of the street and associated items 
             
             if (!initialiseStreet())
@@ -338,10 +338,10 @@ public void draw()
              
             printToFile.printDebugLine(this, "street initialised is " + configInfo.readStreetTSID(streetBeingProcessed) + " (" + streetBeingProcessed + ")", 1);
             
-            nextAction = processStreet;
+            nextAction = PROCESS_STREET;
             break;
             
-        case processStreet:
+        case PROCESS_STREET:
             // Process the street, one street snap at a time, going over each item in turn 
         
             // Process street item unless due to move on to next street
@@ -361,7 +361,7 @@ public void draw()
                 else
                 {
                     // OK to move on to the next street
-                    nextAction = initStreet;
+                    nextAction = INIT_STREET;
                 }
             }
             else
@@ -452,7 +452,7 @@ void keyPressed()
     {
         // debugging through images - need to set okToContinue flag after processItem call above
         okToContinue = true;
-        nextAction = processStreet;
+        nextAction = PROCESS_STREET;
         return;
         
     }

@@ -35,8 +35,8 @@ class FragmentFind
         
         searchDone = false;
         //streetImageBeingUsed = 0;
-        newItemX = missCoOrds;
-        newItemY = missCoOrds;
+        newItemX = MISSING_COORDS;
+        newItemY = MISSING_COORDS;
         newItemExtraInfo = "";
         itemFound = false;
         
@@ -51,7 +51,7 @@ class FragmentFind
             return;
         }
                         
-        if (thisItemInfo.readItemClassTSID().equals("quoin") && (configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != missCoOrds))
+        if (thisItemInfo.readItemClassTSID().equals("quoin") && (configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != MISSING_COORDS))
         {
             // If we are only searching for x,y changes, or if the quoin has already been found, then we know what image to be searching for.
             // So can just set itemImageBeingUsed to the correct number which will force it to just use that image to check with
@@ -86,7 +86,7 @@ class FragmentFind
         // is more efficient to start the search with the latest x,y co-ords.
 
         
-        if ((thisItemInfo.readItemClassTSID().equals("quoin") || thisItemInfo.readItemClassTSID().equals("marker_qurazy")) && thisItemInfo.readNewItemX() != missCoOrds)
+        if ((thisItemInfo.readItemClassTSID().equals("quoin") || thisItemInfo.readItemClassTSID().equals("marker_qurazy")) && thisItemInfo.readNewItemX() != MISSING_COORDS)
         {
             // Already have the co-ordinates for a matching quoin/QQ - so use those to start this search
             startItemX = thisItemInfo.readNewItemX();
@@ -160,7 +160,7 @@ class FragmentFind
             // Item was not found on this image, so move on to the next image to search
             // However no point doing this in the case where only looking to update x,y values for quoins (and so won't change their type, are using
             // the JSON as the expected type), or if the quoin has been previously found on a street snap (and so we know what to look for from then onwards).
-            if (thisItemInfo.readItemClassTSID().equals("quoin") && (configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != missCoOrds))
+            if (thisItemInfo.readItemClassTSID().equals("quoin") && (configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != MISSING_COORDS))
             {
                 // We only ever search on one image in this case - as we know what the quoin looks like, so can ignore the other quoin images
                 // Won't reach this leg of the code for any other items - as once

@@ -52,8 +52,8 @@ class ItemInfo
         fragFind = null;
         origItemX = 0;
         origItemY = 0;
-        newItemX = missCoOrds;
-        newItemY = missCoOrds;
+        newItemX = MISSING_COORDS;
+        newItemY = MISSING_COORDS;
         newItemExtraInfo = "";        
         newItemClassName = "";
         
@@ -720,7 +720,7 @@ class ItemInfo
         File f;
 
         // Need to handle the missing items first
-        if (newItemX == missCoOrds)
+        if (newItemX == MISSING_COORDS)
         {
             if (!itemClassTSID.equals("quoin"))
             {
@@ -940,7 +940,7 @@ class ItemInfo
          else
          {
              // No changes to make to JSON - either because item found (and matches existing file) or not found
-            if (newItemX != missCoOrds)
+            if (newItemX != MISSING_COORDS)
             {
                     s = "Matches existing item (";
             }
@@ -993,7 +993,7 @@ class ItemInfo
             if (fragFind.readItemFound())
             {
                 // Item was successfully found on the street
-                if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy")) && newItemX != missCoOrds)
+                if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy")) && newItemX != MISSING_COORDS)
                 {
                     // This is the 2nd time or more that we've found this quoin/QQ
                     // Only save the Y-cord if lower than the one we already have i.e. less negative
@@ -1084,7 +1084,7 @@ class ItemInfo
             
 
              // If an item was found, then delay the image for a second before continuing - for debug onl
-            if (doDelay && newItemX != missCoOrds)
+            if (doDelay && newItemX != MISSING_COORDS)
             {
                 delay(1000);
             }
@@ -1195,7 +1195,12 @@ class ItemInfo
     {
         return newItemY;
     }
-   
+    
+    public String readNewItemExtraInfo()
+    {
+        return newItemExtraInfo;
+    }
+      
     public boolean readSkipThisItem()
     {
         return skipThisItem;
@@ -1204,6 +1209,23 @@ class ItemInfo
     public boolean readItemFound()
     {
         return itemFound;
+    }
+    
+    public boolean readSaveChangedJSONfile()
+    {
+        return saveChangedJSONfile;
+    }
+    
+    public boolean differentVariantFound()
+    {
+        if (origItemExtraInfo.equals(newItemExtraInfo))
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
     
     public boolean readOkFlag()

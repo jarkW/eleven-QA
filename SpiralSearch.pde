@@ -58,11 +58,11 @@ class SpiralSearch
     // but then it takes much longer to run. 
     // Too big - risk false positives
     // NB QQ change shape as bounces, so need to be more generous
-    final float goodEnoughTotalRGB = 5000; 
-    //final float goodEnoughTotalRGB = 1000;
+    final static float GOOD_ENOUGH_TOTAL_RGB = 5000; 
+    //final float GOOD_ENOUGH_TOTAL_RGB = 1000;
 
-    //final float goodEnoughQQTotalRGB = 3 * goodEnoughTotalRGB;
-    final float goodEnoughQQTotalRGB = 5 * goodEnoughTotalRGB;
+    //final float GOOD_ENOUGH_QQ_TOTAL_RGB = 3 * GOOD_ENOUGH_TOTAL_RGB;
+    final float GOOD_ENOUGH_QQ_TOTAL_RGB = 5 * GOOD_ENOUGH_TOTAL_RGB;
 
     public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int itemX, int itemY, int offsetX, int offsetY, int widthBox, int heightBox)
     {
@@ -133,8 +133,8 @@ class SpiralSearch
         // current position (i, j) and how much of current segment we passed
         stepX = startX;
         stepY = startY;
-        foundStepX = missCoOrds;
-        foundStepY = missCoOrds;
+        foundStepX = MISSING_COORDS;
+        foundStepY = MISSING_COORDS;
         segmentPassed = 0;
 
         // Initialise values for keeping record of 'best' fit of QA fragments with archive
@@ -218,15 +218,15 @@ class SpiralSearch
                 " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
                 " RGBDiffCount = " + RGBDiffCount +
                 " spiralCount = " + spiralCount, 1);  
-                foundStepX = missCoOrds;
-                foundStepY = missCoOrds;
+                foundStepX = MISSING_COORDS;
+                foundStepY = MISSING_COORDS;
             }
         }
         else
         {
             // Just do simple compare to boundary level - treat QQ differently to other items           
-            if ((thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < goodEnoughQQTotalRGB)) || 
-                (!thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < goodEnoughTotalRGB)))
+            if ((thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < GOOD_ENOUGH_QQ_TOTAL_RGB)) || 
+                (!thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < GOOD_ENOUGH_TOTAL_RGB)))
             {
                 foundStepX = lowestTotalRGBDiffStepX;
                 foundStepY = lowestTotalRGBDiffStepY;
@@ -258,8 +258,8 @@ class SpiralSearch
                 " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
                 " RGBDiffCount = " + RGBDiffCount +
                 " spiralCount = " + spiralCount, 1);  
-                foundStepX = missCoOrds;
-                foundStepY = missCoOrds;
+                foundStepX = MISSING_COORDS;
+                foundStepY = MISSING_COORDS;
             }
         }
              
@@ -411,7 +411,7 @@ class SpiralSearch
             return true;
         }
         // leave this check out - only return true if perfect match, otherwise search the entire snap and take the lowest value
-        //else if (totalRGBDiff < goodEnoughTotalRGB)
+        //else if (totalRGBDiff < GOOD_ENOUGH_TOTAL_RGB)
         //{
             //sumTotalRGBDiff += totalRGBDiff;
            //return true;
@@ -492,24 +492,24 @@ class SpiralSearch
     
     public int readDiffX()
     {
-        if (foundStepX != missCoOrds)
+        if (foundStepX != MISSING_COORDS)
         {
             return foundStepX - startX;
         }
         else
         {
-            return missCoOrds;
+            return MISSING_COORDS;
         }
     }
     public int readDiffY()
     {
-        if (foundStepY != missCoOrds)
+        if (foundStepY != MISSING_COORDS)
         {
             return foundStepY - startY;
         }
         else
         {
-            return missCoOrds;
+            return MISSING_COORDS;
         }
     }
 
