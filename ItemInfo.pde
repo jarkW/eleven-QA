@@ -1022,11 +1022,11 @@ class ItemInfo
                     newItemX = fragFind.readNewItemX();
                     newItemY = fragFind.readNewItemY();
                     newItemExtraInfo = fragFind.readNewItemExtraInfo();
+                    itemFound = true;
                     
                     // For all non-quoins/QQ, we only need to do the search once, so on future street snaps, skip this item
                     if (!itemClassTSID.equals("quoin") && !itemClassTSID.equals("marker_qurazy"))
                     {
-                        itemFound = true;
                         s = "SEARCH FOUND (skip in future) (";
                     }
                     else
@@ -1226,6 +1226,35 @@ class ItemInfo
         {
             return true;
         }
+    }
+    
+    public String readOrigItemClassName()
+    {
+        if (itemClassTSID.equals("quoin"))
+        {
+            return origItemClassName;
+        }
+        else
+        {
+            return "";
+        }
+    }
+    
+    public String readNewItemClassName()
+    {
+        if (itemClassTSID.equals("quoin"))
+        {
+            return newItemClassName;
+        }
+        else
+        {
+            return "";
+        }
+    }
+    
+    public boolean readAlreadySetDirField()
+    {
+        return alreadySetDirField;
     }
     
     public boolean readOkFlag()

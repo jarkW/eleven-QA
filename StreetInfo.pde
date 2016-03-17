@@ -472,7 +472,8 @@ class StreetInfo
     public void processItem()
     {
 
-        if (itemInfo.get(itemBeingProcessed).readSkipThisItem() || itemInfo.get(itemBeingProcessed).readItemFound())
+        // Skip items that we're not interested in, or items which have been already found (and which are not quoins/QQ)
+        if (!itemValidToContinueSearchingFor(itemBeingProcessed))
         {
             // Item needs to be skipped/or has already been found
             // Move onto next one
@@ -520,7 +521,7 @@ class StreetInfo
                 // Set up fragFind in item ready to start the next item/streetsnap search combo
                 // i.e. loads up pointers to correct street snap and item images
                 // Only do this for items we still need to search for
-                if (!itemInfo.get(itemBeingProcessed).readSkipThisItem() && !itemInfo.get(itemBeingProcessed).readItemFound())
+                if (itemValidToContinueSearchingFor(itemBeingProcessed))
                 {
                     if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
                     {
@@ -598,7 +599,7 @@ class StreetInfo
                 itemBeingProcessed = 0;
                 printToFile.printDebugLine(this, "STARTING WITH FIRST ITEM ON STREET SNAP " + streetSnapBeingUsed, 1);
                 
-                if (!itemInfo.get(itemBeingProcessed).readSkipThisItem() && !itemInfo.get(itemBeingProcessed).readItemFound())
+                if (itemValidToContinueSearchingFor(itemBeingProcessed))
                 {
                     if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
                     {
@@ -615,7 +616,7 @@ class StreetInfo
         else
         {
             // Valid next item found - reset ready for the search to happen
-            if (!itemInfo.get(itemBeingProcessed).readSkipThisItem() && !itemInfo.get(itemBeingProcessed).readItemFound())
+            if (itemValidToContinueSearchingFor(itemBeingProcessed))
             {
                 if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
                 {
@@ -632,14 +633,34 @@ class StreetInfo
     {
         boolean allFound = true;
         for (int i = 0; i < itemInfo.size(); i++)
-        {
-           if (!itemInfo.get(i).readSkipThisItem() && !itemInfo.get(i).readItemFound())
+        { 
+           if (itemValidToContinueSearchingFor(i))
            {
                // Item is valid for searching BUT has not been found
                allFound = false;
            }
         }
         return allFound;
+    }
+    
+    boolean itemValidToContinueSearchingFor(int n)
+    {
+        println("itemBeingProcessed is ", n);
+        if (itemInfo.get(n).readSkipThisItem())
+        {
+            // Item is not one we ever search for e.g. street spirit
+            return false;
+        }
+        else if (itemInfo.get(n).readItemFound())
+        {
+            // Item has been found - for non quoins/QQ, the search ends once it has been found
+            if (!itemInfo.get(n).readItemClassTSID().equals("quoin") &&
+                    !itemInfo.get(n).readItemClassTSID().equals("marker_qurazy"))
+            {
+                return false;
+            }
+        }
+        return true;
     }
     
     // Simple functions to read/set variables

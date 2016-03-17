@@ -300,6 +300,18 @@ static class Utils
         return true;
     }
     
+    static public String formatItemInfoString(String itemInfo)
+    {
+        // Simply returns the field, if present, inside brackets
+        String s = "";
+        if (itemInfo.length() > 0)
+        {
+            s = " (" + itemInfo + ")";
+        }
+
+        return s;
+    }
+        
     static public boolean readOkFlag()
     {
         return okFlag;

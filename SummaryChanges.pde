@@ -3,7 +3,6 @@ class SummaryChanges implements Comparable
     // small class which should make it easier to output/summarise the changes being made to individual item JSON files
     ItemInfo itemInfo;
     
-    // Can access this from outside - SummaryChanges.SKIPPED
     // Used to populate the results field
     final static int SKIPPED = 1;
     final static int MISSING = 2;
@@ -15,68 +14,53 @@ class SummaryChanges implements Comparable
     // Populate fields I might want to sort on
     int itemX;
     int itemY;
-    String itemClassTSID;
-    String itemExtraInfo;
-    String TSID;
-    boolean changedJSON;
     int result; 
     
-    /*
-    What might I want to display
-    Also useful to say at top - name of street/TSID - and where files being written to (from config file)
-        1. List items from L to R - i.e. by -ve X to +ve X (summary of what was to what is now) - and then summary list of missing/skipped items and count of new quoin types?
-        2. List of missing items
-        3. list of skipped items
-    */
-    
+    String TSID; // used for debugging error case only
+
+        
     public SummaryChanges( ItemInfo item)
     {
         itemInfo = item;
-        itemClassTSID = itemInfo.readItemClassTSID();
         TSID = itemInfo.readItemTSID();
-        changedJSON = itemInfo.readSaveChangedJSONfile();
         
-        //newItemExtraInfo = itemInfo.readNewItemExtraInfo;
         if (itemInfo.readSkipThisItem())
         {
             itemX = itemInfo.readOrigItemX();
             itemY = itemInfo.readOrigItemY();
-            itemExtraInfo = itemInfo.readOrigItemExtraInfo();
             result = SKIPPED;
         }
         else if (itemInfo.readItemFound())
         {
-            if (itemInfo.differentVariantFound())
+            if (itemInfo.differentVariantFound() || itemInfo.readAlreadySetDirField())
             {
-                if (itemX == itemInfo.readOrigItemX())
+                // Either the variant has changed or it was manually inserted at start of processing because missing e.g. shrines/visiting stones
+                if (itemInfo.readNewItemX() == itemInfo.readOrigItemX())
                 {
                     itemX = itemInfo.readOrigItemX();
                     itemY = itemInfo.readOrigItemY();
-                    itemExtraInfo = itemInfo.readNewItemExtraInfo();
                     result = VARIANT_ONLY;
                 }
                 else
                 {
                     itemX = itemInfo.readNewItemX();
                     itemY = itemInfo.readNewItemY();
-                    itemExtraInfo = itemInfo.readNewItemExtraInfo();
                     result = VARIANT_AND_COORDS_CHANGED;
                 }
             }
             else
             {
+
                 if (itemInfo.readNewItemX() != itemInfo.readOrigItemX())
                 {
                     itemX = itemInfo.readNewItemX();
                     itemY = itemInfo.readNewItemY();
-                    itemExtraInfo = itemInfo.readOrigItemExtraInfo();
                     result = COORDS_ONLY;
                 }
                 else
                 {
                     itemX = itemInfo.readNewItemX();
                     itemY = itemInfo.readNewItemY();
-                    itemExtraInfo = itemInfo.readOrigItemExtraInfo();
                     result = UNCHANGED;
                 }
             }
@@ -85,15 +69,6 @@ class SummaryChanges implements Comparable
         {
             itemX = itemInfo.readOrigItemX();
             itemY = itemInfo.readOrigItemY();
-            if (itemClassTSID.equals("quoin"))
-            {
-                // As will be set to mystery = change
-                itemExtraInfo = itemInfo.readNewItemExtraInfo();
-            }
-            else
-            {
-                itemExtraInfo = itemInfo.readOrigItemExtraInfo();
-            }
             result = MISSING;
         }
     }
@@ -153,14 +128,9 @@ class SummaryChanges implements Comparable
     
     public String readItemClassTSID()
     {
-        return itemClassTSID;
+        return itemInfo.readItemClassTSID();
     }
-    
-    public String readItemExtraInfo()
-    {
-        return itemExtraInfo;
-    }
-    
+        
     public String readItemTSID()
     {
         return TSID;
@@ -168,7 +138,42 @@ class SummaryChanges implements Comparable
     
     public boolean readChangedJSON()
     {
-        return changedJSON;
+        return itemInfo.readSaveChangedJSONfile();
+    }
+    
+    public int readOrigItemX()
+    {
+        return itemInfo.readOrigItemX();
+    }
+    
+    public int readOrigItemY()
+    {
+        return itemInfo.readOrigItemY();
+    }
+    
+    public String readOrigItemExtraInfo()
+    {
+        return itemInfo.readOrigItemExtraInfo();
+    }
+    
+    public String readOrigItemClassName()
+    {
+        return itemInfo.readOrigItemClassName();
+    }
+    
+    public String readNewItemExtraInfo()
+    {
+        return itemInfo.readNewItemExtraInfo();
+    }
+    
+    public String readNewItemClassName()
+    {
+        return itemInfo.readNewItemClassName();
+    }
+    
+    public boolean readAlreadySetDirField()
+    {
+        return itemInfo.readAlreadySetDirField();
     }
 
 }

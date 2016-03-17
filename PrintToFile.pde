@@ -111,11 +111,11 @@ class PrintToFile {
         
         if (writeJSONsToPersdata)
         {
-            printOutputLine("Writing JSON files to persdata");
+            printOutputLine("Writing JSON files to persdata (** indicate changed files)");
         }
         else
         {
-            printOutputLine("No JSON files being written to persdata");
+            printOutputLine("No JSON files being written to persdata (** indicate changed files)");
         }
         
         if (usingGeoInfo)
@@ -146,20 +146,21 @@ class PrintToFile {
             s = "";
             if (itemResults.get(i).readChangedJSON())
             {
+                // Used to clearly show if JSON has been updated
                 s = "** ";
             }
 
             switch (itemResults.get(i).readResult())
             {
                 case SummaryChanges.SKIPPED:
-                    s = s + "SKIPPED ";
+                    s = s + "Skipped ";
                     skippedCount++;
                     break;    
                             
                 case SummaryChanges.MISSING:
                     if (itemResults.get(i).readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "MISSING QUOIN ";
+                        s = s + "MISSING quoin ";
                     }
                     else
                     {
@@ -169,19 +170,28 @@ class PrintToFile {
                     break; 
                             
                 case SummaryChanges.COORDS_ONLY:
-                    s = s + "CHANGED CO-ORDS ";
+                    s = s + "Changed co-ords ";
                     break;
                          
                 case SummaryChanges.VARIANT_ONLY:
-                    s = s + "CHANGED VARIANT ";
+                    s = s + "Changed variant ";
                     break;
                             
                 case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
-                    s = s + "CHANGED VARIANT & CO-ORDS ";
+                    s = s + "Changed variant & co-ords ";
                     break;
                     
                 case SummaryChanges.UNCHANGED:
-                    s = s + "UNCHANGED ";
+                    if (itemResults.get(i).readAlreadySetDirField())
+                    {
+                        // This handles the case of e.g. shrine where x,y unchanged and just inserted the missing dir field
+                        // Had to fake up the missing variant field in order to correctly handle images
+                        s = s + "Changed variant ";
+                    }
+                    else
+                    {
+                        s = s + "Unchanged ";
+                    }
                     break;
                             
                 default:
@@ -191,65 +201,99 @@ class PrintToFile {
             }
                     
             s = s + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
-            if (itemResults.get(i).readItemExtraInfo().length () > 0)
+            //s = s + " " + Utils.formatItemInfoString(itemResults.get(i).readItemExtraInfo());
+
+            
+            if (itemResults.get(i).readResult() == SummaryChanges.VARIANT_ONLY || itemResults.get(i).readResult() == SummaryChanges.VARIANT_AND_COORDS_CHANGED)
             {
-                s = s + "(" + itemResults.get(i).readItemExtraInfo() + ")";
+                if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                {
+                    // Don't bother printing out the quoin type, as the class name also includes this info
+                    s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemClassName());
+                    s = s + " (was" + Utils.formatItemInfoString(itemResults.get(i).readOrigItemClassName()) + ")";
+                }
+                else
+                {
+                    s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemExtraInfo());
+                    s = s + " (was" + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
+                }
             }
-            s = s + " at " + itemResults.get(i).readItemX() + "," + itemResults.get(i).readItemY();
+            else
+            {
+                // Variant has not changed - print out the original version if present
+                if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                {
+                    // Don't bother printing out the quoin type, as the class name also includes this info
+                    s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemClassName());
+                }
+                else
+                {
+                    s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
+                }
+            }
+                
+            s = s + " at x,y " + itemResults.get(i).readItemX() + "," + itemResults.get(i).readItemY();
+            if (itemResults.get(i).readResult() == SummaryChanges.COORDS_ONLY || itemResults.get(i).readResult() == SummaryChanges.VARIANT_AND_COORDS_CHANGED)
+            {
+                s = s + " (was " + itemResults.get(i).readOrigItemX() + "," +  itemResults.get(i).readOrigItemY() + ")"; 
+            }
+            
             printOutputLine(s);
 
             if (itemResults.get(i).readItemClassTSID().equals("quoin"))
             {
-                if (itemResults.get(i).readItemExtraInfo().equals("energy"))
+                switch (itemResults.get(i).readNewItemExtraInfo())
                 {
-                    quoinEnergy++;
-                }
-                else if (itemResults.get(i).readItemExtraInfo().equals("mood"))
-                {
-                    quoinMood++;
-                }
-                else if (itemResults.get(i).readItemExtraInfo().equals("currants"))
-                {
-                    quoinCurrants++;
-                }
-                else if (itemResults.get(i).readItemExtraInfo().equals("time"))
-                {
-                    quoinTime++;
-                }
-                else if (itemResults.get(i).readItemExtraInfo().equals("favor"))
-                {
-                    quoinFavor++;
-                }
-                else if (itemResults.get(i).readItemExtraInfo().equals("xp"))
-                {
-                    quoinXP++;
-                }
-                else if (itemResults.get(i).readItemExtraInfo().equals("mystery"))
-                {
-                    quoinMystery++;
-                }
-                else
-                {
-                    printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).readItemExtraInfo(), 3);
-                    failNow = true;
-                    return false; 
+                    case "xp":
+                        quoinXP++;
+                        break;
+                        
+                    case "energy":
+                        quoinEnergy++;
+                        break;
+                        
+                    case "mood":
+                        quoinMood++;
+                        break;
+                        
+                    case "currants":
+                        quoinCurrants++;
+                        break;
+                        
+                    case "time":
+                        quoinTime++;
+                        break;
+                        
+                    case "favor":
+                        quoinFavor++;
+                        break;
+                        
+                    case "mystery":
+                        quoinMystery++;
+                        break;
+                        
+                    default:
+                        printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).readNewItemExtraInfo(), 3);
+                        failNow = true;
+                        return false;
                 }
             }
         }
         
         // Just dump out number of quoins
-        s = "Skipped " + skippedCount + " items, missing " + missingCount + " items";
+        s = "\nSkipped " + skippedCount + " items, missing " + missingCount + " items";
         printOutputLine(s);
         
-        s = "Quoin count is: XP (" + quoinXP + ")   energy (" + quoinEnergy + ")   mood (" + quoinMood +
-            ")   currants (" + quoinCurrants +")   favor (" + quoinFavor +")   time (" + quoinTime +")   mystery (" + quoinMystery + ")" +
-            " Total = " + (quoinXP + quoinEnergy + quoinMood + quoinCurrants + quoinFavor + quoinTime + quoinMystery);
+        s = "Quoin count is: XP=" + quoinXP + "   energy=" + quoinEnergy + "   mood=" + quoinMood +
+            "   currants=" + quoinCurrants +"   favor=" + quoinFavor +"   time=" + quoinTime +"   mystery=" + quoinMystery +
+            " Total=" + (quoinXP + quoinEnergy + quoinMood + quoinCurrants + quoinFavor + quoinTime + quoinMystery);
 
         printOutputLine(s);
         printOutputLine("\n\n");
         return true;
     }
-           
+    
+          
     public boolean readOkFlag()
     {
         return (okFlag);
