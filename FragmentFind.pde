@@ -78,7 +78,7 @@ class FragmentFind
         }
 
         printToFile.printDebugLine(this, "Starting search with image number " + itemImageBeingUsed + " i.e. " + itemImages.get(itemImageBeingUsed).readPNGImageName() +
-                                    " with street snap " + streetSnapImage.readPNGImageName(), 2);        
+                                    " with street snap " + streetSnapImage.readPNGImageName(), 1);        
         
         // Need to convert the JSON x,y to relate to the street snap 
         // For most items, the search will only be done once so the starting point is the JSON x,y. And the search box will be the default
@@ -93,7 +93,7 @@ class FragmentFind
             startItemY = thisItemInfo.readNewItemY();
             searchBoxWidth = narrowSearchWidthBox;
             searchBoxHeight = defSearchBox;
-            printToFile.printDebugLine(this, "Continuing search for quoin/QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + startItemX + "," + startItemY, 2);
+            printToFile.printDebugLine(this, "Continuing search for quoin/QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + startItemX + "," + startItemY, 1);
         }
         else
         {
@@ -102,7 +102,7 @@ class FragmentFind
             startItemY = thisItemInfo.readOrigItemY();
             searchBoxWidth = defSearchBox;
             searchBoxHeight = defSearchBox;
-            printToFile.printDebugLine(this, "Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY(), 2);
+            printToFile.printDebugLine(this, "Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY(), 1);
         }
         // Set up the structure to actually do the search
         spiralSearch = null;
@@ -141,7 +141,7 @@ class FragmentFind
         display.showStreetImage(streetSnapImage.readPNGImage(), streetSnapImage.readPNGImageName());
         
         // Carry out the search for the item and depending on the result might then move on to look at the next image
-        printToFile.printDebugLine(this, "Search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " using item image " + itemImages.get(itemImageBeingUsed).readPNGImageName() , 1);
+        printToFile.printDebugLine(this, "Search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " using item image " + itemImages.get(itemImageBeingUsed).readPNGImageName() , 2);
         if (spiralSearch.searchForItem())
         {   
             // Item was found so save the new x,y and other information
@@ -153,7 +153,7 @@ class FragmentFind
             newItemExtraInfo = extractItemInfoFromItemImageFilename();
             debugInfo = spiralSearch.debugRGBInfo(); 
             searchDone = true;
-            printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY, 1);
+            printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY, 2);
         }
         else
         {
@@ -166,7 +166,7 @@ class FragmentFind
                 // Won't reach this leg of the code for any other items - as once
                 
                 searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - found 1 item, no more images to search", 1);
+                printToFile.printDebugLine(this, "searchForFragment - found 1 item, no more images to search", 2);
             }
             else
             {
@@ -176,13 +176,16 @@ class FragmentFind
                 {
                     // Have searched using all the item images
                     // This will include the case of the QQ - as only has one image (but will be searched for as special case on next street snap)
-                    printToFile.printDebugLine(this, "searchForFragment - no more images to search", 1);
+                    printToFile.printDebugLine(this, "searchForFragment - no more images to search", 2);
                     searchDone = true;
                 }
                 else
                 {
                     // Carry out search using the new image
-                    printToFile.printDebugLine(this, "searchForFragment - with new image " + itemImages.get(itemImageBeingUsed).readPNGImageName() + " and street " + streetSnapImage.readPNGImageName(), 1);
+                    debugInfo = spiralSearch.debugRGBInfo(); 
+                    //printToFile.printDebugLine(this, " For reference before start search with next image - " + debugInfo, 2);
+                    
+                    printToFile.printDebugLine(this, "searchForFragment - with new image " + itemImages.get(itemImageBeingUsed).readPNGImageName() + " and street " + streetSnapImage.readPNGImageName(), 2);
                     spiralSearch = null; 
                     System.gc();
                     spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
@@ -222,18 +225,34 @@ class FragmentFind
         // Extract the information which describes the quoin type or dir/variant fields for different items
         // Just need to strip out the item class_tsid from the front of the file name - if anything left, then
         // this is the value needed for the JSON file if the street item is to match the archive snaps. 
-        
-        // Remove the classTSID and .png part 
-        String fname = itemImages.get(itemImageBeingUsed).readPNGImageName();
         String extraInfo = "";
+        String imageName = itemImages.get(itemImageBeingUsed).readPNGImageName();
+        String name = imageName.replace(".png", "");
         
-        println(" image name ", fname, " for item class tsid ", thisItemInfo.itemClassTSID);
         
-        if (fname.length() > (thisItemInfo.itemClassTSID.length() + 4))
+        // Some items never have a variant field e.g. rock_metal_1, QQ, so image name = class TSID
+        if (thisItemInfo.itemClassTSID.equals(name))
+        {
+            return "";
+        }
+        else if (thisItemInfo.itemClassTSID.indexOf("trant_") == 0)
+        {
+            // Quite often might have a bean tree on our QA street, but the snap has a fruit tree. Therefore the itemClassTSID (bean)
+            // won't match the tree found on the snap. Unlike quoins, we are not changing tree JSONs to match snaps, therefore
+            // quite feasible that the itemClassTSID won't match the snap name. So just return a clean empty extraInfo field.
+            return "";
+        }
+        
+        // Remove the classTSID and .png part               
+        //if (imageName.length() > (thisItemInfo.itemClassTSID.length() + 4))
+        if (name.length() > (thisItemInfo.itemClassTSID.length() + 1))
         {
             // Means there is an _info field to extract - so strip off the classTSID_ part and .png
-            extraInfo = fname.substring((thisItemInfo.itemClassTSID.length() + 1), fname.length() - 4);
+            //extraInfo = imageName.substring((thisItemInfo.itemClassTSID.length() + 1), imageName.length() - 4);
+            // Means there is an _info field to extract - so strip off the classTSID_ part and _
+            extraInfo = name.replace(thisItemInfo.readItemClassTSID() + "_", "");
         }
+        printToFile.printDebugLine(this, " image name "  + imageName + " for item class tsid " + thisItemInfo.itemClassTSID + " returns variant + " + extraInfo, 1);
         return extraInfo;
     }
        

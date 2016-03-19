@@ -29,6 +29,28 @@
  *
  */
  
+ // Clean up the shrine/visiting stone so don't rely on setting the OrigExtraItemField??? And then insert the fields at the end - as will appear from the 
+ // image names???? And then check if get right info at end.
+ // 
+ 
+ // BUG - shrine new x,y not correct with new printout - although is found in code ... LHV1FUFU9442AKR
+ 
+// BUG?????
+//Saving change - item (IHVNUG0T63G3O14) trant_fruit with changed x,y = -1056,-438 to -1056,-437
+//** Unchanged IHVNUG0T63G3O14: trant_fruit at x,y -1056,-437
+
+//BUG - need to sort out the dir field - for this and visiting stones - might be OK with images just loading as based on classTSID
+//Saving change - unchanged item info/class (INV6K3P4GRL27G9) npc_shrine_humbaba dir = right with changed x,y = 627,-148 to 625,-150 (inserting/updating  dir field in JSON file)
+//** Changed variant & co-ords INV6K3P4GRL27G9: npc_shrine_humbaba (right) (was (right)) at x,y 625,-150 (was 627,-148)
+
+//BUG - shouldn't have an info field???
+//Saving change - changed item info/class (IHVQ6ED0B5G3ST3) trant_bean =  to e with changed x,y = 1384,-108 to 1385,-104
+//** Changed variant & co-ords IHVQ6ED0B5G3ST3: trant_bean (e) (was) at x,y 1385,-104 (was 1384,-108)
+// see extractItemInfoFromItemImageFilename()
+ 
+// Should the quoin, after saving - if missing not have origInfo != newInfo - therefore looks like changed variant???
+ 
+ 
  // BUG need to rework the skipItem/finishedItem etc - not sure that resetReadyForNewItemSearch() is
  // being called each time when it should. E.g. when just skipped past something. Might need to rejig
  // the variables being set in street/item/fragment level

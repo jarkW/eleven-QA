@@ -9,6 +9,9 @@ class ConfigInfo {
     boolean changeXYOnly;
     boolean debugSaveOrigAndNewJSONs;
     int searchRadius;
+    String serverName;
+    String serverUsername;
+    String serverPassword;
     
     StringList streetTSIDs = new StringList();
     String outputFile;
@@ -51,6 +54,46 @@ class ConfigInfo {
             println("Failed to read use_vagrant_dirs in config.json file");
             return false;
         }
+        
+        // Read in server details
+        JSONObject serverInfo = Utils.readJSONObject(json, "server_info", true); 
+        if (!Utils.readOkFlag())
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read server in config.json file");
+            return false;
+        }  
+        serverName = Utils.readJSONString(serverInfo, "host", true);
+        if (!Utils.readOkFlag())
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read server host name in config.json file");
+            return false;
+        }  
+        serverUsername = Utils.readJSONString(serverInfo, "username", true);
+        if (!Utils.readOkFlag())
+        {
+             println(Utils.readErrMsg());
+             println("Failed to read server username in config.json file");
+             return false;
+        }            
+        serverPassword = Utils.readJSONString(serverInfo, "password", true);
+        if (!Utils.readOkFlag())
+        {
+           println(Utils.readErrMsg());
+           println("Failed to read server password in config.json file");
+           return false;
+        }   
+        
+        // Give warning message if both are configured - will use the useVagrant flag as the default
+        if (useVagrant && (serverName.length() > 0 || serverUsername.length() > 0  || serverPassword.length() > 0))
+        {
+            println("use_vagrant_dirs flag is set in config.json so using vagrant files for analysis - ignoring QA server details");
+            serverName = "";
+            serverUsername = "";
+            serverPassword = "";
+        }
+
         fixturesPath = Utils.readJSONString(json, "fixtures_path", true); 
         if (!Utils.readOkFlag() || fixturesPath.length() == 0)
         {
@@ -209,6 +252,21 @@ class ConfigInfo {
     public int readSearchRadius()
     {
         return searchRadius;
+    }
+    
+    public String readServerName()
+    {
+        return serverName;
+    }
+    
+    public String readServerUserName()
+    {
+        return serverUsername;
+    }
+    
+    public String readServerPassword()
+    {
+        return serverPassword;
     }
     
 }

@@ -109,22 +109,31 @@ class PrintToFile {
         String s = "\nResults for " + streetInfo.readStreetName() + " (" + streetInfo.readStreetTSID() + ")";
         printOutputLine(s);
         
-        if (writeJSONsToPersdata)
+        if (!configInfo.readUseVagrantFlag())
         {
-            printOutputLine("Writing JSON files to persdata (** indicate changed files)");
+            printOutputLine("Reading/writing files from server " + configInfo.readServerName() + " (** indicate changed files)");
         }
         else
         {
-            printOutputLine("No JSON files being written to persdata (** indicate changed files)");
+            printOutputLine("Reading/writing files using vagrant file system (** indicate changed files)");
+        }
+                
+        if (writeJSONsToPersdata)
+        {
+            printOutputLine("DEBUG Writing JSON files to persdata");
+        }
+        else
+        {
+            printOutputLine("DEBUG No JSON files being written to persdata");
         }
         
         if (usingGeoInfo)
         {
-            printOutputLine("Using Geo data to change image files");
+            printOutputLine("DEBUG Using Geo data to change image files");
         }
         else
         {
-            printOutputLine("Converting images to black/white for compare");
+            printOutputLine("DEBUG Converting images to black/white for compare");
         }
             
                 
@@ -153,32 +162,64 @@ class PrintToFile {
             switch (itemResults.get(i).readResult())
             {
                 case SummaryChanges.SKIPPED:
-                    s = s + "Skipped ";
+                    s = s + "Skipped " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                    s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
                     skippedCount++;
                     break;    
                             
                 case SummaryChanges.MISSING:
                     if (itemResults.get(i).readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "MISSING quoin ";
+                        s = s + "MISSING quoin " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                        s = s + "(" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                        s = s + " defaulted to (mystery/placement tester)";
                     }
                     else
                     {
-                         s = s + "MISSING ";
+                         s = s + "MISSING " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                         s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
                     }
                     missingCount++;
                     break; 
                             
                 case SummaryChanges.COORDS_ONLY:
-                    s = s + "Changed co-ords ";
+                    s = s + "Changed co-ords " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                    if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                    {
+                        s = s + "(" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                    }
+                    else
+                    {
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
+                    }
                     break;
                          
                 case SummaryChanges.VARIANT_ONLY:
-                    s = s + "Changed variant ";
+                    s = s + "Changed variant " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                    if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                    {
+                        s = s + "(" + itemResults.get(i).readNewItemExtraInfo() + "/" + itemResults.get(i).readNewItemClassName() + ")";
+                        s = s + " (was" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                    }
+                    else
+                    {
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemExtraInfo());
+                        s = s + " (was" + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
+                    }
                     break;
                             
                 case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
-                    s = s + "Changed variant & co-ords ";
+                    s = s + "Changed variant & co-ords " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                    if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                    {
+                        s = s + "(" + itemResults.get(i).readNewItemExtraInfo() + "/" + itemResults.get(i).readNewItemClassName() + ")";
+                        s = s + " (was" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                    }
+                    else
+                    {
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemExtraInfo());
+                        s = s + " (was" + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
+                    }
                     break;
                     
                 case SummaryChanges.UNCHANGED:
@@ -187,10 +228,20 @@ class PrintToFile {
                         // This handles the case of e.g. shrine where x,y unchanged and just inserted the missing dir field
                         // Had to fake up the missing variant field in order to correctly handle images
                         s = s + "Changed variant ";
+                        s = s + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
                     }
                     else
                     {
                         s = s + "Unchanged ";
+                        s = s + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                    }
+                    if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                    {
+                        s = s + "(" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                    }
+                    else
+                    {
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
                     }
                     break;
                             
@@ -199,39 +250,7 @@ class PrintToFile {
                     failNow = true;
                     return false;  
             }
-                    
-            s = s + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
-            //s = s + " " + Utils.formatItemInfoString(itemResults.get(i).readItemExtraInfo());
-
-            
-            if (itemResults.get(i).readResult() == SummaryChanges.VARIANT_ONLY || itemResults.get(i).readResult() == SummaryChanges.VARIANT_AND_COORDS_CHANGED)
-            {
-                if (itemResults.get(i).readItemClassTSID().equals("quoin"))
-                {
-                    // Don't bother printing out the quoin type, as the class name also includes this info
-                    s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemClassName());
-                    s = s + " (was" + Utils.formatItemInfoString(itemResults.get(i).readOrigItemClassName()) + ")";
-                }
-                else
-                {
-                    s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemExtraInfo());
-                    s = s + " (was" + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
-                }
-            }
-            else
-            {
-                // Variant has not changed - print out the original version if present
-                if (itemResults.get(i).readItemClassTSID().equals("quoin"))
-                {
-                    // Don't bother printing out the quoin type, as the class name also includes this info
-                    s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemClassName());
-                }
-                else
-                {
-                    s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
-                }
-            }
-                
+                        
             s = s + " at x,y " + itemResults.get(i).readItemX() + "," + itemResults.get(i).readItemY();
             if (itemResults.get(i).readResult() == SummaryChanges.COORDS_ONLY || itemResults.get(i).readResult() == SummaryChanges.VARIANT_AND_COORDS_CHANGED)
             {

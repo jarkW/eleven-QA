@@ -8,6 +8,7 @@ To create a valid config.json  file do the following:
 	streets - list of TSIDs to be read (NB last TSID must not have trailing comma)
 	use_vagrant_dirs - set to true if the street/item JSON files are on a PC version of Eleven
 					 - set to false if using the QA server/persdata
+    server - set up the hostname, username and password for server. Only read if use_vagrant_dirs is false.
 	fixtures_path - set to path for eleven-fixtures (ignored if use_vagrant_dirs = false)
 	persdata_path - set to path for eleven-throwaway-server/persdata (ignored if use_vagrant_dirs = false)
 	street_snap_path - set to path containing all the archive street snaps for these streets
@@ -25,6 +26,11 @@ To create a valid config.json  file do the following:
 	{"tsid": "LHV4U509S9B2MRV"}
   ],
   "use_vagrant_dirs": true,
+  "server_info": {
+	"host": "",
+    "username": "",
+    "password": ""
+  },
   "fixtures_path": "C:/Glitch/eleven/eleven-fixtures",
   "persdata_path": "C:/Glitch/eleven/eleven-throwaway-server/persdata",
   "street_snap_path": "C:/Glitch/QA2/StreetSnapsArchive/Snaps",
