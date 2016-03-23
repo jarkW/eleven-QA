@@ -7,11 +7,14 @@ class ConfigInfo {
     String persdataPath;
     String streetSnapPath;
     boolean changeXYOnly;
-    boolean debugSaveOrigAndNewJSONs;
     int searchRadius;
     String serverName;
     String serverUsername;
     String serverPassword;
+    boolean appendToOutputFile;
+    
+    boolean debugSaveOrigAndNewJSONs;
+    boolean debugWriteJSONsToPersdata;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
     
     StringList streetTSIDs = new StringList();
     String outputFile;
@@ -121,10 +124,25 @@ class ConfigInfo {
             println(Utils.readErrMsg());
             println("Failed to read output_file in config.json file");
             return false;
+        }        
+        // Need to check that output file is a text file
+        if (outputFile.indexOf(".txt") == -1)
+        {
+            println("Output file (output_file) needs to be a .txt file");
+            return false;
+        } 
+        
+        appendToOutputFile = Utils.readJSONBool(json, "append_to_output_file", true);
+        if (!Utils.readOkFlag())
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read append_to_output_file in config.json file");
+            return false;
         }
+         
         
         changeXYOnly = Utils.readJSONBool(json, "change_xy_only", true);
-        if (!Utils.readOkFlag() || outputFile.length() == 0)
+        if (!Utils.readOkFlag())
         {
             println(Utils.readErrMsg());
             println("Failed to read change_xy_only in config.json file");
@@ -141,19 +159,20 @@ class ConfigInfo {
         
         // REMOVE BEFORE END OF TESTING
         debugSaveOrigAndNewJSONs = Utils.readJSONBool(json, "debug_save_all_JSONs_for_comparison", true);
-        if (!Utils.readOkFlag() || outputFile.length() == 0)
+        if (!Utils.readOkFlag())
         {
             println(Utils.readErrMsg());
             println("Failed to read debug_save_all_JSONs_for_comparison in config.json file");
             return false;
         }
-        
-        // Need to check that output file is a text file
-        if (outputFile.indexOf(".txt") == -1)
+        debugWriteJSONsToPersdata = Utils.readJSONBool(json, "debug_write_JSONs_To_Persdata", true);
+        if (!Utils.readOkFlag())
         {
-            println("Output file (output_file) needs to a .txt file");
+            println(Utils.readErrMsg());
+            println("Failed to read debug_save_all_JSONs_for_comparison in config.json file");
             return false;
-        }    
+        }
+   
         
         // Read in array of street TSID from config file
         JSONArray TSIDArray = Utils.readJSONArray(json, "streets", true);
@@ -225,6 +244,10 @@ class ConfigInfo {
     {
         return debugSaveOrigAndNewJSONs;
     }
+    public boolean readDebugWriteJSONsToPersdata()
+    {
+        return debugWriteJSONsToPersdata;
+    }
          
     public String readStreetTSID(int n)
     {
@@ -248,6 +271,11 @@ class ConfigInfo {
     {
         return outputFile;
     } 
+    
+    public boolean readAppendToOutputFile()
+    {
+        return appendToOutputFile;
+    }
     
     public int readSearchRadius()
     {

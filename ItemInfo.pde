@@ -26,7 +26,6 @@ class ItemInfo
     
     // show if need to write out changed JSON file
     boolean saveChangedJSONfile;
-    boolean alreadySetDirField;
       
     FragmentFind fragFind;
     
@@ -35,12 +34,8 @@ class ItemInfo
     
     // Only used for debug purposes - to collect y values on the street with reference quoins on
     IntList itemYValues;
-    boolean collectItemYValues = false;
-    
-    // ARE THESE EVER USED HERE?
-    //int itemImageBeingUsed;
-    //int streetImageBeingUsed;
-           
+    boolean collectItemYValues = true;
+              
     // constructor/initialise fields
     public ItemInfo(JSONObject item)
     {
@@ -60,7 +55,6 @@ class ItemInfo
         skipThisItem = false;
         itemFound = false;
         saveChangedJSONfile = false;
-        alreadySetDirField = false;
         
         itemYValues = new IntList();
         
@@ -299,36 +293,17 @@ class ItemInfo
             // As dir may not exist - is not an error
             itemExtraInfoKey = "dir";
             origItemExtraInfo = Utils.readJSONString(itemJSON, itemExtraInfoKey, false);
-            if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
-            {
-                // Failed to read this field from JSON file - so need to insert one
-                printToFile.printDebugLine(this, "Failed to read dir field from shrine JSON file " + itemTSID, 2);
-                
-                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, "right"))
-                {
-                    // Error occurred - fail
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine(this, "Failed to insert new dir field in item JSON file " + itemTSID, 3);
-                    return false;
-                }
-
-                // save this new dir field - will need to load the shrine picture
-                origItemExtraInfo = "right";
-                
-                // Show JSON file needs saving after processing done
-                saveChangedJSONfile = true;
-                
-                // Set flag so give meaningful msg at end of processing
-                alreadySetDirField = true;
-            }
             
             // Currently all shrines are set to 'right' so flag up error if that isn't true
             // Putting this in so that if I ever come across a left-shrine, it will cause the code to fail
-            // Hence read the value in rather than simply setting to 'right' all the time.
-            if (!origItemExtraInfo.equals("right"))
+            // It is also OK at this stage for the dir field to be left unset 
+            if (origItemExtraInfo.length() > 0)
             {
-                printToFile.printDebugLine(this, "Unexpected dir = left field in shrine JSON file  " + itemTSID, 3);
-                return false;
+                if (!origItemExtraInfo.equals("right"))
+                {
+                    printToFile.printDebugLine(this, "Unexpected dir = left field in shrine JSON file  " + itemTSID, 3);
+                    return false;
+                }    
             }
             
             return true;
@@ -457,46 +432,10 @@ class ItemInfo
             case "visiting_stone":
                 // Read in the dir field 
                 // NB The dir field is not always set in visiting_stones - and often set wrong.
-                // Therefore default the direction depending on what side of the screen it is    
-                itemExtraInfoKey = "dir";              
-                if (origItemX > 0)
-                {
-                    // stone is on RHS of screen - so set to 'left'
-                    origItemExtraInfo = "left";
-                }
-                else
-                {
-                    // stone is on LHS of screen - so set to 'right'
-                    origItemExtraInfo = "right";
-                }
-                
-                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, origItemExtraInfo))
-                {
-                    // Error occurred - fail
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine(this, "Failed to set dir field in item JSON file " + itemTSID, 3);
-                    return false;
-                }
-                
-                // Also need to check that there is a state field set - don't report an error if missing
-                String stateValue = Utils.readJSONString(itemJSON, "state", false);
-                if (!Utils.readOkFlag() || stateValue.length() == 0)
-                {
-                    // It isn't present - so insert
-                    if (!Utils.setJSONString(itemJSON, "state", "1"))
-                    {
-                        // Error occurred - fail
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        printToFile.printDebugLine(this, "Failed to set state field in item JSON file " + itemTSID, 3);
-                        return false;
-                    }
-                }
-                             
-                // Show JSON file needs saving after processing done
-                saveChangedJSONfile = true;
-                
-                // Set flag so give meaningful msg at end of processing
-                alreadySetDirField = true;
+                // Is OK if does not exist for now - as will be found when search the street and set to correct
+                // direction then
+                itemExtraInfoKey = "dir";  
+                origItemExtraInfo = Utils.readJSONString(itemJSON, itemExtraInfoKey, false);
                 break;
                                 
             default:
@@ -522,11 +461,23 @@ class ItemInfo
                 return false;
             }
             
-            // Dir set to right has already been saved in the json and the flag set. So nothing to do
+            if (origItemExtraInfo.length() == 0)
+            {
+                // Need to insert the dir field - as missing from original JSON file                
+                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, "right"))
+                {
+                    // Error occurred - fail
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to insert new dir field in item JSON file " + itemTSID, 3);
+                    return false;
+                }
+                saveChangedJSONfile = true; 
+            }  
             return true;
         }
         else if (!itemClassTSID.equals("quoin") && newItemExtraInfo.equals(origItemExtraInfo)) 
         {
+            // For all non-quoins
             // None of the additional information has been changed from the original. 
             // So just return without setting the flag.
             // For quoins this check is done later once the classname has been determined.
@@ -637,12 +588,35 @@ class ItemInfo
                 break;
    
             case "subway_gate":
-            case "visiting_stone":
                 if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, newItemExtraInfo))
                 {
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                     return false;
                 }          
+                break;
+                
+            case "visiting_stone":
+                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, newItemExtraInfo))
+                {
+                    // Error occurred - fail
+                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                    printToFile.printDebugLine(this, "Failed to set dir field in item JSON file " + itemTSID, 3);
+                    return false;
+                } 
+                             
+                // Also need to check that there is a state field set - don't report an error if missing
+                String stateValue = Utils.readJSONString(itemJSON, "state", false);
+                if (!Utils.readOkFlag() || stateValue.length() == 0)
+                {
+                    // It isn't present - so insert
+                    if (!Utils.setJSONString(itemJSON, "state", "1"))
+                    {
+                        // Error occurred - fail
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                        printToFile.printDebugLine(this, "Failed to set state field in item JSON file " + itemTSID, 3);
+                        return false;
+                    }
+                }
                 break;
                          
             case "npc_sloth":
@@ -744,7 +718,7 @@ class ItemInfo
                 {
                     s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
                 }
-                printToFile.printOutputLine(s);
+                //printToFile.printOutputLine(s);
                 printToFile.printDebugLine(this, s, 2);         
                 if (!configInfo.readDebugSaveOrigAndNewJSONs())
                 {
@@ -761,10 +735,18 @@ class ItemInfo
             else
             {
                  // Reset the quoin type if the x,y was not found - set to mystery, with the existing x,y
-                 printToFile.printDebugLine(this, "Set missing quoin " + itemTSID + " to be type = mystery", 1);
                 newItemX = origItemX;
                 newItemY = origItemY;
-                newItemExtraInfo = "mystery";
+                if (!configInfo.readChangeXYOnly())
+                {
+                    printToFile.printDebugLine(this, "Set missing quoin " + itemTSID + " to be type = mystery", 1);
+                    newItemExtraInfo = "mystery";
+                }
+                else
+                {    
+                    // Do not reset to mystery, leave as is
+                    newItemExtraInfo = origItemExtraInfo;
+                }
                 
                 // OK to then carry on in this function
             }
@@ -773,28 +755,19 @@ class ItemInfo
         // dump out all the y values nb 'max y' is the most negative
         // Only do this occasionally when want to correct the quoin images offset manually
         // as have to allow for bounce.
-        if (collectItemYValues)
+        if (collectItemYValues && (itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy")))
         {
-            int minY = -1000;
-            int maxY = 0;
             String s1 = "";
             for (int i = 0; i < itemYValues.size(); i++)
             {
                 s1 = s1 + " " + itemYValues.get(i);
-                if (itemYValues.get(i) < maxY)
-                {
-                    maxY = itemYValues.get(i);
-                }
-                else if (itemYValues.get(i) > minY)
-                {
-                    minY = itemYValues.get(i);
-                }
             }
-            printToFile.printOutputLine("Y values for " + itemTSID + "(" + newItemExtraInfo + ") x,y " + origItemX + "," + origItemY + " range of y = " + minY + " to " + maxY);
             printToFile.printOutputLine("Y values for " + itemTSID + "(" + newItemExtraInfo + ") x,y " + origItemX + "," + origItemY + " are " + s1);
         }
 
         // Item has been found or has been reset as mystery quoin - so changes to write
+        
+        // Change in co-ords
         if (newItemX != origItemX)
         {
             if (!Utils.setJSONInt(itemJSON, "x", newItemX))
@@ -885,12 +858,8 @@ class ItemInfo
             {
                 s = s + " with changed x,y = " + origItemX + "," + origItemY + " to " + newItemX + "," + newItemY;
             }
-            
-            if (alreadySetDirField)
-            {
-                s = s + " (inserting/updating  dir field in JSON file)";
-            }
-            printToFile.printOutputLine(s);
+
+            //printToFile.printOutputLine(s);
             printToFile.printDebugLine(this, s, 2);
                 
             // Write the JSON file out to temporary place before checking that the new file length = old one plus calculated diff
@@ -919,7 +888,7 @@ class ItemInfo
             jsonDiff.displayInfoMsg();
                                 
             // Write to persdata and then delete the one in the temporary directory
-            if (writeJSONsToPersdata)
+            if (configInfo.readDebugWriteJSONsToPersdata())
             {
                 try
                 {
@@ -957,7 +926,7 @@ class ItemInfo
                     s = s + " (" + origItemClassName + ")";
                 }
             }
-            printToFile.printOutputLine(s);
+            //printToFile.printOutputLine(s);
             printToFile.printDebugLine(this, s, 2);
         }
         
@@ -992,14 +961,23 @@ class ItemInfo
             // Search has completed - for this item on this street
             if (fragFind.readItemFound())
             {
+                if (itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy"))
+                {
+                    // debug only
+                    s = "quoin/QQ (" + itemTSID + ") orig type <" + origItemExtraInfo + "> new type <" + newItemExtraInfo + " found on street snap " + streetInfo.streetSnapBeingUsed + " with new item X " + newItemX;
+                    printToFile.printDebugLine(this, s, 1);
+                }
+                
+                
                 // Item was successfully found on the street
                 if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy")) && newItemX != MISSING_COORDS)
-                {
+                {                   
                     // This is the 2nd time or more that we've found this quoin/QQ
                     // Only save the Y-cord if lower than the one we already have i.e. less negative
                     if (collectItemYValues)
                     {
                         itemYValues.append(fragFind.readNewItemY());
+                        printToFile.printDebugLine(this, "adding Y value 2 " + fragFind.readNewItemY() + " for item " + itemTSID + " itemClassTSID " + itemClassTSID, 1);
                     }
                     if (newItemY < fragFind.readNewItemY())
                     {
@@ -1034,6 +1012,7 @@ class ItemInfo
                         s = "SEARCH FOUND (but keep looking) (";
                         if (collectItemYValues)
                         {
+                            printToFile.printDebugLine(this, "adding Y value " + fragFind.readNewItemY() + " for item " + itemTSID + " itemClassTSID " + itemClassTSID, 1);
                             itemYValues.append(fragFind.readNewItemY());
                         }
                     }
@@ -1250,11 +1229,6 @@ class ItemInfo
         {
             return "";
         }
-    }
-    
-    public boolean readAlreadySetDirField()
-    {
-        return alreadySetDirField;
     }
     
     public boolean readOkFlag()

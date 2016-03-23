@@ -5,6 +5,8 @@ class PrintToFile {
    PrintWriter infoOutput;
    boolean okFlag;
    boolean initDone;
+   
+   StringList existingOutputText;
     
      // constructor/initialise fields
     public PrintToFile()
@@ -16,6 +18,17 @@ class PrintToFile {
     public boolean initPrintToFile()
     {       
         // Open output file
+        if (configInfo.readAppendToOutputFile())
+        {
+            existingOutputText = new StringList(); 
+            if (!saveExistingOutputFileText())
+            {
+                printToFile.printDebugLine(this, "Failed to open output file for append " + configInfo.readOutputFilename(), 3);
+                return false;
+            }
+        }
+        
+        // Now have saved any existing Output file contents, can open the output file ready for writing     
         try
         {
             infoOutput = createWriter(configInfo.readOutputFilename());
@@ -45,8 +58,68 @@ class PrintToFile {
         }
         
         initDone = true;
+        
+        // Is now save to write back the output file contents if this is a pseudo-append
+        if (configInfo.readAppendToOutputFile())
+        {
+            // Now rewrite back the saved lines to the top of this output file
+            for (int i = 0; i < existingOutputText.size(); i++)
+            {
+                printOutputLine(existingOutputText.get(i));
+            }
+        }
+        
         return true;
     }
+    
+    public boolean saveExistingOutputFileText()
+    {
+        // Cannot append to files easily in Processing
+        // So if the file exists, open, and read into an array
+        File file = new File(configInfo.readOutputFilename());
+        if (file.exists())
+        {            
+            // Read in contents of the file
+            BufferedReader reader;
+            String line;
+            reader = createReader(configInfo.readOutputFilename());
+
+            boolean eof = false;
+            while (!eof)
+            {
+                try 
+                {
+                    line = reader.readLine();
+                } 
+                catch (IOException e) 
+                {
+                    e.printStackTrace();
+                    printToFile.printDebugLine(this, "IO exception when reading in existing output file " + configInfo.readOutputFilename(), 3);
+                    line = null;
+                }
+                catch(Exception e)
+                {
+                    println(e);
+                    printToFile.printDebugLine(this, "General exception when reading in existing output file (= ERROR) " + configInfo.readOutputFilename(), 3);
+                    return false;
+                } 
+
+                if (line == null) 
+                {
+                    // Stop reading because of an error or file is empty
+                    printToFile.printDebugLine(this, configInfo.readOutputFilename() + " is empty or IO exception encountered", 1);
+                    eof = true;  
+                } 
+                else 
+                {
+                    existingOutputText.append(line);
+                }
+            }           
+        } 
+        
+        return true;
+    }
+    
  
     // Used to just print debug information - so can filter out minor messages
     // if not needed
@@ -111,14 +184,14 @@ class PrintToFile {
         
         if (!configInfo.readUseVagrantFlag())
         {
-            printOutputLine("Reading/writing files from server " + configInfo.readServerName() + " (** indicate changed files)");
+            printOutputLine("Reading/writing files from server " + configInfo.readServerName() + " (** indicate changed JSON files)");
         }
         else
         {
-            printOutputLine("Reading/writing files using vagrant file system (** indicate changed files)");
+            printOutputLine("Reading/writing files using vagrant file system (** indicate changed JSON files)");
         }
                 
-        if (writeJSONsToPersdata)
+        if (configInfo.readDebugWriteJSONsToPersdata())
         {
             printOutputLine("DEBUG Writing JSON files to persdata");
         }
@@ -162,7 +235,7 @@ class PrintToFile {
             switch (itemResults.get(i).readResult())
             {
                 case SummaryChanges.SKIPPED:
-                    s = s + "Skipped " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                    s = s + "SKIPPED " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
                     s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
                     skippedCount++;
                     break;    
@@ -199,12 +272,19 @@ class PrintToFile {
                     if (itemResults.get(i).readItemClassTSID().equals("quoin"))
                     {
                         s = s + "(" + itemResults.get(i).readNewItemExtraInfo() + "/" + itemResults.get(i).readNewItemClassName() + ")";
-                        s = s + " (was" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                        s = s + " (was " + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
                     }
                     else
                     {
                         s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemExtraInfo());
-                        s = s + " (was" + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
+                        if (itemResults.get(i).readOrigItemExtraInfo().length() > 0)
+                        {
+                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
+                        }
+                        else
+                        {
+                            s = s + " (inserted variant field)";
+                        }
                     }
                     break;
                             
@@ -213,16 +293,24 @@ class PrintToFile {
                     if (itemResults.get(i).readItemClassTSID().equals("quoin"))
                     {
                         s = s + "(" + itemResults.get(i).readNewItemExtraInfo() + "/" + itemResults.get(i).readNewItemClassName() + ")";
-                        s = s + " (was" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                        s = s + " (was " + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
                     }
                     else
                     {
                         s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemExtraInfo());
-                        s = s + " (was" + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
+                        if (itemResults.get(i).readOrigItemExtraInfo().length() > 0)
+                        {
+                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
+                        }
+                        else
+                        {
+                            s = s + " (inserted variant field)";
+                        }
                     }
                     break;
                     
                 case SummaryChanges.UNCHANGED:
+                /*
                     if (itemResults.get(i).readAlreadySetDirField())
                     {
                         // This handles the case of e.g. shrine where x,y unchanged and just inserted the missing dir field
@@ -231,10 +319,10 @@ class PrintToFile {
                         s = s + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
                     }
                     else
-                    {
+                    {*/
                         s = s + "Unchanged ";
                         s = s + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
-                    }
+                    //}
                     if (itemResults.get(i).readItemClassTSID().equals("quoin"))
                     {
                         s = s + "(" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";

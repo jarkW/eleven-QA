@@ -9,6 +9,9 @@ class FragmentOffsets
     
     boolean loadFragmentDefaultsForItems()
     {
+        // NB These are only valid for the first search of an item - once the item has been found on a snap, then the
+        // offset is not applied again for subsequent searches of that item on other snaps.
+        // Otherwise the final item x,y gradually creep ...
         JSONObject json;
         JSONArray values;
         JSONObject fragment = null;
@@ -122,10 +125,15 @@ class FragmentOffsets
                     break;
             }
              */            
+             
             // Now add into the hashmap - using classTSID/info as the key
             Offsets itemOffsets = new Offsets(fragOffsetX, fragOffsetY);
             if (info.length() > 0)
             {
+                if (info.equals("currants"))
+                {
+                    printToFile.printDebugLine(this, " currants quoin offsets are x " + fragOffsetX + " y " + fragOffsetY, 1);
+                }
                 itemOffsetHashMap.put(tsid + "_" + info, itemOffsets);
             }
             else

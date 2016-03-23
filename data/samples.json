@@ -133,14 +133,14 @@
   },
   {
     "class_tsid": "visiting_stone",
-    "offset_x": 14,
-    "offset_y": -134,
+    "offset_x": 6,
+    "offset_y": -140,
     "info": "right"
   },
   {
     "class_tsid": "visiting_stone",
-    "offset_x": -35,
-    "offset_y": -133,
+    "offset_x": -42,
+    "offset_y": -140,
     "info": "left"
   },
   {
@@ -277,14 +277,14 @@
   },
   {
     "class_tsid": "npc_sloth",
-    "offset_x": -55,
-    "offset_y": -102,
+    "offset_x": -24,
+    "offset_y": -106,
     "info": "left"
   },
   {
     "class_tsid": "npc_sloth",
-    "offset_x": -43,
-    "offset_y": -106,
+    "offset_x": 9,
+    "offset_y": -103,
     "info": "right"
   },
   {

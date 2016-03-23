@@ -180,7 +180,7 @@ class StreetInfo
             file = new File(geoFileName);
             if (!file.exists())
             {
-                printToFile.printDebugLine(this, "SKIPPING MISSING street geo file - " + geoFileName, 3);
+                printToFile.printDebugLine(this, "SKIPPING - MISSING street geo file - " + geoFileName, 3);
                 display.setSkippedStreetsMsg("Skipping street - Missing geo JSON file for TSID " + streetTSID);
                 invalidStreet = true;
                 return false;
@@ -414,6 +414,7 @@ class StreetInfo
             {
                 // i.e. need to skip this street as location information not available
                 printToFile.printDebugLine(this, "Skipping missing location JSON file", 3);
+                printToFile.printOutputLine("SKIPPING STREET - missing location JSON file for TSID " + streetTSID);
                 return true; // continue
             }
             else
@@ -436,6 +437,7 @@ class StreetInfo
                 {
                     // i.e. need to skip this street as location information not available
                     printToFile.printDebugLine(this, "Skipping missing geo JSON file", 3);
+                    printToFile.printOutputLine("SKIPPING STREET - missing geo JSON file for TSID " + streetTSID);
                     return true; // continue
                 }
                 else
@@ -494,7 +496,6 @@ class StreetInfo
         //ItemInfo itemData = itemInfo.get(itemBeingProcessed);      
         
         // Display information
-        display.clearDisplay();
         display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
         display.setItemProgress(itemInfo.get(itemBeingProcessed).itemClassTSID, itemInfo.get(itemBeingProcessed).itemTSID, itemBeingProcessed+1, itemInfo.size());
         

@@ -42,10 +42,7 @@ class SpiralSearch
     float lowestTotalRGBDiff;
     int lowestTotalRGBDiffStepX;
     int lowestTotalRGBDiffStepY;
-    
-    // Test using either % pass or simple numerical boundary 
-    boolean usePercentageMethod = false;
-    
+        
     // final found difference in x,y
     int foundStepX;
     int foundStepY;
@@ -64,7 +61,7 @@ class SpiralSearch
     //final float GOOD_ENOUGH_QQ_TOTAL_RGB = 3 * GOOD_ENOUGH_TOTAL_RGB;
     final float GOOD_ENOUGH_QQ_TOTAL_RGB = 5 * GOOD_ENOUGH_TOTAL_RGB;
 
-    public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int itemX, int itemY, int offsetX, int offsetY, int widthBox, int heightBox)
+    public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int itemX, int itemY, int offsetX, int offsetY, int widthBox, int heightBox, int searchAdjustment)
     {
         okFlag = true;
         
@@ -89,15 +86,17 @@ class SpiralSearch
         fragOffsetX = offsetX;
         fragOffsetY = offsetY;        
         
-        startX = itemX + thisStreetImage.width/2 + offsetX;
-        startY = itemY + thisStreetImage.height + offsetY;
+        startX = itemX + thisStreetImage.width/2 + fragOffsetX;
+        startY = itemY + thisStreetImage.height + fragOffsetY;
         
         spiralCount = 0; 
         RGBDiffCount = 0;
         
         // Set the search width to whatever was specified in the config.json file
-        widthSearchBox = widthBox + configInfo.readSearchRadius();
-        heightSearchBox = heightBox + configInfo.readSearchRadius();
+        // For some items e.g. sloths, will manually extend the search radius as the branches have been
+        // very poorly configured so far
+        widthSearchBox = widthBox + configInfo.readSearchRadius() + searchAdjustment;
+        heightSearchBox = heightBox + configInfo.readSearchRadius()+ searchAdjustment;
         
          // convert the searchbox to be even numbers
          // deal with odd sizes of box - by adding 1 before do divide so box
@@ -146,7 +145,7 @@ class SpiralSearch
 
         noMoreValidFragments = false; 
         
-        //printToFile.printDebugLine(this, "New SpiralSearch for " + classTSID + " at snap x,y " + itemX + "," + itemY + " with search box wxh " + widthBox + "x" + heightBox + " maxSpiralCount = " + maxSpiralCount, 1);
+        printToFile.printDebugLine(this, "New SpiralSearch for " + classTSID + " at snap x,y " + itemX + "," + itemY + " using offsetX=" + fragOffsetX + " offsetY=" + fragOffsetY + " with search box wxh " + widthBox + "x" + heightBox, 1);
         //printHashCodes(this);
     }
     
@@ -163,7 +162,7 @@ class SpiralSearch
                 //printToFile.printDebugLine(this, "Perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 foundStepX = stepX;
                 foundStepY = stepY;
-                printToFile.printDebugLine(this, "Perfect Match found at  x,y " +(itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) + " with lowestTotalRGBDiff = " + int(lowestTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
+                printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX() + "," + convertToJSONY() + " with lowestTotalRGBDiff = " + int(lowestTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 return true;
             }
             else 
@@ -174,93 +173,42 @@ class SpiralSearch
         }
         
         // Reached end of matching QA fragment against archive snap - need to see if the lowest RGB diff is good enough to be a match
-        
-        if (usePercentageMethod)
+        // Just do simple compare to boundary level - treat QQ differently to other items           
+        if ((thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < GOOD_ENOUGH_QQ_TOTAL_RGB)) || 
+            (!thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < GOOD_ENOUGH_TOTAL_RGB)))
         {
-            // Assume good enough if less than 10% of average total_rgb_diff measured
-                   
-            // Need to be more generous for QQ because shape changes as bounces
-            float percentagePass;
-            if (thisItemClassTSID == "marker_qurazy")
-            {
-                //percentagePass = 15;
-                percentagePass = 25;
-            }
-            else
-            {
-                percentagePass = 10;
-            }
-        
-            printToFile.printDebugLine(this, " RGBDiffCount is " + RGBDiffCount + " TotalRGBDiff is " + sumTotalRGBDiff + " so " + percentagePass + "% of TotalRGBDiff is " + int(percentagePass * sumTotalRGBDiff/float(100*RGBDiffCount)), 1);
-        
-            if (lowestTotalRGBDiff < (percentagePass * sumTotalRGBDiff/float(100*RGBDiffCount)))
-            {
-                foundStepX = lowestTotalRGBDiffStepX;
-                foundStepY = lowestTotalRGBDiffStepY;
-                printToFile.printDebugLine(this, "Good enough % match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
-                " at x,y " + (itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) +
-                //" equivalent to changes in x,y of " + readDiffX() + "," + readDiffY() +
-                //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY +
-                //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) +
-                " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
-                " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
-                " RGBDiffCount = " + RGBDiffCount +
-                " spiralCount = " + spiralCount, 2);  
-                return true;
-            }
-            else
-            {
-                // Consider item not found
-                printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) + 
-                //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
-                //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) + 
-                " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
-                " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
-                " RGBDiffCount = " + RGBDiffCount +
-                " spiralCount = " + spiralCount, 1);  
-                foundStepX = MISSING_COORDS;
-                foundStepY = MISSING_COORDS;
-            }
+            foundStepX = lowestTotalRGBDiffStepX;
+            foundStepY = lowestTotalRGBDiffStepY;
+            printToFile.printDebugLine(this, "Good enough match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
+            " at x,y " + convertToJSONX() + "," + convertToJSONY() +
+            " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
+            " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
+            " RGBDiffCount = " + RGBDiffCount +
+            " spiralCount = " + spiralCount, 2);  
+                
+            display.clearImage(650, 100, 50, 50);
+            display.clearImage(750, 100, 50, 50);
+            display.clearTextBox(650, 200, 200, 50);  
+            
+            PImage streetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
+            image(thisItemImage, 750, 100, 50, 50);
+            image(streetFragment, 650, 100, 50, 50);
+            fill(50);
+            text("good enough fit (RGBDiff = " + int(lowestTotalRGBDiff) + ")  step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
+
+            return true;
         }
         else
         {
-            // Just do simple compare to boundary level - treat QQ differently to other items           
-            if ((thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < GOOD_ENOUGH_QQ_TOTAL_RGB)) || 
-                (!thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < GOOD_ENOUGH_TOTAL_RGB)))
-            {
-                foundStepX = lowestTotalRGBDiffStepX;
-                foundStepY = lowestTotalRGBDiffStepY;
-                printToFile.printDebugLine(this, "Good enough match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
-                " at x,y " + (itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) +
-                //" equivalent to changes in x,y of " + readDiffX() + "," + readDiffY() +
-                //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY +
-                //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) +
-                " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
-                " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
-                " RGBDiffCount = " + RGBDiffCount +
-                " spiralCount = " + spiralCount, 2);  
-                
-                PImage streetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
-                image(thisItemImage, 750, 100, 50, 50);
-                image(streetFragment, 650, 100, 50, 50);
-                fill(50);
-                text("good enough fit (RGBDiff = " + int(lowestTotalRGBDiff) + ")  step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
-
-                return true;
-            }
-            else
-            {
-                // Consider item not found
-                printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) + 
-                //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
-                //") avg RGB diff = " + int(sumTotalRGBDiff/percentagePass*RGBDiffCount) + 
-                " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
-                " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
-                " RGBDiffCount = " + RGBDiffCount +
-                " spiralCount = " + spiralCount, 1);  
-                foundStepX = MISSING_COORDS;
-                foundStepY = MISSING_COORDS;
-            }
+            // Consider item not found
+            printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) + 
+            //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
+            " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
+            " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
+            " RGBDiffCount = " + RGBDiffCount +
+            " spiralCount = " + spiralCount, 1);  
+            foundStepX = MISSING_COORDS;
+            foundStepY = MISSING_COORDS;
         }
              
         // If reached this stage - failed to find item
@@ -394,6 +342,10 @@ class SpiralSearch
             lowestTotalRGBDiff = totalRGBDiff;
             lowestTotalRGBDiffStepX = stepX;
             lowestTotalRGBDiffStepY = stepY;
+            display.clearImage(650, 100, 50, 50);
+            display.clearImage(750, 100, 50, 50);
+            display.clearTextBox(650, 200, 200, 50);
+            
             image(streetFragment, 650, 100, 50, 50);
             image(itemFragment, 750, 100, 50, 50);
             fill(50);
@@ -489,23 +441,25 @@ class SpiralSearch
         return (fragment);
         
     }
-    
-    public int readDiffX()
+       
+    public int convertToJSONX()
     {
+        // converts the foundStepX = pixel X co-ord from 0-width, into JSON equivalent X co-ord
         if (foundStepX != MISSING_COORDS)
         {
-            return foundStepX - startX;
+            return foundStepX - thisStreetImage.width/2 - fragOffsetX;
         }
         else
         {
             return MISSING_COORDS;
         }
     }
-    public int readDiffY()
+    public int convertToJSONY()
     {
+        // converts the foundStepY = pixel Y co-ord from 0-width, into JSON equivalent Y co-ord
         if (foundStepY != MISSING_COORDS)
         {
-            return foundStepY - startY;
+            return foundStepY - thisStreetImage.height - fragOffsetY;
         }
         else
         {
@@ -516,26 +470,12 @@ class SpiralSearch
     // Used for debugging only
     public String debugRGBInfo()
     {
-        float percentagePass;
-        if (thisItemClassTSID == "marker_qurazy")
-        {
-            //percentagePass = 15;
-            percentagePass = 25;
-        }
-        else
-        {
-            percentagePass = 10;
-        }
+
         String s = "lowest RGB was " + lowestTotalRGBDiff + 
-                    //" lowestTotalRGBDiffStepX = " + lowestTotalRGBDiffStepX + 
-                    //" lowestTotalRGBDiffStepY = " + lowestTotalRGBDiffStepY + 
                     " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
                     " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
                     " RGBDiffCount = " + RGBDiffCount +
-                    //" foundStepX = " + foundStepX + 
-                    //" foundStepY = " + foundStepY + 
-                    " at x,y " + (itemJSONX + readDiffX()) + "," + (itemJSONY + readDiffY()) +
-                    //" equivalent to changes in x,y of " + readDiffX() + "," + readDiffY() +
+                    " at x,y " + convertToJSONX() + "," + convertToJSONY() +
                     " spiralCount = " + spiralCount;
 
         return s;

@@ -24,6 +24,10 @@ class SummaryChanges implements Comparable
         itemInfo = item;
         TSID = itemInfo.readItemTSID();
         
+        printToFile.printDebugLine(this, TSID + " found=" + itemInfo.readItemFound() + " orig x,y=" + itemInfo.readOrigItemX() + "," +
+                                    itemInfo.readOrigItemY() + " new x,y=" + itemInfo.readNewItemX() + "," +  itemInfo.readNewItemY() + " change in info " + itemInfo.readItemFound(), 1);
+                                    
+        
         if (itemInfo.readSkipThisItem())
         {
             itemX = itemInfo.readOrigItemX();
@@ -32,36 +36,53 @@ class SummaryChanges implements Comparable
         }
         else if (itemInfo.readItemFound())
         {
-            if (itemInfo.differentVariantFound() || itemInfo.readAlreadySetDirField())
+            if (configInfo.readChangeXYOnly())
             {
-                // Either the variant has changed or it was manually inserted at start of processing because missing e.g. shrines/visiting stones
-                if (itemInfo.readNewItemX() == itemInfo.readOrigItemX())
+                if ((itemInfo.readNewItemX() == itemInfo.readOrigItemX()) && (itemInfo.readNewItemY() == itemInfo.readOrigItemY()))
                 {
                     itemX = itemInfo.readOrigItemX();
                     itemY = itemInfo.readOrigItemY();
-                    result = VARIANT_ONLY;
+                    result = UNCHANGED;
                 }
                 else
-                {
-                    itemX = itemInfo.readNewItemX();
-                    itemY = itemInfo.readNewItemY();
-                    result = VARIANT_AND_COORDS_CHANGED;
-                }
-            }
-            else
-            {
-
-                if (itemInfo.readNewItemX() != itemInfo.readOrigItemX())
                 {
                     itemX = itemInfo.readNewItemX();
                     itemY = itemInfo.readNewItemY();
                     result = COORDS_ONLY;
                 }
+            }
+            else
+            {
+                if (itemInfo.differentVariantFound())
+                {
+                    // Variant has changed/been inserted
+                    if ((itemInfo.readNewItemX() == itemInfo.readOrigItemX()) && (itemInfo.readNewItemY() == itemInfo.readOrigItemY()))
+                    {
+                        itemX = itemInfo.readOrigItemX();
+                        itemY = itemInfo.readOrigItemY();
+                        result = VARIANT_ONLY;
+                    }
+                    else
+                    {
+                        itemX = itemInfo.readNewItemX();
+                        itemY = itemInfo.readNewItemY();
+                        result = VARIANT_AND_COORDS_CHANGED;
+                    }
+                }
                 else
                 {
-                    itemX = itemInfo.readNewItemX();
-                    itemY = itemInfo.readNewItemY();
-                    result = UNCHANGED;
+                    if ((itemInfo.readNewItemX() == itemInfo.readOrigItemX()) && (itemInfo.readNewItemY() == itemInfo.readOrigItemY()))
+                    {
+                        itemX = itemInfo.readOrigItemX();
+                        itemY = itemInfo.readOrigItemY();
+                        result = UNCHANGED;
+                    }
+                    else
+                    {
+                        itemX = itemInfo.readNewItemX();
+                        itemY = itemInfo.readNewItemY();
+                        result = COORDS_ONLY;
+                    }
                 }
             }
         }
@@ -71,6 +92,7 @@ class SummaryChanges implements Comparable
             itemY = itemInfo.readOrigItemY();
             result = MISSING;
         }
+        
     }
 
     public int compareTo(Object o) 
@@ -170,10 +192,6 @@ class SummaryChanges implements Comparable
     {
         return itemInfo.readNewItemClassName();
     }
-    
-    public boolean readAlreadySetDirField()
-    {
-        return itemInfo.readAlreadySetDirField();
-    }
+
 
 }

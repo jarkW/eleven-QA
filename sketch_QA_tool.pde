@@ -29,45 +29,8 @@
  *
  */
  
- // Clean up the shrine/visiting stone so don't rely on setting the OrigExtraItemField??? And then insert the fields at the end - as will appear from the 
- // image names???? And then check if get right info at end.
- // 
  
- // BUG - shrine new x,y not correct with new printout - although is found in code ... LHV1FUFU9442AKR
- 
-// BUG?????
-//Saving change - item (IHVNUG0T63G3O14) trant_fruit with changed x,y = -1056,-438 to -1056,-437
-//** Unchanged IHVNUG0T63G3O14: trant_fruit at x,y -1056,-437
-
-//BUG - need to sort out the dir field - for this and visiting stones - might be OK with images just loading as based on classTSID
-//Saving change - unchanged item info/class (INV6K3P4GRL27G9) npc_shrine_humbaba dir = right with changed x,y = 627,-148 to 625,-150 (inserting/updating  dir field in JSON file)
-//** Changed variant & co-ords INV6K3P4GRL27G9: npc_shrine_humbaba (right) (was (right)) at x,y 625,-150 (was 627,-148)
-
-//BUG - shouldn't have an info field???
-//Saving change - changed item info/class (IHVQ6ED0B5G3ST3) trant_bean =  to e with changed x,y = 1384,-108 to 1385,-104
-//** Changed variant & co-ords IHVQ6ED0B5G3ST3: trant_bean (e) (was) at x,y 1385,-104 (was 1384,-108)
-// see extractItemInfoFromItemImageFilename()
- 
-// Should the quoin, after saving - if missing not have origInfo != newInfo - therefore looks like changed variant???
- 
- 
- // BUG need to rework the skipItem/finishedItem etc - not sure that resetReadyForNewItemSearch() is
- // being called each time when it should. E.g. when just skipped past something. Might need to rejig
- // the variables being set in street/item/fragment level
- // Need to distinguish, item found (once, and many times (quoin)), not found, toBeSkipped (e.g. street spirit)
- // Maybe need an enum - itemFoundButStillSearch, itemFound, itemToSkip, itemNotFound, or something? In conjunction with Fragmentsearch
- // returning SearchDone to indicate that done everything it can with all the item images on that street snap/item combo
- // NB Might also be worth considering removing all skipped items once determine this fact - could be done as a loop over all street items 
- // as part of the initialiseStreetItems stuff???
- 
- // Add option to append to output file
- 
- // Create new outputInfo class - contains pointer to item, status (found, skipped etc), newItemX
- // Then at end of street, can output useful info to output file - output items from L to R (-ve x to +x) as can sort an array list easily
- // Also give neat list of 'MISSING' items so easy for user to find.Also list of SKIPPED items (as reminder of what they need to change?)
- // Can also give a count of different kinds of quoins written out? (for validation?)
- 
- // BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
+ // POSSIBLE FUTURE BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
  // Currently I am doing this with simple black/white setting.
  // Butdo collect the values in readStreetGeoInfo() even though not used. usingGeoInfo flag
  // But at some point might need to be more sophisticated - see eleven-client/src/com/quasimodo/geom/ColorMatrix.as
@@ -87,30 +50,6 @@
  // Need to see if know where the config.json is - if not, then dialog box so user can select.
  // Next time run program, screen shows the path of the json and gives user chance to change/accept
  
- // Need to load up all items we have at once - check how it impacts on the memory as currently cumulatively loading items
- // as process streets. 
- 
- // Change image handling to store sets of item images as hashmaps ... then can easily access all in a loop, or pull out the
- // one image that is relevant using the class/info fields. So can return to doing visiting stones, wall button, postbox, x/y quoins, trees
- // in the correct order. 
-
-// TO DO
-// First of all load up all streets/items - so can check for missing L/snaps etc
-// Give msg to screen - streets skipped - missng L* or snaps, snaps ignored (too small).
-// Give user chance to abort then - so can fix problem, or continue.
-// Unload all the snaps held in streets/items.
-// Then process each street in turn - reloading snaps on that streets/each item as needed. Then
-// unload when finished the street. Should be simple enough to have a street_unload_all_snaps - which 
-// unloads the street snaps and then cycles through all the items, unloading the item images - i.e. set to null. 
-// OR do this as part of Setup - once loaded the images to check everything, unlead before move onto next street (and could unload the item
-// images before move on to next item). 
-// Ditto for the load functionality. 
-// Add 
-
-
-//Display the thing being searched for together with large image of snap.
-// Have a wire frame that moves around to show what being compared with small image
-// Save 'best fit so far' as pink box on image
 
 // Have an option where only changes x,y in files (e.g. if on street where already started
 // QA. Or could do something where if street is in persdata-qa, only change the x,y? 
@@ -120,7 +59,6 @@
 // RUN TOOL TWICE FOR STREETS ALREADY/NOT DONE WITH OPTION SET DIFFERENTLY.
 
 
-//
 //  Need to read in street region - to know if black/white or AL (changes the quoin settings). 
 // And other different quoin regions (party?)
 //
@@ -197,7 +135,6 @@ PrintToFile printToFile;
 int debugLevel = 1;
 boolean debugToConsole = true;
 boolean doDelay = false;
-boolean writeJSONsToPersdata = false;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
 boolean usingGeoInfo = false; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
 
 Memory memory = new Memory();
@@ -213,6 +150,7 @@ public void setup()
     
     // Start up display manager
     display = new DisplayMgr();
+    display.clearDisplay();
     
     printToFile = new PrintToFile();
     if (!printToFile.readOkFlag())
