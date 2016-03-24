@@ -96,17 +96,9 @@ class FragmentFind
         printToFile.printDebugLine(this, "Starting search with image number " + itemImageBeingUsed + " i.e. " + itemImages.get(itemImageBeingUsed).readPNGImageName() +
                                     " with street snap " + streetSnapImage.readPNGImageName(), 1);        
         
-        // Need to convert the JSON x,y to relate to the street snap 
         // For most items, the search will only be done once so the starting point is the JSON x,y. And the search box will be the default
         // 20x20 size. But for quoins/QQ the search is done on all streets even if a match is found - to find the y variation. In this case
-        // is more efficient to start the search with the latest x,y co-ords. But if using the latest x,y, then need to ignore the offsets
-        // as have already been applied to the original JSON x,y. If don't do this, then the x,y creep if keep running the tool.
-
-        int fragmentOffsetX;
-        int fragmentOffsetY;
-        
-        // BUT doesn't work ... resetting offset to 0, just make s
-        
+        // is more efficient to start the search with the latest x,y co-ords.         
         if ((thisItemInfo.readItemClassTSID().equals("quoin") || thisItemInfo.readItemClassTSID().equals("marker_qurazy")) && thisItemInfo.readNewItemX() != MISSING_COORDS)
         {
             // Already have the co-ordinates for a matching quoin/QQ - so use those to start this search
@@ -114,10 +106,6 @@ class FragmentFind
             startItemY = thisItemInfo.readNewItemY();
             searchBoxWidth = NARROW_SEARCH_WIDTH_BOX;
             searchBoxHeight = DEF_SEARCH_BOX;
-            fragmentOffsetX = itemImages.get(itemImageBeingUsed).readFragOffsetX();
-            fragmentOffsetY = itemImages.get(itemImageBeingUsed).readFragOffsetY();
-            //fragmentOffsetX = 0;
-            //fragmentOffsetY = 0;
             printToFile.printDebugLine(this, "Continuing search for quoin/QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + startItemX + "," + startItemY, 1);
         }
         else
@@ -127,8 +115,6 @@ class FragmentFind
             startItemY = thisItemInfo.readOrigItemY();
             searchBoxWidth = DEF_SEARCH_BOX;
             searchBoxHeight = DEF_SEARCH_BOX;
-            fragmentOffsetX = itemImages.get(itemImageBeingUsed).readFragOffsetX();
-            fragmentOffsetY = itemImages.get(itemImageBeingUsed).readFragOffsetY();
             printToFile.printDebugLine(this, "Starting search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY(), 1);
         }
         // Set up the structure to actually do the search
@@ -145,8 +131,8 @@ class FragmentFind
             thisItemInfo.readItemClassTSID(),
             startItemX,
             startItemY, 
-            fragmentOffsetX,
-            fragmentOffsetY,
+            itemImages.get(itemImageBeingUsed).readFragOffsetX(),
+            itemImages.get(itemImageBeingUsed).readFragOffsetY(),
             searchBoxWidth, searchBoxHeight, adjustment);
 
         if (!spiralSearch.readOkFlag()) 
@@ -161,17 +147,14 @@ class FragmentFind
     public boolean searchForFragment()
     {
         String debugInfo = "";
-        
-        //display.clearDisplay();
-        //display.showStreetName();
-        
-        display.showItemImage(itemImages.get(itemImageBeingUsed).readPNGImage(), thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY());
-        display.showStreetFragmentImage(streetSnapImage.readPNGImage(), 
+                
+        displayMgr.showItemImage(itemImages.get(itemImageBeingUsed).readPNGImage(), thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY());
+        displayMgr.showStreetFragmentImage(streetSnapImage.readPNGImage(), 
                                 itemImages.get(itemImageBeingUsed).readPNGImageWidth(), 
                                 itemImages.get(itemImageBeingUsed).readPNGImageHeight(),
                                 startItemX + streetSnapImage.readPNGImage().width/2 + itemImages.get(itemImageBeingUsed).readFragOffsetX(),
                                 startItemY + streetSnapImage.readPNGImage().height + itemImages.get(itemImageBeingUsed).readFragOffsetY());
-        display.showStreetImage(streetSnapImage.readPNGImage(), streetSnapImage.readPNGImageName());
+        displayMgr.showStreetImage(streetSnapImage.readPNGImage(), streetSnapImage.readPNGImageName());
         
         // Carry out the search for the item and depending on the result might then move on to look at the next image
         printToFile.printDebugLine(this, "Search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " using item image " + itemImages.get(itemImageBeingUsed).readPNGImageName() , 2);
@@ -180,8 +163,8 @@ class FragmentFind
             // Item was found so save the new x,y and other information
             itemFound = true;
             // Match has been found - might be perfect or good enough - so save the information            
-            newItemX = spiralSearch.convertToJSONX();
-            newItemY = spiralSearch.convertToJSONY();
+            newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
+            newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
             
             // As matched item image is the current one, extract the extra information from the item image filename
             newItemExtraInfo = extractItemInfoFromItemImageFilename();

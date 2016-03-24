@@ -191,13 +191,13 @@ class PrintToFile {
             printOutputLine("Reading/writing files using vagrant file system (** indicate changed JSON files)");
         }
                 
-        if (configInfo.readDebugWriteJSONsToPersdata())
+        if (configInfo.readWriteJSONsToPersdata())
         {
             printOutputLine("DEBUG Writing JSON files to persdata");
         }
         else
         {
-            printOutputLine("DEBUG No JSON files being written to persdata");
+            printOutputLine("DEBUG No JSON filesx being written to persdata");
         }
         
         if (usingGeoInfo)

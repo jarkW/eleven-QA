@@ -34,7 +34,7 @@ class ItemInfo
     
     // Only used for debug purposes - to collect y values on the street with reference quoins on
     IntList itemYValues;
-    boolean collectItemYValues = true;
+    boolean collectItemYValues = false;
               
     // constructor/initialise fields
     public ItemInfo(JSONObject item)
@@ -888,7 +888,8 @@ class ItemInfo
             jsonDiff.displayInfoMsg();
                                 
             // Write to persdata and then delete the one in the temporary directory
-            if (configInfo.readDebugWriteJSONsToPersdata())
+            // As this is the default behaviour in the real tool - will be set to true if flag absent from config file
+            if (configInfo.readWriteJSONsToPersdata())
             {
                 try
                 {

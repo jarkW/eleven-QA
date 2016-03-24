@@ -109,7 +109,7 @@ ItemImages allItemImages;
 FragmentOffsets allFragmentOffsets;
 
 // Handles all output to screen
-DisplayMgr display;
+DisplayMgr displayMgr;
 
 // missing item co-ordinates - if set to this, know not found
 final static int MISSING_COORDS = 32700;
@@ -119,7 +119,9 @@ int nextAction;
 final static int LOAD_ITEM_IMAGES = 10;
 final static int LOAD_FRAGMENT_OFFSETS = 11;
 final static int INIT_STREET = 20;
+final static int INIT_STREET_DATA = 21;
 final static int PROCESS_STREET = 30;
+final static int WAITING_FOR_INPUT = 90;
 final static int IDLING = 100;
 
 // Differentiate between error/normal endings
@@ -132,7 +134,7 @@ boolean okToContinue = true;
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 1;
+int debugLevel = 3;
 boolean debugToConsole = true;
 boolean doDelay = false;
 boolean usingGeoInfo = false; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
@@ -149,8 +151,8 @@ public void setup()
     nextAction = 0;
     
     // Start up display manager
-    display = new DisplayMgr();
-    display.clearDisplay();
+    displayMgr = new DisplayMgr();
+    displayMgr.clearDisplay();
     
     printToFile = new PrintToFile();
     if (!printToFile.readOkFlag())
@@ -195,7 +197,7 @@ public void setup()
     nextAction = LOAD_FRAGMENT_OFFSETS;
     
     // Display start up msg
-    display.showInfoMsg("Loading item images for comparison ... please wait");
+    displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
     
     memory.printMemoryUsage();
 }
@@ -206,27 +208,34 @@ public void draw()
     // Each time we enter the loop check for error/end flags
     if (!okToContinue)
     {
-        // Problem during validation of street - waiting for user to press c or any other key
-        nextAction = IDLING;
+        // waiting for user to press c or any other key
+        nextAction = WAITING_FOR_INPUT;
         return;
     }
     else if (failNow)
     {
         println("failNow flag set - exiting with errors");
-        printToFile.printOutputLine("failNow flag set - exiting with errors");
+        printToFile.printOutputLine("\n\n!!!!! EXITING WITH ERRORS !!!!!\n\n");
         printToFile.printDebugLine(this, "failNow flag set - exiting with errors", 3);
         nextAction = IDLING;
         exit();
     }
     else if (exitNow && !doNothing)
     {
-        display.showSkippedStreetsMsg();
-        printToFile.printOutputLine("All processing completed");
+        boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();       
+        printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED\n\n");
         printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
         memory.printMemoryUsage();
         doNothing = true;
-        nextAction = IDLING;
-        exit();
+        if (nothingToShow)
+        {
+            nextAction = IDLING;
+            exit();
+        }
+        else
+        {
+            nextAction = WAITING_FOR_INPUT;
+        }
     }
     
     // Carry out processing depending on whether setting up the street or processing it
@@ -234,6 +243,7 @@ public void draw()
     switch (nextAction)
     {
         case IDLING:
+        case WAITING_FOR_INPUT:
             break;
                  
         case LOAD_FRAGMENT_OFFSETS:
@@ -266,7 +276,7 @@ public void draw()
             
         case INIT_STREET:
             // Carries out the setting up of the street and associated items 
-            
+            displayMgr.clearDisplay();
             if (!initialiseStreet())
             {
                 // fatal error
@@ -286,6 +296,11 @@ public void draw()
                 return;
             }
             
+            nextAction = INIT_STREET_DATA;
+            break;
+            
+        case INIT_STREET_DATA:
+        
             if (!streetInfo.readStreetItemData())
             {
                 printToFile.printDebugLine(this, "Error in readStreetItemData", 3);
@@ -380,9 +395,7 @@ boolean initialiseStreet()
         okToContinue = false;
         
         // Display the start up error messages
-        display.clearDisplay();
-        display.showSkippedStreetsMsg();
-        display.showInfoMsg("Errors during initial processing of street - press 'c' to continue, 'x' to exit");
+        displayMgr.showThisSkippedStreetMsg();
         return true;
     }
                  
@@ -395,12 +408,15 @@ void keyPressed()
     if ((key == 'c') || (key == 'C')) 
     {
         okToContinue = true;
+        displayMgr.clearDisplay();
         streetBeingProcessed++;
         if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
         {
             // Reached end of list of streets - normal ending
             exitNow = true;
+            return;
         }
+        nextAction = INIT_STREET;
         return;
     }
     else if ((key == 'x') || (key == 'X'))

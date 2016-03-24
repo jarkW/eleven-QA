@@ -67,7 +67,7 @@ class StreetInfo
             if (!file.exists())
             {
                 printToFile.printDebugLine(this, "SKIPPING MISSING street location file - " + locFileName, 3);
-                display.setSkippedStreetsMsg("Skipping street - Missing location JSON file for TSID " + streetTSID);
+                displayMgr.setSkippedStreetsMsg("Skipping street - Missing location JSON file for TSID " + streetTSID);
                 invalidStreet = true;
                 return false;
             }
@@ -181,7 +181,7 @@ class StreetInfo
             if (!file.exists())
             {
                 printToFile.printDebugLine(this, "SKIPPING - MISSING street geo file - " + geoFileName, 3);
-                display.setSkippedStreetsMsg("Skipping street - Missing geo JSON file for TSID " + streetTSID);
+                displayMgr.setSkippedStreetsMsg("Skipping street - Missing geo JSON file for TSID " + streetTSID);
                 invalidStreet = true;
                 return false;
             }
@@ -295,7 +295,7 @@ class StreetInfo
         if (snapFilenames == null || snapFilenames.length == 0)
         {
             printToFile.printDebugLine(this, "SKIPPING STREET - No street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
-            display.setSkippedStreetsMsg("Skipping street " + streetName + ": No street snaps found");
+            displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No street snaps found");
             invalidStreet = true;
             return false;
         }
@@ -426,7 +426,9 @@ class StreetInfo
             }
         }
 
-        display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
+        displayMgr.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
+        displayMgr.showStreetName();
+        displayMgr.showStreetProcessingMsg();
         
         // Read in the G* file and load up the contrast settings etc - if this feature has been implemented
         if (usingGeoInfo)
@@ -496,8 +498,8 @@ class StreetInfo
         //ItemInfo itemData = itemInfo.get(itemBeingProcessed);      
         
         // Display information
-        display.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
-        display.setItemProgress(itemInfo.get(itemBeingProcessed).itemClassTSID, itemInfo.get(itemBeingProcessed).itemTSID, itemBeingProcessed+1, itemInfo.size());
+        //displayMgr.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
+        displayMgr.setItemProgress(itemInfo.get(itemBeingProcessed).itemClassTSID, itemInfo.get(itemBeingProcessed).itemTSID, itemBeingProcessed+1, itemInfo.size());
         
         // Search the snap for this image/item
         if (!itemInfo.get(itemBeingProcessed).searchSnapForImage())
@@ -646,7 +648,7 @@ class StreetInfo
     
     boolean itemValidToContinueSearchingFor(int n)
     {
-        println("itemBeingProcessed is ", n);
+        //println("itemBeingProcessed is ", n);
         if (itemInfo.get(n).readSkipThisItem())
         {
             // Item is not one we ever search for e.g. street spirit

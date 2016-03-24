@@ -6,6 +6,7 @@ class DisplayMgr
     // Add in list of failed streets - can be display at the end when program ends
     // is street + reason why failed (missing L*, missing snaps)
     StringList failedStreets;
+    StringList allFailedStreets; // Used for reporting at end
     
     String streetNameMsg;
     String itemNameMsg;
@@ -34,6 +35,7 @@ class DisplayMgr
         streetNameMsg = "";
         itemNameMsg = "";
         failedStreets = new StringList();
+        allFailedStreets = new StringList();
     }
     
     public void showInfoMsg(String info)
@@ -50,35 +52,31 @@ class DisplayMgr
         
     public void setStreetName(String streetName, String streetTSID, int streetNum, int totalStreets)
     {
-        String s = "Processing street " + streetName + " (" + streetTSID + "): " + streetNum + " of " + totalStreets;
-        
-        // clear existing text box
-        clearTextBox(10, 10, width, 50);
-        
-        fill(50);
-        textSize(14);
-        // Want text to go along top - so set relative to width of display
-        //text( x, y, width, height)
-        text(s, 10, 10, width, 50);  // Text wraps within text box
-        
-        // Save for future use
-        streetNameMsg = streetName + "(" + streetTSID + "): " + streetNum + " of " + totalStreets;
+        streetNameMsg = "Processing street " + streetName + " (" + streetTSID + "): " + streetNum + " of " + totalStreets;
     }
-    
     
     public void showStreetName()
     {
-        // DO WE NEED THIS ONE?????
-        String s = "Searching for items on street " + streetNameMsg;
-        
         // clear existing text box
         clearTextBox(10, 10, width, 50);
         
         fill(50);
         textSize(14);
         // Want text to go along top - so set relative to width of display
-        //text( x, y, width, height)
-        text(s, 10, 10, width, 50);  // Text wraps within text box
+        text(streetNameMsg, 10, 10, width, 50);  // Text wraps within text box
+    }
+    
+    public void showStreetProcessingMsg()
+    {
+        String s = "Searching for items on street " + streetNameMsg;
+        
+        // clear existing text box
+        clearTextBox(10, 30, width, 50);
+        
+        fill(50);
+        textSize(12);
+        // Want text to go along top - so set relative to width of display
+        text(s, 10, 30, width, 50);  // Text wraps within text box
     }
     
     public void setItemProgress(String itemClass, String itemTSID, int itemNumber, int totalItems)
@@ -139,6 +137,7 @@ class DisplayMgr
         
         // Need to change the location/size of snap depending on whether it is a wide or tall street
         // DO WE NEED THIS - COULD JUST ALWAYS MAKE THE SAME HEIGHT, THEN NOT HAVING TO FIDDLE WITH ITEM POSITION
+        
         if (streetImage.width > streetImage.height)
         {
            // scale down the wide street so fits in bottom of window
@@ -158,8 +157,8 @@ class DisplayMgr
         else
         {
            // scale down the tall street so fits in bottom of window
-           maxWidth = 500;
-           maxHeight = height - 200;      
+           maxWidth = width-100;
+           maxHeight = height - 400;      
            scalar = maxHeight / streetImage.height;
         
            scaledStreetHeight= maxHeight;
@@ -167,7 +166,6 @@ class DisplayMgr
            
            if (scaledStreetWidth > maxWidth)
             {
-
                 scalar = maxWidth / scaledStreetWidth;
                 scaledStreetWidth = maxWidth;
                 scaledStreetHeight = scaledStreetHeight * scalar;
@@ -196,6 +194,23 @@ class DisplayMgr
         // Need to calculate where to put the rectangle            
         rect(200 + int(STREET_FRAGMENT_WIDTH/2), 100 + int(STREET_FRAGMENT_HEIGHT/2), itemBoxWidth, itemBoxHeight);
 
+    }
+    
+    public void showDebugImages(PImage BWStreetFragment, PImage BWItemFragment, String infoText)
+    {
+        if (!configInfo.readDebugShowBWFragments())
+        {
+            return;
+        }
+        // Displays black and white search comparisons
+        clearImage(650, 100, 50, 50);
+        clearImage(750, 100, 50, 50);
+        clearTextBox(650, 200, 200, 50);        
+            
+        image(BWStreetFragment, 650, 100, 50, 50);
+        image(BWItemFragment, 750, 100, 50, 50);
+        fill(50);
+        text(infoText, 650, 200, 200, 50);
     }
            
     public void clearDisplay()
@@ -235,20 +250,63 @@ class DisplayMgr
         failedStreets.append(msg);
     }
     
-    public void showSkippedStreetsMsg()
+    public boolean showAllSkippedStreetsMsg()
     {
+        String s;
+        clearDisplay();
+        fill(50);
+        textSize(16);
+        
+        if (allFailedStreets.size() == 0)
+        {
+            s = "All streets were successfully processed";
+            text(s, 10, 100, width-10, 80);  // Text wraps within text box
+            return true;
+        }
+        else
+        {
+            s = "The following streets were not processed";
+        }
+
+        text(s, 10, 100, width-10, 80);  // Text wraps within text box
+        int i;
+        for (i = 0; i < allFailedStreets.size(); i++)
+        {
+            text(allFailedStreets.get(i), 10, 120 + (i * 20), width-10, 80);
+        }
+        i = i + 10;
+        text("Press 'x' to exit", 10, 120 + (i * 20), width-10, 80);
+        
+        return false;
+        
+    }
+    
+    public void showThisSkippedStreetMsg()
+    {
+        clearDisplay();
+        fill(50);
+        textSize(16);
+                
         if (failedStreets.size() == 0)
         {
             return;
         }
-        String s = "The following streets were not processed";
+        //String s = "The following streets were not processed";
         fill(50);
-        text(s, 10, 100, width-10, 80);  // Text wraps within text box
-        for (int i = 0; i < failedStreets.size(); i++)
+        //text(s, 10, 100, width-10, 80);  // Text wraps within text box
+        
+        // Print out each of the messages for this street ... and save to the total message buffer for reporting at end of run
+        int i;
+        for (i = 0; i < failedStreets.size(); i++)
         {
             text(failedStreets.get(i), 10, 120 + (i * 20), width-10, 80);
+            allFailedStreets.append(failedStreets.get(i));
         }
+        i = i + 10;
+        text("Errors during initial processing of street - press 'c' to continue, 'x' to exit", 10, 120 + (i * 20), width-10, 80);
         
+        // Now that all messages have been given for this street - clear the message buffer        
+        failedStreets = new StringList();
     }
     
     public boolean checkIfFailedStreetsMsg()

@@ -15,7 +15,8 @@ class SpiralSearch
     
     PImage thisItemImage;
     PImage thisStreetImage;
-    PImage modStreetImage;
+    PImage BWStreetFragment;
+    PImage BWItemFragment;
     int startX;
     int startY;
     String thisItemClassTSID;
@@ -150,7 +151,8 @@ class SpiralSearch
     }
     
     public boolean searchForItem()
-    {        
+    {    
+        String info;
         //printToFile.printDebugLine(this, "Enter searchForItem " + thisItemClassTSID + " (" + itemJSONX + "," + itemJSONY, 1);
         noMoreValidFragments = false;
 
@@ -162,7 +164,18 @@ class SpiralSearch
                 //printToFile.printDebugLine(this, "Perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 foundStepX = stepX;
                 foundStepY = stepY;
-                printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX() + "," + convertToJSONY() + " with lowestTotalRGBDiff = " + int(lowestTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
+                printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) + " with lowestTotalRGBDiff = " + int(lowestTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
+                           
+                if (!usingGeoInfo)
+                {
+                    info = "Perfect fit/grey at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
+                }
+                else
+                {
+                    info = "Perfect fit/colour at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
+                }
+                displayMgr.showDebugImages(BWStreetFragment, BWItemFragment, info);
+                
                 return true;
             }
             else 
@@ -180,21 +193,17 @@ class SpiralSearch
             foundStepX = lowestTotalRGBDiffStepX;
             foundStepY = lowestTotalRGBDiffStepY;
             printToFile.printDebugLine(this, "Good enough match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
-            " at x,y " + convertToJSONX() + "," + convertToJSONY() +
+            " at x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) +
             " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
             " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
             " RGBDiffCount = " + RGBDiffCount +
             " spiralCount = " + spiralCount, 2);  
-                
-            display.clearImage(650, 100, 50, 50);
-            display.clearImage(750, 100, 50, 50);
-            display.clearTextBox(650, 200, 200, 50);  
-            
-            PImage streetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
-            image(thisItemImage, 750, 100, 50, 50);
-            image(streetFragment, 650, 100, 50, 50);
-            fill(50);
-            text("good enough fit (RGBDiff = " + int(lowestTotalRGBDiff) + ")  step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
+               
+            // Recreate the appropriate street fragment for this good enough search result
+            BWStreetFragment = thisStreetImage.get(foundStepX, foundStepY, thisItemImage.width, thisItemImage.height);
+            BWStreetFragment = convertImage(BWStreetFragment);
+            info = "good enough fit (RGBDiff = " + int(lowestTotalRGBDiff) + ") at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
+            displayMgr.showDebugImages(BWStreetFragment, BWItemFragment, info);
 
             return true;
         }
@@ -285,11 +294,11 @@ class SpiralSearch
         // Register fact that doing another RGB comparison
         RGBDiffCount++;
                 
-        PImage streetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
-        PImage itemFragment = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
+        BWStreetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
+        BWItemFragment = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
         // Draw out image pre-conversion  
-        streetFragment = convertImage(streetFragment);
-        itemFragment = convertImage(itemFragment);
+        BWStreetFragment = convertImage(BWStreetFragment);
+        BWItemFragment = convertImage(BWItemFragment);
         
         // Don't draw these out now - only want to show the closest match ones.
         //image(streetFragment, 650, 100, 50, 50);
@@ -305,15 +314,15 @@ class SpiralSearch
                         
                 // For street snap
                 locStreet = pixelXPosition + (pixelYPosition * thisItemImage.width);
-                rStreet = red(streetFragment.pixels[locStreet]);
-                gStreet = green(streetFragment.pixels[locStreet]);
-                bStreet = blue(streetFragment.pixels[locStreet]);
+                rStreet = red(BWStreetFragment.pixels[locStreet]);
+                gStreet = green(BWStreetFragment.pixels[locStreet]);
+                bStreet = blue(BWStreetFragment.pixels[locStreet]);
             
                 // for Item snap
                 locItem = pixelXPosition + (pixelYPosition * thisItemImage.width);
-                rItem = red(itemFragment.pixels[locItem]);
-                gItem = green(itemFragment.pixels[locItem]);
-                bItem = blue(itemFragment.pixels[locItem]);
+                rItem = red(BWItemFragment.pixels[locItem]);
+                gItem = green(BWItemFragment.pixels[locItem]);
+                bItem = blue(BWItemFragment.pixels[locItem]);
                   
                 RGBDiff = abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
                 totalRGBDiff += abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
@@ -341,25 +350,7 @@ class SpiralSearch
         {
             lowestTotalRGBDiff = totalRGBDiff;
             lowestTotalRGBDiffStepX = stepX;
-            lowestTotalRGBDiffStepY = stepY;
-            display.clearImage(650, 100, 50, 50);
-            display.clearImage(750, 100, 50, 50);
-            display.clearTextBox(650, 200, 200, 50);
-            
-            image(streetFragment, 650, 100, 50, 50);
-            image(itemFragment, 750, 100, 50, 50);
-            fill(50);
-            if (!usingGeoInfo)
-            {
-                //printToFile.printDebugLine(this, "perfect/grey " + stepX + "," + stepY, 1);
-                text("Perfect fit/grey step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
-            }
-            else
-            {
-                //printToFile.printDebugLine(this, "perfect/colour " + stepX + "," + stepY, 1);
-                text("Perfect fit/colour step X/Y " + stepX + "," + stepY, 650, 200, 200, 50);
-            }
-            
+            lowestTotalRGBDiffStepY = stepY;            
             return true;
         }
         // leave this check out - only return true if perfect match, otherwise search the entire snap and take the lowest value
@@ -442,24 +433,24 @@ class SpiralSearch
         
     }
        
-    public int convertToJSONX()
+    public int convertToJSONX(int pixelX)
     {
         // converts the foundStepX = pixel X co-ord from 0-width, into JSON equivalent X co-ord
-        if (foundStepX != MISSING_COORDS)
+        if (pixelX != MISSING_COORDS)
         {
-            return foundStepX - thisStreetImage.width/2 - fragOffsetX;
+            return pixelX - thisStreetImage.width/2 - fragOffsetX;
         }
         else
         {
             return MISSING_COORDS;
         }
     }
-    public int convertToJSONY()
+    public int convertToJSONY(int pixelY)
     {
         // converts the foundStepY = pixel Y co-ord from 0-width, into JSON equivalent Y co-ord
-        if (foundStepY != MISSING_COORDS)
+        if (pixelY != MISSING_COORDS)
         {
-            return foundStepY - thisStreetImage.height - fragOffsetY;
+            return pixelY - thisStreetImage.height - fragOffsetY;
         }
         else
         {
@@ -475,10 +466,20 @@ class SpiralSearch
                     " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
                     " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
                     " RGBDiffCount = " + RGBDiffCount +
-                    " at x,y " + convertToJSONX() + "," + convertToJSONY() +
+                    " at x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) +
                     " spiralCount = " + spiralCount;
 
         return s;
+    }
+    
+    public int readFoundStepX()
+    {
+        return foundStepX;
+    }
+    
+    public int readFoundStepY()
+    {
+        return foundStepY;
     }
     
     public boolean readOkFlag()

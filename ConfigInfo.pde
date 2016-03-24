@@ -12,9 +12,10 @@ class ConfigInfo {
     String serverUsername;
     String serverPassword;
     boolean appendToOutputFile;
+    boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
     
     boolean debugSaveOrigAndNewJSONs;
-    boolean debugWriteJSONsToPersdata;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
+    boolean debugShowBWFragments;
     
     StringList streetTSIDs = new StringList();
     String outputFile;
@@ -157,22 +158,24 @@ class ConfigInfo {
             return false;
         }
         
-        // REMOVE BEFORE END OF TESTING
-        debugSaveOrigAndNewJSONs = Utils.readJSONBool(json, "debug_save_all_JSONs_for_comparison", true);
+        // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
+        debugSaveOrigAndNewJSONs = Utils.readJSONBool(json, "debug_save_all_JSONs_for_comparison", false);
         if (!Utils.readOkFlag())
         {
-            println(Utils.readErrMsg());
-            println("Failed to read debug_save_all_JSONs_for_comparison in config.json file");
-            return false;
+            debugSaveOrigAndNewJSONs = false;
         }
-        debugWriteJSONsToPersdata = Utils.readJSONBool(json, "debug_write_JSONs_To_Persdata", true);
+        writeJSONsToPersdata = Utils.readJSONBool(json, "debug_write_JSONs_To_Persdata", false);
         if (!Utils.readOkFlag())
         {
-            println(Utils.readErrMsg());
-            println("Failed to read debug_save_all_JSONs_for_comparison in config.json file");
-            return false;
+            // By default want to write files to persdata
+            writeJSONsToPersdata = true;
         }
-   
+        debugShowBWFragments = Utils.readJSONBool(json, "debug_show_BW_fragments", false);
+        if (!Utils.readOkFlag())
+        {
+            debugShowBWFragments = false;
+        }
+       // End of debug only info
         
         // Read in array of street TSID from config file
         JSONArray TSIDArray = Utils.readJSONArray(json, "streets", true);
@@ -244,9 +247,9 @@ class ConfigInfo {
     {
         return debugSaveOrigAndNewJSONs;
     }
-    public boolean readDebugWriteJSONsToPersdata()
+    public boolean readWriteJSONsToPersdata()
     {
-        return debugWriteJSONsToPersdata;
+        return writeJSONsToPersdata;
     }
          
     public String readStreetTSID(int n)
@@ -295,6 +298,11 @@ class ConfigInfo {
     public String readServerPassword()
     {
         return serverPassword;
+    }
+    
+    public boolean readDebugShowBWFragments()
+    {
+        return debugShowBWFragments;
     }
     
 }
