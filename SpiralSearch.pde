@@ -15,8 +15,8 @@ class SpiralSearch
     
     PImage thisItemImage;
     PImage thisStreetImage;
-    PImage BWStreetFragment;
-    PImage BWItemFragment;
+    PImage testStreetFragment;
+    PImage testItemFragment;
     int startX;
     int startY;
     String thisItemClassTSID;
@@ -166,7 +166,7 @@ class SpiralSearch
                 foundStepY = stepY;
                 printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) + " with lowestTotalRGBDiff = " + int(lowestTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                            
-                if (!usingGeoInfo)
+                if (usingBlackWhiteComparison)
                 {
                     info = "Perfect fit/grey at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
                 }
@@ -174,7 +174,7 @@ class SpiralSearch
                 {
                     info = "Perfect fit/colour at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
                 }
-                displayMgr.showDebugImages(BWStreetFragment, BWItemFragment, info);
+                displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
                 
                 return true;
             }
@@ -200,10 +200,10 @@ class SpiralSearch
             " spiralCount = " + spiralCount, 2);  
                
             // Recreate the appropriate street fragment for this good enough search result
-            BWStreetFragment = thisStreetImage.get(foundStepX, foundStepY, thisItemImage.width, thisItemImage.height);
-            BWStreetFragment = convertImage(BWStreetFragment);
+            testStreetFragment = thisStreetImage.get(foundStepX, foundStepY, thisItemImage.width, thisItemImage.height);
+            testStreetFragment = convertImage(testStreetFragment);
             info = "good enough fit (RGBDiff = " + int(lowestTotalRGBDiff) + ") at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
-            displayMgr.showDebugImages(BWStreetFragment, BWItemFragment, info);
+            displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
 
             return true;
         }
@@ -294,11 +294,11 @@ class SpiralSearch
         // Register fact that doing another RGB comparison
         RGBDiffCount++;
                 
-        BWStreetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
-        BWItemFragment = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
+        testStreetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
+        testItemFragment = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
         // Draw out image pre-conversion  
-        BWStreetFragment = convertImage(BWStreetFragment);
-        BWItemFragment = convertImage(BWItemFragment);
+        testStreetFragment = convertImage(testStreetFragment);
+        testItemFragment = convertImage(testItemFragment);
         
         // Don't draw these out now - only want to show the closest match ones.
         //image(streetFragment, 650, 100, 50, 50);
@@ -314,15 +314,15 @@ class SpiralSearch
                         
                 // For street snap
                 locStreet = pixelXPosition + (pixelYPosition * thisItemImage.width);
-                rStreet = red(BWStreetFragment.pixels[locStreet]);
-                gStreet = green(BWStreetFragment.pixels[locStreet]);
-                bStreet = blue(BWStreetFragment.pixels[locStreet]);
+                rStreet = red(testStreetFragment.pixels[locStreet]);
+                gStreet = green(testStreetFragment.pixels[locStreet]);
+                bStreet = blue(testStreetFragment.pixels[locStreet]);
             
                 // for Item snap
                 locItem = pixelXPosition + (pixelYPosition * thisItemImage.width);
-                rItem = red(BWItemFragment.pixels[locItem]);
-                gItem = green(BWItemFragment.pixels[locItem]);
-                bItem = blue(BWItemFragment.pixels[locItem]);
+                rItem = red(testItemFragment.pixels[locItem]);
+                gItem = green(testItemFragment.pixels[locItem]);
+                bItem = blue(testItemFragment.pixels[locItem]);
                   
                 RGBDiff = abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
                 totalRGBDiff += abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
@@ -382,7 +382,7 @@ class SpiralSearch
    
     PImage convertImage(PImage fragment)
     {
-        if (usingGeoInfo)
+        if (!usingBlackWhiteComparison)
         {
             return (fragment);
         }

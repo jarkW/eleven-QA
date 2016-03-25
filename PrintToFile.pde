@@ -200,7 +200,7 @@ class PrintToFile {
             printOutputLine("DEBUG No JSON filesx being written to persdata");
         }
         
-        if (usingGeoInfo)
+        if (!usingBlackWhiteComparison)
         {
             printOutputLine("DEBUG Using Geo data to change image files");
         }

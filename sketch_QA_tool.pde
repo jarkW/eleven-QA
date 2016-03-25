@@ -16,9 +16,7 @@
  *
  * For quoins, all available snaps will be searched in order to provide as much information
  *( as possible about quoin types/x,y. Any quoins not located in this manner will be 
- * set to 'mystery' unless the 'do_xy_only' flag is set in the config file. NB This might change
- * functionality - as the setting to mystery forces a write of the quoin item file ... but could simply
- * add code that instead of checking diff in extra_info, instead always writes out quoin item files in that case
+ * set to 'mystery' unless the 'do_xy_only' flag is set in the config file. 
  *
  * The new x,y values and variant information is written to JSON files in persdata.
  * The tool will eventually be able to write to either the server/vagrant depending on 
@@ -29,6 +27,8 @@
  *
  */
  
+ 
+ // Need to change snap matching so read JSON GEO file to find the height/width of street snap 
  
  // POSSIBLE FUTURE BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
  // Currently I am doing this with simple black/white setting.
@@ -45,7 +45,8 @@
     
 
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
- // Rather than failing after an hour.
+ // Rather than failing after an hour. So would just check all the JSON files exist for each
+ // of the streets.
  
  // Need to see if know where the config.json is - if not, then dialog box so user can select.
  // Next time run program, screen shows the path of the json and gives user chance to change/accept
@@ -137,7 +138,7 @@ PrintToFile printToFile;
 int debugLevel = 3;
 boolean debugToConsole = true;
 boolean doDelay = false;
-boolean usingGeoInfo = false; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
+boolean usingBlackWhiteComparison = true; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
 
 Memory memory = new Memory();
 
@@ -208,8 +209,19 @@ public void draw()
     // Each time we enter the loop check for error/end flags
     if (!okToContinue)
     {
-        // waiting for user to press c or any other key
-        nextAction = WAITING_FOR_INPUT;
+        // pause things for 2 seconds - so user can see previous output about failed street - then move on to next one
+        delay(2000);
+        
+        okToContinue = true;
+        displayMgr.clearDisplay();
+        streetBeingProcessed++;
+        if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
+        {
+            // Reached end of list of streets - normal ending
+            exitNow = true;
+            return;
+        }
+        nextAction = INIT_STREET;
         return;
     }
     else if (failNow)
@@ -405,21 +417,7 @@ boolean initialiseStreet()
 
 void keyPressed() 
 {
-    if ((key == 'c') || (key == 'C')) 
-    {
-        okToContinue = true;
-        displayMgr.clearDisplay();
-        streetBeingProcessed++;
-        if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
-        {
-            // Reached end of list of streets - normal ending
-            exitNow = true;
-            return;
-        }
-        nextAction = INIT_STREET;
-        return;
-    }
-    else if ((key == 'x') || (key == 'X'))
+    if ((key == 'x') || (key == 'X'))
     {
         exit();
     }

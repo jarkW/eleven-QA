@@ -29,6 +29,8 @@ class StreetInfo
     int geoTintAmount;
     int geoSaturation;
     int geoBrightness;
+    int geoHeight;
+    int geoWidth;
     
     // constructor/initialise fields
     public StreetInfo(String tsid)
@@ -50,6 +52,8 @@ class StreetInfo
         geoTintAmount = 0;
         geoSaturation = 0;
         geoBrightness = 0;
+        geoHeight = 0;
+        geoWidth = 0;
     }
     
     boolean readStreetData()
@@ -207,7 +211,7 @@ class StreetInfo
         geoTintAmount = 0;
         geoSaturation = 0;
         geoBrightness = 0;
-         
+                
         JSONObject dynamic = Utils.readJSONObject(json, "dynamic", false);
         if (!Utils.readOkFlag() || dynamic == null)
         {
@@ -230,49 +234,69 @@ class StreetInfo
             JSONObject middleground = Utils.readJSONObject(layers, "middleground", true);
             if (Utils.readOkFlag() && middleground != null)
             {
-                // Don't always have a filtersNew on this layer
-                JSONObject filtersNEW = Utils.readJSONObject(middleground, "filtersNEW", false);
+                // Always read in the w/l values as needed for street snap validation.
+                geoWidth = Utils.readJSONInt(middleground, "w", true);
+                if (!Utils.readOkFlag() || geoWidth == 0)
+                {
+                    printToFile.printDebugLine(this, "Failed to read width of street from geo JSON file " + geoFileName, 3);
+                    return false;
+                }
+                geoHeight = Utils.readJSONInt(middleground, "h", true);
+                if (!Utils.readOkFlag() || geoHeight == 0)
+                {
+                    printToFile.printDebugLine(this, "Failed to read height of street from geo JSON file " + geoFileName, 3);
+                    return false;
+                }
+                printToFile.printDebugLine(this, "Geo JSON file " + geoFileName + " gives street snap height " + geoHeight + " snap width " + geoWidth, 1);
+                                // Only bother reading in the remaining geo information if not using a black/white comparison method
+                if (!usingBlackWhiteComparison)
+                {
+                    // Don't always have a filtersNew on this layer
+                    JSONObject filtersNEW = Utils.readJSONObject(middleground, "filtersNEW", false);
                 
-                if (Utils.readOkFlag() && filtersNEW != null)
-                {
-                    printToFile.printDebugLine(this, "size of filtersNew is " + filtersNEW.size() + " in " + geoFileName, 2);
-                    // extract the fields inside
-                    JSONObject filtersNewObject = Utils.readJSONObject(filtersNEW, "tintColor", true);
-                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    if (Utils.readOkFlag() && filtersNEW != null)
                     {
-                        geoTintColor = filtersNewObject.getInt("value", 0);
+                        printToFile.printDebugLine(this, "size of filtersNew is " + filtersNEW.size() + " in " + geoFileName, 2);
+                        // extract the fields inside
+                        JSONObject filtersNewObject = Utils.readJSONObject(filtersNEW, "tintColor", true);
+                        if (Utils.readOkFlag() && filtersNewObject != null)
+                        {
+                            geoTintColor = filtersNewObject.getInt("value", 0);
+                        }
+                        filtersNewObject = Utils.readJSONObject(filtersNEW, "contrast", true);
+                        if (Utils.readOkFlag() && filtersNewObject != null)
+                        {
+                            geoContrast = filtersNewObject.getInt("value", 0);
+                        }
+                        filtersNewObject = Utils.readJSONObject(filtersNEW, "tintAmount", true);
+                        if (Utils.readOkFlag() && filtersNewObject != null)
+                        {
+                            geoTintAmount = filtersNewObject.getInt("value", 0);
+                        } 
+                        filtersNewObject = Utils.readJSONObject(filtersNEW, "saturation", true);
+                        if (Utils.readOkFlag() && filtersNewObject != null)
+                        {
+                            geoSaturation = filtersNewObject.getInt("value", 0);
+                        } 
+                        filtersNewObject = Utils.readJSONObject(filtersNEW, "brightness", true);
+                        if (Utils.readOkFlag() && filtersNewObject != null)
+                        {
+                            geoBrightness = filtersNewObject.getInt("value", 0);
+                        } 
                     }
-                    filtersNewObject = Utils.readJSONObject(filtersNEW, "contrast", true);
-                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    else
                     {
-                        geoContrast = filtersNewObject.getInt("value", 0);
+                        printToFile.printDebugLine(this, "Reading geo file - failed to read filtersNEW " + geoFileName, 2);
                     }
-                    filtersNewObject = Utils.readJSONObject(filtersNEW, "tintAmount", true);
-                    if (Utils.readOkFlag() && filtersNewObject != null)
-                    {
-                        geoTintAmount = filtersNewObject.getInt("value", 0);
-                    } 
-                    filtersNewObject = Utils.readJSONObject(filtersNEW, "saturation", true);
-                    if (Utils.readOkFlag() && filtersNewObject != null)
-                    {
-                        geoSaturation = filtersNewObject.getInt("value", 0);
-                    } 
-                    filtersNewObject = Utils.readJSONObject(filtersNEW, "brightness", true);
-                    if (Utils.readOkFlag() && filtersNewObject != null)
-                    {
-                        geoBrightness = filtersNewObject.getInt("value", 0);
-                    } 
-                }
-                else
-                {
-                    printToFile.printDebugLine(this, "Reading geo file - failed to read filtersNEW " + geoFileName, 1);
-                }
-            }
+                }// end if !using B&W comparison 
+            } // if middleground not null
             else
             {
-                 printToFile.printDebugLine(this, "Reading geo file - failed to read middleground " + geoFileName, 2);
+                // This counts as an error as need the snap size from the file
+                 printToFile.printDebugLine(this, "Reading geo file - failed to read middleground " + geoFileName, 3);
+                 return false;
             }
-         }
+         } // layers not null
          else
          {
              printToFile.printDebugLine(this, "Reading geo file - failed to read layers " + geoFileName, 2);
@@ -287,7 +311,9 @@ class StreetInfo
     boolean validateStreetSnaps()
     {
         // Using the street name, loads up all the street snaps from the QA snap directory
-        // NB Need to makes sure these are all the same size - so smaller images are removed from the list of snaps automatically
+        // Are only interested in street snaps with the correct h/w which matches the values read from the json geo file
+        
+        // NB smaller images are removed from the list of snaps automatically
         // Will unload the street snaps immediately - as only interested in the list of valid street snaps for now
         // Work out how many street snaps exist
         String [] snapFilenames = Utils.loadFilenames(configInfo.readStreetSnapPath(), streetName);
@@ -361,45 +387,43 @@ class StreetInfo
         } 
         
         // Now load up each of the snaps
-        int maxImageWidth = 0;
-        int maxImageHeight = 0;
+        int j = 0;
         for (i = 0; i < archiveSnapFilenames.size(); i++) 
         {
             // This currently never returns an error
             streetSnaps.add(new PNGFile(archiveSnapFilenames.get(i), true));
             
             // load up the image
-            if (!streetSnaps.get(i).setupPNGImage())
+            if (!streetSnaps.get(j).setupPNGImage())
             {
                 printToFile.printDebugLine(this, "Failed to load up image " + archiveSnapFilenames.get(i), 3);
                 return false;
             }
             
-            // Keep track of the largest snap size - most likely to be the FSS e.g. zoi/cleops
-            if (streetSnaps.get(i).readPNGImageWidth() > maxImageWidth)
+            if (streetSnaps.get(j).readPNGImageWidth() != geoWidth || streetSnaps.get(j).readPNGImageHeight() != geoHeight)
             {
-                maxImageWidth = streetSnaps.get(i).PNGImageWidth;
+                printToFile.printDebugLine(this, "Skipping street snap " + streetSnaps.get(j).readPNGImageName() + " because resolution is smaller than " + 
+                geoWidth + "x" + geoHeight + "pixels", 3);
+                streetSnaps.remove(j);
             }
-            if (streetSnaps.get(i).readPNGImageHeight() > maxImageHeight)
+            else 
             {
-                maxImageHeight = streetSnaps.get(i).PNGImageHeight;
-            } 
-            
-            // Now unload the image
-            streetSnaps.get(i).unloadPNGImage();
+                // valid snap - so keep and unload
+                streetSnaps.get(j).unloadPNGImage();
+                j++;
+            }
+        }  
+        
+        // If not found any of the right size - then need to return error
+        if (streetSnaps.size() == 0)
+        {
+            printToFile.printDebugLine(this, "SKIPPING STREET - No valid street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName + " with resolution " + geoWidth + " x " + geoHeight + " pixels", 3);
+            displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No valid street snaps found with resolution " + geoWidth + " x " + geoHeight + " pixels");
+            invalidStreet = true;
+            return false;
         }
         
-        // Work backwards so always removing from the end, not the top
-        for (i = streetSnaps.size()-1; i >= 0; i--)
-        {
-            if ((streetSnaps.get(i).readPNGImageWidth() != maxImageWidth) || (streetSnaps.get(i).readPNGImageHeight() != maxImageHeight))
-            {
-                printToFile.printDebugLine(this, "Skipping street snap " + streetSnaps.get(i).readPNGImageName() + " because resolution is smaller than " + 
-                maxImageWidth + "x" + maxImageHeight + "pixels", 3);
-                streetSnaps.remove(i);
-            }
-        }        
-       
+        printToFile.printDebugLine(this, "Number of valid street snaps is " + streetSnaps.size(), 1);
         // Everything OK
         return true;
     }
@@ -430,25 +454,22 @@ class StreetInfo
         displayMgr.showStreetName();
         displayMgr.showStreetProcessingMsg();
         
-        // Read in the G* file and load up the contrast settings etc - if this feature has been implemented
-        if (usingGeoInfo)
+        // Read in the G* file and load up the contrast settings etc (currently not used as searching on black/white)
+        if (!readStreetGeoInfo())
         {
-            if (!readStreetGeoInfo())
+            if (invalidStreet)
             {
-                if (invalidStreet)
-                {
-                    // i.e. need to skip this street as location information not available
-                    printToFile.printDebugLine(this, "Skipping missing geo JSON file", 3);
-                    printToFile.printOutputLine("SKIPPING STREET - missing geo JSON file for TSID " + streetTSID);
-                    return true; // continue
-                }
-                else
-                {
-                    // error - need to stop
-                    printToFile.printDebugLine(this, "Error in readStreetGeoInfo", 3);
-                    okFlag = false;
-                    return false;
-                }
+                // i.e. need to skip this street as location information not available
+                printToFile.printDebugLine(this, "Skipping missing geo JSON file", 3);
+                printToFile.printOutputLine("SKIPPING STREET - missing geo JSON file for TSID " + streetTSID);
+                return true; // continue
+            }
+            else
+            {
+                // error - need to stop
+                printToFile.printDebugLine(this, "Error in readStreetGeoInfo", 3);
+                okFlag = false;
+                return false;
             }
         }
         
@@ -751,6 +772,16 @@ class StreetInfo
     public int readGeoBrightness()
     {
         return geoBrightness;
+    }
+    
+    public int readGeoHeight()
+    {
+        return geoHeight;
+    }
+    
+    public int readGeoWidth()
+    {
+        return geoWidth;
     }
     
 }

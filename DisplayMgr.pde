@@ -196,7 +196,7 @@ class DisplayMgr
 
     }
     
-    public void showDebugImages(PImage BWStreetFragment, PImage BWItemFragment, String infoText)
+    public void showDebugImages(PImage testStreetFragment, PImage testItemFragment, String infoText)
     {
         if (!configInfo.readDebugShowBWFragments())
         {
@@ -207,8 +207,8 @@ class DisplayMgr
         clearImage(750, 100, 50, 50);
         clearTextBox(650, 200, 200, 50);        
             
-        image(BWStreetFragment, 650, 100, 50, 50);
-        image(BWItemFragment, 750, 100, 50, 50);
+        image(testStreetFragment, 650, 100, 50, 50);
+        image(testItemFragment, 750, 100, 50, 50);
         fill(50);
         text(infoText, 650, 200, 200, 50);
     }
@@ -292,7 +292,7 @@ class DisplayMgr
             return;
         }
         //String s = "The following streets were not processed";
-        fill(50);
+        fill(#FF002B);
         //text(s, 10, 100, width-10, 80);  // Text wraps within text box
         
         // Print out each of the messages for this street ... and save to the total message buffer for reporting at end of run
@@ -303,7 +303,7 @@ class DisplayMgr
             allFailedStreets.append(failedStreets.get(i));
         }
         i = i + 10;
-        text("Errors during initial processing of street - press 'c' to continue, 'x' to exit", 10, 120 + (i * 20), width-10, 80);
+        //text("Errors during initial processing of street - press 'c' to continue, 'x' to exit", 10, 120 + (i * 20), width-10, 80);
         
         // Now that all messages have been given for this street - clear the message buffer        
         failedStreets = new StringList();
