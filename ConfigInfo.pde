@@ -11,6 +11,7 @@ class ConfigInfo {
     String serverName;
     String serverUsername;
     String serverPassword;
+    int serverPort;
     boolean appendToOutputFile;
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
     
@@ -59,59 +60,101 @@ class ConfigInfo {
             return false;
         }
         
-        // Read in server details
-        JSONObject serverInfo = Utils.readJSONObject(json, "server_info", true); 
-        if (!Utils.readOkFlag())
+        // Read in the locations of the JSON directories        
+        JSONObject fileSystemInfo;
+        if (useVagrant)
         {
-            println(Utils.readErrMsg());
-            println("Failed to read server in config.json file");
-            return false;
-        }  
-        serverName = Utils.readJSONString(serverInfo, "host", true);
-        if (!Utils.readOkFlag())
-        {
-            println(Utils.readErrMsg());
-            println("Failed to read server host name in config.json file");
-            return false;
-        }  
-        serverUsername = Utils.readJSONString(serverInfo, "username", true);
-        if (!Utils.readOkFlag())
-        {
-             println(Utils.readErrMsg());
-             println("Failed to read server username in config.json file");
-             return false;
-        }            
-        serverPassword = Utils.readJSONString(serverInfo, "password", true);
-        if (!Utils.readOkFlag())
-        {
-           println(Utils.readErrMsg());
-           println("Failed to read server password in config.json file");
-           return false;
-        }   
-        
-        // Give warning message if both are configured - will use the useVagrant flag as the default
-        if (useVagrant && (serverName.length() > 0 || serverUsername.length() > 0  || serverPassword.length() > 0))
-        {
-            println("use_vagrant_dirs flag is set in config.json so using vagrant files for analysis - ignoring QA server details");
-            serverName = "";
+            fileSystemInfo = Utils.readJSONObject(json, "vagrant_dirs", true);
+            if (!Utils.readOkFlag())
+            {
+                println(Utils.readErrMsg());
+                println("Failed to read vagrant_info in config.json file");
+                return false;
+            }
+             serverName = "";
             serverUsername = "";
             serverPassword = "";
+            serverPort = 0;
         }
-
-        fixturesPath = Utils.readJSONString(json, "fixtures_path", true); 
+        else
+        {
+            // Read in server details
+            JSONObject serverInfo = Utils.readJSONObject(json, "server_info", true); 
+            if (!Utils.readOkFlag())
+            {
+                println(Utils.readErrMsg());
+                println("Failed to read server_info in config.json file");
+                return false;
+            }  
+            serverName = Utils.readJSONString(serverInfo, "host", true);
+            if (!Utils.readOkFlag())
+            {
+                println(Utils.readErrMsg());
+                println("Failed to read server host name in config.json file");
+                return false;
+            }  
+            serverUsername = Utils.readJSONString(serverInfo, "username", true);
+            if (!Utils.readOkFlag())
+            {
+                 println(Utils.readErrMsg());
+                 println("Failed to read server username in config.json file");
+                 return false;
+            }            
+            serverPassword = Utils.readJSONString(serverInfo, "password", true);
+            if (!Utils.readOkFlag())
+            {
+               println(Utils.readErrMsg());
+               println("Failed to read server password in config.json file");
+               return false;
+            }
+            serverPort = Utils.readJSONInt(serverInfo, "port", true);
+            if (!Utils.readOkFlag())
+            {
+               println(Utils.readErrMsg());
+               println("Failed to read port in config.json file");
+               return false;
+            }
+            
+            fileSystemInfo = Utils.readJSONObject(serverInfo, "server_dirs", true);
+            if (!Utils.readOkFlag())
+            {
+                println(Utils.readErrMsg());
+                println("Failed to read server_dirs in config.json file");
+                return false;
+            }
+        }
+        
+        // Now read in the appropriate dirs that contain JSON files
+        fixturesPath = Utils.readJSONString(fileSystemInfo, "fixtures_path", true); 
         if (!Utils.readOkFlag() || fixturesPath.length() == 0)
         {
             println(Utils.readErrMsg());
-            println("Failed to read fixtures_path in config.json file");
+            if (useVagrant)
+            {
+                println("Failed to read fixtures_path from vagrant_dirs in config.json file");
+            }
+            else
+            {
+                println("Failed to read fixtures_path from server_dirs in config.json file");
+            }
             return false;
         }
-        persdataPath = Utils.readJSONString(json, "persdata_path", true);
+        persdataPath = Utils.readJSONString(fileSystemInfo, "persdata_path", true);
         if (!Utils.readOkFlag() || persdataPath.length() == 0)
         {
             println(Utils.readErrMsg());
-            println("Failed to read persdata_path in config.json file");
+            if (useVagrant)
+            {
+                println("Failed to read persdata_path from vagrant_dirs in config.json file");
+            }
+            else
+            {
+                println("Failed to read persdata_path from server_dirs in config.json file");
+            }
             return false;
         }
+        
+        
         streetSnapPath = Utils.readJSONString(json, "street_snap_path", true);
         if (!Utils.readOkFlag() || streetSnapPath.length() == 0)
         {
@@ -290,7 +333,7 @@ class ConfigInfo {
         return serverName;
     }
     
-    public String readServerUserName()
+    public String readServerUsername()
     {
         return serverUsername;
     }
@@ -298,6 +341,10 @@ class ConfigInfo {
     public String readServerPassword()
     {
         return serverPassword;
+    }
+    public int readServerPort()
+    {
+        return serverPort;
     }
     
     public boolean readDebugShowBWFragments()

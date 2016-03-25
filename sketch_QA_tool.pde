@@ -1,3 +1,5 @@
+import sftp.*;
+
 /*
  * Reads in a list of street TSIDs from a config.json file, and then using the item
  * information/co-ordinates, searches street snaps with small item fragment images
@@ -27,8 +29,22 @@
  *
  */
  
+ // TODO - change the sftp stuff so returns true/false if worked. See if can dump more
+ // meaningful data from the exception stuff also. Could test by trying to upload
+ // a bad name file. 
  
- // Need to change snap matching so read JSON GEO file to find the height/width of street snap 
+ // TO DO - need to upload all the L*/G*/I* files to OrigJSONs (or copy from vagrant dir) ... and as go through them,
+ // delete the skipped I files at some point so don't accumulate in the directory
+ // then don't need the place where save the Orig JSON files anymore. Do this as part of 
+ // setup - if I/L* files missing, then mark street as skipped and delete all the I/L* files that
+ // do have
+ 
+ // TO DO Change all the places where I do '/' in paths and replace with File.separatorChar so
+ // that works on Mac and PC
+ 
+ // TO DO update the quoin type settings for all the other regions. 
+ 
+ // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
  // POSSIBLE FUTURE BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
  // Currently I am doing this with simple black/white setting.
@@ -50,6 +66,7 @@
  
  // Need to see if know where the config.json is - if not, then dialog box so user can select.
  // Next time run program, screen shows the path of the json and gives user chance to change/accept
+ 
  
 
 // Have an option where only changes x,y in files (e.g. if on street where already started
@@ -112,16 +129,20 @@ FragmentOffsets allFragmentOffsets;
 // Handles all output to screen
 DisplayMgr displayMgr;
 
+// Handles connection to server
+Sftp QAsftp;
+
 // missing item co-ordinates - if set to this, know not found
 final static int MISSING_COORDS = 32700;
 
 // States - used to determine next actions
 int nextAction;
-final static int LOAD_ITEM_IMAGES = 10;
-final static int LOAD_FRAGMENT_OFFSETS = 11;
-final static int INIT_STREET = 20;
-final static int INIT_STREET_DATA = 21;
-final static int PROCESS_STREET = 30;
+final static int START_SERVER = 10;
+final static int LOAD_ITEM_IMAGES = 20;
+final static int LOAD_FRAGMENT_OFFSETS = 21;
+final static int INIT_STREET = 30;
+final static int INIT_STREET_DATA = 31;
+final static int PROCESS_STREET = 40;
 final static int WAITING_FOR_INPUT = 90;
 final static int IDLING = 100;
 
@@ -135,7 +156,7 @@ boolean okToContinue = true;
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 3;
+int debugLevel = 1;
 boolean debugToConsole = true;
 boolean doDelay = false;
 boolean usingBlackWhiteComparison = true; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
@@ -187,20 +208,43 @@ public void setup()
         return;
     }
     
-    //Set up ready to start adding images to this 
-    allItemImages = new ItemImages();
+    if (!setupWorkingDirectories())
+    {
+        printToFile.printDebugLine(this, "Problems creating working directories", 3);
+        failNow = true;
+        return;
+    }
     
-    // Set up ready to start adding offsets to this
-    allFragmentOffsets = new FragmentOffsets();
+    // Set up connection to remote server if not using vagrant
+    if (!configInfo.readUseVagrantFlag())
+    {
+
+        QAsftp = new Sftp(configInfo.readServerName(), configInfo.readServerUsername(), false, configInfo.readServerPort());  
+        QAsftp.setPassword(configInfo.readServerPassword());
+        QAsftp.start(); // start the thread
+        displayMgr.showInfoMsg("Connecting to server ... please wait");
+        nextAction = START_SERVER;
+    }
+    else
+    {
+        QAsftp = null;
+        
+        //Set up ready to start adding images to this 
+        allItemImages = new ItemImages();
     
-    // Ready to start with first street
-    streetBeingProcessed = 0;
-    nextAction = LOAD_FRAGMENT_OFFSETS;
+        // Set up ready to start adding offsets to this
+        allFragmentOffsets = new FragmentOffsets();
     
-    // Display start up msg
-    displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
+        // Ready to start with first street
+        streetBeingProcessed = 0;
+        nextAction = LOAD_FRAGMENT_OFFSETS;
     
-    memory.printMemoryUsage();
+        // Display start up msg
+        displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
+         
+        memory.printMemoryUsage();
+    }
+   
 }
 
 public void draw() 
@@ -256,6 +300,29 @@ public void draw()
     {
         case IDLING:
         case WAITING_FOR_INPUT:
+            break;
+            
+        case START_SERVER:
+            
+            if (QAsftp != null && QAsftp.readSessionConnect())
+            {
+                // Server has been connected successfully - so can continue
+                
+                //Set up ready to start adding images to this 
+                allItemImages = new ItemImages();
+    
+                // Set up ready to start adding offsets to this
+                allFragmentOffsets = new FragmentOffsets();
+    
+                // Ready to start with first street
+                streetBeingProcessed = 0;
+                nextAction = LOAD_FRAGMENT_OFFSETS;
+    
+                // Display start up msg
+                displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
+            
+                memory.printMemoryUsage();
+            }
             break;
                  
         case LOAD_FRAGMENT_OFFSETS:
@@ -413,6 +480,45 @@ boolean initialiseStreet()
                  
     // All OK
     return true;
+}
+
+boolean setupWorkingDirectories()
+{
+    // Checks that we have working directories for the JSONs - create them if they don't exist
+    File myDir = new File(dataPath("") + "/NewJSONs");
+    if (!myDir.exists())
+    {
+        // create directory
+        println("creating newJSONSs");
+        try
+        {
+            myDir.mkdir();
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "Failed to create Data/NewJSONs folder", 3);
+            return false;
+        } 
+        
+    }
+    myDir = new File(dataPath("") + "/OrigJSONs");
+    if (!myDir.exists())
+    {
+        // create directory
+        try
+        {
+            myDir.mkdir();
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "Failed to create Data/OrigJSONs folder", 3);
+            return false;
+        } 
+        
+    }
+    return true; 
 }
 
 void keyPressed() 

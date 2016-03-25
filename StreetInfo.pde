@@ -60,6 +60,11 @@ class StreetInfo
     {
         // Now read in item list and street from L* file
         String locFileName = configInfo.readPersdataPath() + "/" + streetTSID + ".json";
+        
+        println("locFileName is ", locFileName);
+        QAsftp.executeCommand("ls", locFileName, null);
+        QAsftp.executeCommand("get", locFileName, dataPath("") + "/temp");
+        QAsftp.executeCommand("put", "c:/MYTEST/jark.json", "/home/qateam/jark_tmp/jark1.json");
    
         // First check L* file exists
         File file = new File(locFileName);

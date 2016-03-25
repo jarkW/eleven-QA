@@ -8,9 +8,9 @@ To create a valid config.json  file do the following:
 	streets - list of TSIDs to be read (NB last TSID must not have trailing comma)
 	use_vagrant_dirs - set to true if the street/item JSON files are on a PC version of Eleven
 					 - set to false if using the QA server/persdata
-    server - set up the hostname, username and password for server. Only read if use_vagrant_dirs is false.
-	fixtures_path - set to path for eleven-fixtures (ignored if use_vagrant_dirs = false)
-	persdata_path - set to path for eleven-throwaway-server/persdata (ignored if use_vagrant_dirs = false)
+    server - set up the hostname, port, username and password for server. 
+	fixtures_path - set to path for eleven-fixtures 
+	persdata_path - set to path for eleven-throwaway-server/persdata 
 	street_snap_path - set to path containing all the archive street snaps for these streets
 	output_file - set to path/name of file which contain a summary of all the changes made by this tool. 
 	append_to_output_file - if set to false, then a fresh output_file is written each time the tool is run 
@@ -23,17 +23,23 @@ To create a valid config.json  file do the following:
 // Copy everything from below this line into your config.json
 {
   "streets": [
-    {"tsid": "LHVT4C9KSIA2UMG"},
 	{"tsid": "LHV4U509S9B2MRV"}
   ],
   "use_vagrant_dirs": true,
-  "server_info": {
-	"host": "",
-    "username": "",
-    "password": ""
+  "vagrant_info": {
+	"fixtures_path": "C:/Glitch/eleven/eleven-fixtures",
+	"persdata_path": "C:/Glitch/eleven/eleven-throwaway-server/persdata"
   },
-  "fixtures_path": "C:/Glitch/eleven/eleven-fixtures",
-  "persdata_path": "C:/Glitch/eleven/eleven-throwaway-server/persdata",
+  "server_info": {
+  	"host": "",
+	"port": "",
+    "username": "",
+    "password": "",
+	"server_dirs": {
+		"fixtures_path": "",
+		"persdata_path": ""
+	}
+  },
   "street_snap_path": "C:/Glitch/QA2/StreetSnapsArchive/Snaps",
   "output_file": "C:/Glitch/QA2/region.txt",
   "append_to_output_file": true,

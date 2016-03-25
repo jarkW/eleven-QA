@@ -26,6 +26,10 @@ class SpiralSearch
     int itemJSONY;
     int fragOffsetX;
     int fragOffsetY;
+    // dumps out the images that are being compared as files - useful for when failing and not sure why.
+    // Used to dump out the best of the failure cases. 
+    boolean saveImages = false;
+    int numSavedImages = 0;
     
     // (dStepX, dStepY) is a vector - direction in which we move right now
     int dStepX;
@@ -210,12 +214,24 @@ class SpiralSearch
         else
         {
             // Consider item not found
-            printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) + 
-            //" for step X = " + lowestTotalRGBDiffStepX + " stepY = " + lowestTotalRGBDiffStepY + 
+            printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) +
+            " at x,y " + convertToJSONX(lowestTotalRGBDiffStepX) + "," + convertToJSONY(lowestTotalRGBDiffStepY) +
             " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
             " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
             " RGBDiffCount = " + RGBDiffCount +
             " spiralCount = " + spiralCount, 1);  
+            if (saveImages)
+            {
+                // This doesn't really work as we don't know which of the images had this lowest RGB for example. Might need instead to have a separate class
+                // for dumping out images - or pass the item info field as well??? 
+                testStreetFragment = thisStreetImage.get(lowestTotalRGBDiffStepX, lowestTotalRGBDiffStepY, thisItemImage.width, thisItemImage.height);
+                testStreetFragment = convertImage(testStreetFragment);
+                testStreetFragment.save(sketchPath() + "/BW" + convertToJSONX(lowestTotalRGBDiffStepX) + "_" + convertToJSONY(lowestTotalRGBDiffStepY)+ "_" + thisItemClassTSID + "_" + numSavedImages + ".png");
+                testItemFragment.save(sketchPath() + "/BW" + thisItemClassTSID + "_" + numSavedImages + ".png");
+                numSavedImages++;
+            }
+            
+            
             foundStepX = MISSING_COORDS;
             foundStepY = MISSING_COORDS;
         }
