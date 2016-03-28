@@ -321,5 +321,38 @@ static class Utils
     {
         return errMsg;
     }
+    static public boolean emptyDir(String dirName)
+    {
+        File myDir = new File(dirName);
+        if (!myDir.exists())
+        {
+            // create directory
+            println("creating newJSONSs");
+            try
+            {
+                myDir.mkdir();
+            }
+            catch(Exception e)
+            {
+                println(e);
+                errMsg = "Failed to create " + dirName + " folder";
+                return false;
+            } 
+        
+        }
+        else
+        {
+            // Delete all the contents of the file
+            File[] contents = myDir.listFiles();
+            if (contents != null) 
+            {
+                for (int i=0; i< contents.length; i++)
+                {
+                    contents[i].delete();
+                }
+            }
+        }
+        return true;
+    }
 
 }

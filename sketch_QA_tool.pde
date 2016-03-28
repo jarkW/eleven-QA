@@ -32,15 +32,53 @@ import sftp.*;
  // TODO - change the sftp stuff so returns true/false if worked. See if can dump more
  // meaningful data from the exception stuff also. Could test by trying to upload
  // a bad name file. 
+ // Also need better error reporting for incorrect URL/username/password
+ // Can dump out exception.class - to see actual error returned e.g. for missing files
+ // Also test out trying to save to dir that write protected (set persdata to program files dir)
+ // As well as testing for specific failures, incude def final catch Exception so that info
+ // gets dumped (and failed returned)
+ // for file get/put - break the connection - then do the get/put and see what class of 
+ // error returns - so can trap it specifically
+ // For any errors in getting, stop the program. But for errors putting ... carry on
+ // because user can then manually update them to Tii (give message about having to
+ // remove remaining files in data/NewJSONs manually (or rerunning tool)
  
- // TO DO - need to upload all the L*/G*/I* files to OrigJSONs (or copy from vagrant dir) ... and as go through them,
+ // BUG? xy variant only
+ // Does it load up the single image for other non-quoin items with variant field?
+ // Except wood trees - where still needs to test all tree images.
+ // Also in JSON diff, ensure that only x,y have changed, error otherwise
+ 
+ 
+ 
+ // TO DO - need to upload all the L*/G*/I* files to OrigJSONs (or copy from vagrant dir) ... 
+ // and as go through them,
  // delete the skipped I files at some point so don't accumulate in the directory
  // then don't need the place where save the Orig JSON files anymore. Do this as part of 
  // setup - if I/L* files missing, then mark street as skipped and delete all the I/L* files that
  // do have
+ // As upload the newJSON files to persdata - move to uploadedJSONs. At end of program
+ // if newJSONs is empty ... successful end. Otherwise could list the JSONs on the screen 
+ // or just do count of files in newJSONs.
+ // Create/replace the errStrings array which is reported at the end? Or create new one for
+ // failed JSONs so that it can be reported on new section of screen, just need display.setFailedJSON or something
+ // Should also report failure to upload JSON files in the output directory
+ // When using vagrant - need to check if fail trying to write files e.g. c:program files/temp or something - so catch that kind of error in all places
+ //
+ // 
+ // Need to do a test to see if file arrived safely - see http://stackoverflow.com/questions/23918070/how-to-tell-if-an-sftp-upload-was-successful-using-jsch
+ // Could implement the stat/lstat command - pass "stat", "--format "%Y"" "filename" which 
+ // will give the time of last modification in seconds since Epoch (so would need to know
+ // the baseline value loaded when start programe). But might just be simpler to assume
+ // it has worked ... if no errors.
  
  // TO DO Change all the places where I do '/' in paths and replace with File.separatorChar so
  // that works on Mac and PC
+ 
+ // Check that all PC defined paths exist in config loading - abort otherwise
+ // Also empty all files from OrigJSONs/NewJSONs/UploadedJSONs
+ 
+ // Should I check in JSONDiff that the only fields changed are the expected ones???
+ // i.e. x,y, variant, and some added fields. 
  
  // TO DO update the quoin type settings for all the other regions. 
  
@@ -142,15 +180,14 @@ final static int LOAD_ITEM_IMAGES = 20;
 final static int LOAD_FRAGMENT_OFFSETS = 21;
 final static int INIT_STREET = 30;
 final static int INIT_STREET_DATA = 31;
+final static int SHOW_FAILED_STREET_MSG = 32;
 final static int PROCESS_STREET = 40;
 final static int WAITING_FOR_INPUT = 90;
 final static int IDLING = 100;
+final static int EXIT_NOW = 110;
 
 // Differentiate between error/normal endings
 boolean failNow = false;    // abnormal ending/error
-boolean exitNow = false;    // normal ending
-boolean doNothing = false; // useful if want to keep the window open to see error msg, used in dev only
-boolean okToContinue = true;
 
 // Contains both debug and user input information output files
 PrintToFile printToFile;
@@ -251,47 +288,12 @@ public void draw()
 {  
 
     // Each time we enter the loop check for error/end flags
-    if (!okToContinue)
-    {
-        // pause things for 2 seconds - so user can see previous output about failed street - then move on to next one
-        delay(2000);
-        
-        okToContinue = true;
-        displayMgr.clearDisplay();
-        streetBeingProcessed++;
-        if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
-        {
-            // Reached end of list of streets - normal ending
-            exitNow = true;
-            return;
-        }
-        nextAction = INIT_STREET;
-        return;
-    }
-    else if (failNow)
+    if (failNow)
     {
         println("failNow flag set - exiting with errors");
         printToFile.printOutputLine("\n\n!!!!! EXITING WITH ERRORS !!!!!\n\n");
         printToFile.printDebugLine(this, "failNow flag set - exiting with errors", 3);
-        nextAction = IDLING;
-        exit();
-    }
-    else if (exitNow && !doNothing)
-    {
-        boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();       
-        printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED\n\n");
-        printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
-        memory.printMemoryUsage();
-        doNothing = true;
-        if (nothingToShow)
-        {
-            nextAction = IDLING;
-            exit();
-        }
-        else
-        {
-            nextAction = WAITING_FOR_INPUT;
-        }
+        nextAction = EXIT_NOW;;
     }
     
     // Carry out processing depending on whether setting up the street or processing it
@@ -304,24 +306,37 @@ public void draw()
             
         case START_SERVER:
             
-            if (QAsftp != null && QAsftp.readSessionConnect())
+            if (QAsftp != null)
             {
-                // Server has been connected successfully - so can continue
+                if (QAsftp.readSessionConnect())
+                {
+                    // Server has been connected successfully - so can continue
                 
-                //Set up ready to start adding images to this 
-                allItemImages = new ItemImages();
+                    //Set up ready to start adding images to this 
+                    allItemImages = new ItemImages();
     
-                // Set up ready to start adding offsets to this
-                allFragmentOffsets = new FragmentOffsets();
+                    // Set up ready to start adding offsets to this
+                    allFragmentOffsets = new FragmentOffsets();
     
-                // Ready to start with first street
-                streetBeingProcessed = 0;
-                nextAction = LOAD_FRAGMENT_OFFSETS;
+                    // Ready to start with first street
+                    streetBeingProcessed = 0;
+                    nextAction = LOAD_FRAGMENT_OFFSETS;
     
-                // Display start up msg
-                displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
+                    // Display start up msg
+                    displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
             
-                memory.printMemoryUsage();
+                    memory.printMemoryUsage();
+                }
+                else
+                {
+                    // Session still not connected
+                    // Abort if the error flag is set
+                    if (!QAsftp.readRunningFlag())
+                    {
+                        failNow = true;
+                        return;
+                    }
+                }
             }
             break;
                  
@@ -362,11 +377,22 @@ public void draw()
                 failNow = true;
                 return;
             }
+            
+            if (streetInfo.readInvalidStreet())
+            {
+                // The L* file is missing for this street       
+                // Display the start up error messages
+                displayMgr.showThisSkippedStreetMsg();
+                nextAction = SHOW_FAILED_STREET_MSG;
+                return;
+            }
+            
+            /*
             if (!okToContinue)
             {
                 // Need to wait for user input
                 return;
-            }
+            }*/
             
             // Reload up the first street image ready to go
             if (!streetInfo.loadStreetImage(0))
@@ -376,6 +402,30 @@ public void draw()
             }
             
             nextAction = INIT_STREET_DATA;
+            break;
+            
+        case SHOW_FAILED_STREET_MSG:
+           // pause things for 2 seconds - so user can see previous output about failed street - then move on to next one
+            delay(2000);
+            displayMgr.clearDisplay();
+            streetBeingProcessed++;
+            if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
+            {
+                // Reached end of list of streets - normal ending
+                boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();       
+                printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED\n\n");
+                printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
+                if (nothingToShow)
+                {
+                    nextAction = EXIT_NOW;
+                }
+                else
+                {
+                    nextAction = WAITING_FOR_INPUT;
+                }
+                return;
+            }
+            nextAction = INIT_STREET;
             break;
             
         case INIT_STREET_DATA:
@@ -408,8 +458,18 @@ public void draw()
                     // Reached end of list of streets - normal ending
                     streetInfo = null;
                     System.gc();
-                    memory.printMemoryUsage();
-                    exitNow = true;
+                                        
+                    boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();       
+                    printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED\n\n");
+                    printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
+                    if (nothingToShow)
+                    {
+                        nextAction = EXIT_NOW;
+                    }
+                    else
+                    {
+                        nextAction = WAITING_FOR_INPUT;
+                    }
                     return;
                 }
                 else
@@ -422,11 +482,23 @@ public void draw()
             {
                 // Street yet not finished - move on to the next item and/or snap
                 streetInfo.processItem();
-                
-                //okToContinue = false;
             }
             //printToFile.printDebugLine(this, "End top level processStreet memory", 1);
             //memory.printMemoryUsage();
+            break;
+            
+        case EXIT_NOW:            
+            memory.printMemoryUsage();
+            // Close sftp session
+            if (QAsftp != null && QAsftp.readRunningFlag())
+            {
+                if (!QAsftp.executeCommand("exit", "session", null))
+                {
+                    println("exit session failed");
+                }
+            }
+            println("exit() issued");
+            exit();
             break;
            
         default:
@@ -467,16 +539,6 @@ boolean initialiseStreet()
         printToFile.printDebugLine(this, "Error populating street data structure", 3);
         return false;
     }
-    
-    if (streetInfo.readInvalidStreet())
-    {
-        // The L* file is missing for this street
-        okToContinue = false;
-        
-        // Display the start up error messages
-        displayMgr.showThisSkippedStreetMsg();
-        return true;
-    }
                  
     // All OK
     return true;
@@ -485,39 +547,29 @@ boolean initialiseStreet()
 boolean setupWorkingDirectories()
 {
     // Checks that we have working directories for the JSONs - create them if they don't exist
-    File myDir = new File(dataPath("") + "/NewJSONs");
-    if (!myDir.exists())
+    // If they exist - then empty them
+    
+    //Need to have a hardcoded path for this - datapath + NewJSONs
+    //Also need 3rd dirctory - uploadedJSONs
+    
+    if (!Utils.emptyDir(dataPath("") + "/NewJSONs"))
     {
-        // create directory
-        println("creating newJSONSs");
-        try
-        {
-            myDir.mkdir();
-        }
-        catch(Exception e)
-        {
-            println(e);
-            printToFile.printDebugLine(this, "Failed to create Data/NewJSONs folder", 3);
-            return false;
-        } 
-        
+        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+        return false;
     }
-    myDir = new File(dataPath("") + "/OrigJSONs");
-    if (!myDir.exists())
+    
+    if (!Utils.emptyDir(dataPath("") + "/OrigJSONs"))
     {
-        // create directory
-        try
-        {
-            myDir.mkdir();
-        }
-        catch(Exception e)
-        {
-            println(e);
-            printToFile.printDebugLine(this, "Failed to create Data/OrigJSONs folder", 3);
-            return false;
-        } 
-        
+        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+        return false;
     }
+    
+    if (!Utils.emptyDir(dataPath("") + "/UploadedJSONs"))
+    {
+        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+        return false;
+    }
+    
     return true; 
 }
 
@@ -525,16 +577,9 @@ void keyPressed()
 {
     if ((key == 'x') || (key == 'X'))
     {
-        exit();
-    }
-    
-    else if (key == CODED && keyCode == RIGHT)
-    {
-        // debugging through images - need to set okToContinue flag after processItem call above
-        okToContinue = true;
-        nextAction = PROCESS_STREET;
+        nextAction = EXIT_NOW;
+        println("x pressed");
         return;
-        
     }
 }
 

@@ -12,6 +12,10 @@
  * All rights reserved
  *
  * Added support for port - as we don't use port 22
+ * Changed interface to execute function so that I pass each part of the command as a separate
+ * parameter - otherwise splitting the string at " " means that file names with spaces in
+ * cause a problem e.g. for get command.
+ * Changed execute function to return true/false depending on whether it succeeded or not.
  * 
  */
 
@@ -40,7 +44,8 @@ public class Sftp extends Thread {
     String password;
     
 
-    public Sftp(String h, String u, boolean p, int port) {
+    public Sftp(String h, String u, boolean p, int port) 
+    {
         host = h;
         user = u;
         prompt = p;
@@ -48,140 +53,309 @@ public class Sftp extends Thread {
         password = "";
     }
 
-    public void start() {
+    public void start() 
+    {
         super.start();
         running = true;
     }
 
-    public void run() {
-        try {
+    public void run() 
+    {
+        try 
+        {
             System.out.println("Attempting to connect.");
             jsch=new JSch();
             //session = jsch.getSession(user, host, 22);
-            session = jsch.getSession(user, host, myPort);
+            try
+            {
+                session = jsch.getSession(user, host, myPort);
+            }
+            catch (Exception e)
+            {
+                println(e);
+                printToFile.printDebugLine(this, "Failed to get session - reason " + e.getClass(), 3);
+                running = false;
+                return;
+            }
             UserInfo ui=new PromptUser(prompt,password);
             session.setUserInfo(ui);
             System.out.println("Logging in.");
-            session.connect();
-            System.out.println("Connected, session started.");
+            
+            try
+            {
+                session.connect();
+            }
+            catch (JSchException e)
+            {
+                 if (e.getCause() != null && e.getCause().getClass().equals(java.net.UnknownHostException.class))
+                {
+                    printToFile.printDebugLine(this, "Failed to login - unrecognised host " + host, 3);
+                }
+                else if (e.getCause() != null && e.getCause().getClass().equals(java.net.ConnectException.class))
+                {
+                    printToFile.printDebugLine(this, "Failed to login - connection failure - is port " + myPort + " correct?", 3);
+                }
+                else if (e.getMessage().equals("Auth fail"))
+                {
+                    printToFile.printDebugLine(this, "Failed to login - connection failure - are username " + user + " and password " + password + " correct?", 3);
+                }
+                else
+                {
+                    printToFile.printDebugLine(this, "Failed to login - JSchException - " + e.getMessage(), 3);
+                }
+                running = false;
+                return;
+            }
+            catch (Exception e)
+            {
+                printToFile.printDebugLine(this, "Failed to login - generalised exception " + e.getClass() + ": " + e.getMessage(), 3);
+                running = false;
+                return;
+            }
 
-            Channel channel= session.openChannel("sftp");
-            channel.connect();
+            System.out.println("Connected, session started.");
+            Channel channel;
+            try
+            {
+                channel= session.openChannel("sftp");
+            }
+            catch (JSchException e)
+            { 
+                printToFile.printDebugLine(this, "Failed to open channel - JSchException - " + e.getClass()+ ": " + e.getMessage(), 3);
+                running = false;
+                return;
+            }
+            catch (Exception e)
+            {
+                printToFile.printDebugLine(this, "Failed to open channel - generalised exception " + e.getClass()+ ": " + e.getMessage(), 3);
+                running = false;
+                return;
+            }
+            
+            try
+            {
+                channel.connect();
+            }
+            catch (JSchException e)
+            { 
+                printToFile.printDebugLine(this, "Failed to connect to channel - JSchException - " + e.getClass()+ ": " + e.getMessage(), 3);
+                running = false;
+                return;
+            }
+            catch (Exception e)
+            {
+                printToFile.printDebugLine(this, "Failed to connect to channel - generalised exception " + e.getClass()+ ": " + e.getMessage(), 3);
+                running = false;
+                return;
+            }
+            
             sftp=(ChannelSftp)channel;
             
-            while (running) {
+            while (running) 
+            {
                 Thread.sleep(1000);
                 // do nothing;
 
             }
+            sftp.exit();
             session.disconnect();
-        } catch (JSchException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+            
+        } 
+ 
+        catch (InterruptedException e) 
+        {
             System.out.println("Thread interuppted");
             e.printStackTrace();
+            printToFile.printDebugLine(this, "SFTP Thread interrupted " + e.getClass(), 3);
+            running = false;
+        }
+        catch (Exception e) 
+        {
+            e.printStackTrace();
+            printToFile.printDebugLine(this, "SFTP Thread general exception " + e.getClass(), 3);
+            running = false;
         }
     }
 
-    public void executeCommand(String s1, String s2, String s3) {
-        
-        // return bool
-        //log part of exception
-
+    public boolean executeCommand(String s1, String s2, String s3) 
+    {
+        // Need to separate out command in calling function - otherwise file name cannot contain spaces
+        // so can't rely on splitting a string by space in order to separate out command/parameters
         String[] cmds = new String[3];
         cmds[0] = s1;
         cmds[1] = s2;
         cmds[2] = s3;
+        
+        if (sftp == null)
+        {
+            return false;
+        }
 
-        if(cmds[0].equals("quit")){
+        if (cmds[0].equals("quit"))
+        {
             sftp.quit();
-            return;
+            if (cmds[1] != null && cmds[1].equals("session"))
+            {
+                running = false;
+            }
+            return true;
         }
-        if(cmds[0].equals("exit")){
+        
+        if (cmds[0].equals("exit"))
+        {
             sftp.exit();
-            return;
+            if (cmds[1] != null && cmds[1].equals("session"))
+            {
+                running = false;
+            }
+            
+            return true;
         }
-        if(cmds[0].equals("pwd") || cmds[0].equals("lpwd")){
+        
+        if (cmds[0].equals("pwd") || cmds[0].equals("lpwd"))
+        {
             String str=(cmds[0].equals("pwd")?"Remote":"Local");
             str+=" working directory: ";
-            if(cmds[0].equals("pwd")) str+=sftp.pwd();
-            else str+=sftp.lpwd();
+            if (cmds[0].equals("pwd"))
+            {
+                str+=sftp.pwd();
+            }
+            else 
+            {
+                str+=sftp.lpwd();
+            }
             System.out.println(str);
-            return;
+            return true;
         }
-        if(cmds[0].equals("ls") || cmds[0].equals("dir")){
+        
+        if (cmds[0].equals("ls") || cmds[0].equals("dir"))
+        {
             String path=".";
-            if(s2 != null) path=s2;
-            try{
+            if (s2 != null)
+            {
+                path=s2;
+            }
+            try
+            {
                 println("path ", path, "sftp ", sftp);
                 java.util.Vector vv=sftp.ls(path);
-                if(vv!=null){
-                    for(int ii=0; ii<vv.size(); ii++){
+                if (vv!=null)
+                {
+                    for (int ii=0; ii<vv.size(); ii++)
+                    {
                         Object obj=vv.elementAt(ii);
-                        if(obj instanceof com.jcraft.jsch.ChannelSftp.LsEntry){
+                        if (obj instanceof com.jcraft.jsch.ChannelSftp.LsEntry)
+                        {
                             System.out.println(((com.jcraft.jsch.ChannelSftp.LsEntry)obj).getLongname());
                         }
-
                     }
                 }
             }
-            catch(SftpException e){
+            catch(SftpException e)
+            {
                 System.out.println(e.toString());
+                return false;
             }
-            return;
+            return true;
         }
 
-        if(cmds[0].equals("get")) {
+        if (cmds[0].equals("get")) 
+        {
             String p1=cmds[1];
             String p2=".";
-            if(s3 != null)p2=s3;
+            if (s3 != null)
+            {
+                p2=s3;
+            }
+            
+            // Check status
+            if (!readSessionConnect())
+            {
+                printToFile.printDebugLine(this, " SFTP GET failed (session down): " + p1 + " to " + p2, 3);
+                return false;
+            }
             SftpProgressMonitor monitor=new Progress();
             int mode=ChannelSftp.OVERWRITE;
-            try {
+            try 
+            {
                 printToFile.printDebugLine(this, " SFTP GET: " + p1 + " to " + p2, 1);
                 sftp.get(p1, p2, monitor, mode);
-            } catch (SftpException e) {
-                e.printStackTrace();
+            } 
+            catch (SftpException e) 
+            {
+                //e.printStackTrace();
+                printToFile.printDebugLine(this, "SFTP GET FAILED: " + e.getMessage(), 3);
+                return false;
             }
-            return;
+            printToFile.printDebugLine(this, " SFTP GET suceeded: " + p1 + " to " + p2, 1);
+            return true;
         }
         
-        if(cmds[0].equals("put")) {
+        if (cmds[0].equals("put")) 
+        {
             String p1=cmds[1];
             String p2=".";
-            if(s3 != null)p2=s3;
+            if (s3 != null)
+            {
+                p2=s3;
+            }
+            // Check status
+            if (!readSessionConnect())
+            {
+                printToFile.printDebugLine(this, " SFTP PUT failed (session down): " + p1 + " to " + p2, 3);
+                return false;
+            }
+            
             SftpProgressMonitor monitor=new Progress();
             int mode=ChannelSftp.OVERWRITE;
-            try {
+            try 
+            {
                 printToFile.printDebugLine(this, " SFTP PUT: " + p1 + " to " + p2, 1);
                 sftp.put(p1, p2, monitor, mode);
-            } catch (SftpException e) {
-                e.printStackTrace();
+            } 
+            catch (SftpException e) 
+            {
+                if (e.getMessage().equals("No such file"))
+                {
+                    printToFile.printDebugLine(this, "SFTP PUT FAILED: \"no such file\" : check destination folder permissions ", 3);
+                }
+                else
+                {
+                    printToFile.printDebugLine(this, "SFTP PUT FAILED: " + e.getMessage(), 3);
+                }
+                return false;
             }
-            return;
+            printToFile.printDebugLine(this, " SFTP PUT succeeded: " + p1 + " to " + p2, 1);
+            return true;
         }
 
-        if(cmds[0].equals("version")){
+        if (cmds[0].equals("version"))
+        {
             System.out.println("SFTP protocol version "+sftp.version());
-            return;
+            return true;
         }
-        if(cmds[0].equals("help") || cmds[0].equals("?")){
+        
+        if (cmds[0].equals("help") || cmds[0].equals("?"))
+        {    
             System.out.println("help");
-            return;
+            return true;
         }
         
         System.out.println("unimplemented command: "+cmds[0]);
+        return false;
     
     }
 
-    public void setPassword(String s) {
+    public void setPassword(String s) 
+    {
         // DANGER IF WE'RE NOT USING A PROMPT
         password = s;
         
     }
     
-    public boolean readSessionConnect(){
-        if (sftp != null && (session != null && session.isConnected()))
+    public boolean readSessionConnect()
+    {
+        if (sftp != null && readRunningFlag() && (session != null && session.isConnected()))
         {
             return true;
         }
@@ -189,6 +363,11 @@ public class Sftp extends Thread {
         {
             return false;
         }
+    }
+    
+    public boolean readRunningFlag()
+    {
+        return running;
     }
 }
 
