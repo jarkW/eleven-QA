@@ -26,6 +26,8 @@ class SpiralSearch
     int itemJSONY;
     int fragOffsetX;
     int fragOffsetY;
+    
+    // FOR DEBUG ONLY
     // dumps out the images that are being compared as files - useful for when failing and not sure why.
     // Used to dump out the best of the failure cases. 
     boolean saveImages = false;

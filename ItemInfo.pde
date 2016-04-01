@@ -85,12 +85,12 @@ class ItemInfo
     public boolean initialiseItemInfo()
     {
         // Now open the relevant I* file from the appropriate place - try persdata first
-        String itemFileName = configInfo.readPersdataPath() + "/" + itemTSID + ".json";
+        String itemFileName = configInfo.readPersdataPath() + File.separatorChar + itemTSID + ".json";
         File file = new File(itemFileName);
         if (!file.exists())
         {
             // Retrieve from fixtures
-            itemFileName = configInfo.readFixturesPath() + "/world-items/" + itemTSID + ".json";
+            itemFileName = configInfo.readFixturesPath() + File.separatorChar + "world-items" + File.separatorChar + itemTSID + ".json";
             file = new File(itemFileName);
             if (!file.exists())
             {
@@ -119,12 +119,12 @@ class ItemInfo
         // Make a copy of the original JSON - so that is can be compared against the final one              
         try
         {
-            saveJSONObject(itemJSON, dataPath("") + "/OrigJSONs/" + itemTSID + ".json");
+            saveJSONObject(itemJSON, workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json");
         }    
         catch(Exception e)
         {
             println(e);
-            printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + dataPath("") + "/OrigJSONs/", 3);
+            printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + workingDir + File.separatorChar + "OrigJSONs", 3);
             return false;
         }
         
@@ -723,7 +723,7 @@ class ItemInfo
                 if (!configInfo.readDebugSaveOrigAndNewJSONs())
                 {
                     // Now remove the file from the temporary directories.
-                    f = new File(dataPath("") + "/OrigJSONs/" + itemTSID + ".json");
+                    f = new File(workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json");
                     if (f.exists())
                     {
                         f.delete();
@@ -865,18 +865,19 @@ class ItemInfo
             // Write the JSON file out to temporary place before checking that the new file length = old one plus calculated diff
             try
             {
-                saveJSONObject(itemJSON, dataPath("") + "/NewJSONs/" + itemTSID + ".json");
+                saveJSONObject(itemJSON, workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + itemTSID + ".json");
             }
             catch(Exception e)
             {
                 println(e);
-                printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + dataPath("") + "/NewJSONs/", 3);
-                printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + dataPath("") + "/NewJSONs/");
+                printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + workingDir + File.separatorChar + "NewJSONs", 3);
+                printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + workingDir + File.separatorChar + "NewJSONs");
                 return false;
             }
                 
             // Double check the new file is reasonable - has to be done by eye by looking at output from a diff comparison tool
-            JSONDiff jsonDiff = new JSONDiff(itemTSID, dataPath("") + "/OrigJSONs/" + itemTSID + ".json", dataPath("") + "/NewJSONs/" + itemTSID + ".json");
+            JSONDiff jsonDiff = new JSONDiff(itemTSID, workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json", 
+                                            workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + itemTSID + ".json");
             if (!jsonDiff.compareJSONFiles())
             {
                 // Error during the diff process
@@ -893,7 +894,7 @@ class ItemInfo
             {
                 try
                 {
-                    saveJSONObject(itemJSON, configInfo.readPersdataPath() + "/" + itemTSID + ".json");
+                    saveJSONObject(itemJSON, configInfo.readPersdataPath() + File.separatorChar + itemTSID + ".json");
                 }    
                 catch(Exception e)
                 {
@@ -936,13 +937,13 @@ class ItemInfo
         if (!configInfo.readDebugSaveOrigAndNewJSONs())
         {
             // Now remove the file from the temporary directories.
-            f = new File(dataPath("") + "/OrigJSONs/" + itemTSID + ".json");
+            f = new File(workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json");
             if (f.exists())
             {
                 f.delete();
             }
                 
-            f = new File(dataPath("") + "/NewJSONs/" + itemTSID + ".json");
+            f = new File(workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + itemTSID + ".json");
             if (f.exists())
             {
                 f.delete();

@@ -59,30 +59,45 @@ class StreetInfo
     boolean readStreetData()
     {
         // Now read in item list and street from L* file
-        String locFileName = configInfo.readPersdataPath() + "/" + streetTSID + ".json";
+        String locFileName = configInfo.readPersdataPath() + File.separatorChar + streetTSID + ".json";
         
         
+        // NB Will either need to fail or carry on with warnings - need to update debug and output files
+        // Safest to do 'put' as dir/filename? So don't risk creating odd files because dir does not exist
+        // although should never happen as we're using the dir we've already created. 
+        /*
         println("locFileName is ", locFileName);
-        if (!QAsftp.executeCommand("ls", locFileName, null))
-        {
-            println("ls failed");
-        }
-        if (!QAsftp.executeCommand("get", locFileName, "C:/Glitch/QA2/temp"))
+        //works
+        if (!QAsftp.executeCommand("get", locFileName, "C:/Glitch/QA2/temp/" + streetTSID + ".json"))
         {
             println("Get failed for ", locFileName);
         }
         if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "/home/qateam/jark_tmp/jark1.json"))
         //if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "c:/Program Files/Temp/jark1.json"))
         {
-            println("Put failed for jark.json to Tii jark1.json");
+            println("Put failed for jark.json2 to Tii jark1.json");
         }
-                  
+        if (!QAsftp.executeCommand("exit", null, null))
+        {
+            println("exit error");
+        }
+        delay (5000);
+        if (!QAsftp.executeCommand("get", locFileName, "C:/Glitch/QA2/temp/" + streetTSID + ".json"))
+        {
+            println("Get failed for ", locFileName);
+        }
+                if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "/home/qateam/jark_tmp/jark1.json"))
+        //if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "c:/Program Files/Temp/jark1.json"))
+        {
+            println("Put failed for jark.json2 to Tii jark1.json");
+        }
+          */        
         // First check L* file exists
         File file = new File(locFileName);
         if (!file.exists())
         {
             // Retrieve from fixtures
-            locFileName = configInfo.readFixturesPath() + "/locations-json/" + streetTSID + ".json";
+            locFileName = configInfo.readFixturesPath() + File.separatorChar + "locations-json" + File.separatorChar + streetTSID + ".json";
             file = new File(locFileName);
             if (!file.exists())
             {
@@ -189,14 +204,14 @@ class StreetInfo
     {
         
         // Now read in information about contrast etc from the G* file if it exists
-        String geoFileName = configInfo.readPersdataPath() + "/" + streetTSID.replaceFirst("L", "G") + ".json";
+        String geoFileName = configInfo.readPersdataPath() + File.separatorChar + streetTSID.replaceFirst("L", "G") + ".json";
    
         // First check G* file exists
         File file = new File(geoFileName);
         if (!file.exists())
         {
             // Retrieve from fixtures
-            geoFileName = configInfo.readFixturesPath() + "/locations-json/" + streetTSID.replaceFirst("L", "G") + ".json";
+            geoFileName = configInfo.readFixturesPath() + File.separatorChar + "locations-json" + File.separatorChar + streetTSID.replaceFirst("L", "G") + ".json";
             file = new File(geoFileName);
             if (!file.exists())
             {

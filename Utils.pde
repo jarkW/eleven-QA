@@ -327,7 +327,6 @@ static class Utils
         if (!myDir.exists())
         {
             // create directory
-            println("creating newJSONSs");
             try
             {
                 myDir.mkdir();

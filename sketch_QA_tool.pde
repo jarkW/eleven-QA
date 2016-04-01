@@ -20,19 +20,13 @@ import sftp.*;
  *( as possible about quoin types/x,y. Any quoins not located in this manner will be 
  * set to 'mystery' unless the 'do_xy_only' flag is set in the config file. 
  *
- * The new x,y values and variant information is written to JSON files in persdata.
- * The tool will eventually be able to write to either the server/vagrant depending on 
- * where the QA person is working. 
+ * The new x,y values and variant information are written to JSON files in persdata.
  *
  * NB It is up to the user to ensure that snaps are correctly labelled with the street 
- * name as it appears in the game. 
+ * name as it appears in the game i.e. with spaces between words. 
  *
  */
  
- // TODO - change the sftp stuff so returns true/false if worked. See if can dump more
- // meaningful data from the exception stuff also. Could test by trying to upload
- // a bad name file. 
- // Also need better error reporting for incorrect URL/username/password
  // Can dump out exception.class - to see actual error returned e.g. for missing files
  // Also test out trying to save to dir that write protected (set persdata to program files dir)
  // As well as testing for specific failures, incude def final catch Exception so that info
@@ -149,6 +143,7 @@ import sftp.*;
 // Shrines - npc_shrine_uralia_*
 // shrines - npc_shrine_ix_
 
+String workingDir;
 // Contains all the info read in from config.json
 ConfigInfo configInfo;
 
@@ -175,13 +170,15 @@ final static int MISSING_COORDS = 32700;
 
 // States - used to determine next actions
 int nextAction;
-final static int START_SERVER = 10;
-final static int LOAD_ITEM_IMAGES = 20;
-final static int LOAD_FRAGMENT_OFFSETS = 21;
-final static int INIT_STREET = 30;
-final static int INIT_STREET_DATA = 31;
-final static int SHOW_FAILED_STREET_MSG = 32;
-final static int PROCESS_STREET = 40;
+final static int USER_INPUT_CONFIG_FOLDER = 10;
+final static int CONTINUE_SETUP = 11;
+final static int START_SERVER = 20;
+final static int LOAD_ITEM_IMAGES = 30;
+final static int LOAD_FRAGMENT_OFFSETS = 31;
+final static int INIT_STREET = 40;
+final static int INIT_STREET_DATA = 41;
+final static int SHOW_FAILED_STREET_MSG = 42;
+final static int PROCESS_STREET = 50;
 final static int WAITING_FOR_INPUT = 90;
 final static int IDLING = 100;
 final static int EXIT_NOW = 110;
@@ -221,67 +218,18 @@ public void setup()
         return;
     }
     
-    // Set up config data
-    configInfo = new ConfigInfo();
-    if (!configInfo.readOkFlag())
+    // Find the directory that contains the config.json 
+    workingDir = "";
+    if (!validConfigJSONLocation())
     {
-        failNow = true;
-        return;
-    }
-    
-    // Set up debug info dump file and output file
-    if (!printToFile.initPrintToFile())
-    {
-        println("Error opening output files");
-        failNow = true;
-        return;
-    }
-    
-    if (configInfo.readTotalJSONStreetCount() < 1)
-    {
-        // No streets to process - exit
-        printToFile.printDebugLine(this, "No streets to process - exiting", 3);
-        failNow = true;
-        return;
-    }
-    
-    if (!setupWorkingDirectories())
-    {
-        printToFile.printDebugLine(this, "Problems creating working directories", 3);
-        failNow = true;
-        return;
-    }
-    
-    // Set up connection to remote server if not using vagrant
-    if (!configInfo.readUseVagrantFlag())
-    {
-
-        QAsftp = new Sftp(configInfo.readServerName(), configInfo.readServerUsername(), false, configInfo.readServerPort());  
-        QAsftp.setPassword(configInfo.readServerPassword());
-        QAsftp.start(); // start the thread
-        displayMgr.showInfoMsg("Connecting to server ... please wait");
-        nextAction = START_SERVER;
+        nextAction = USER_INPUT_CONFIG_FOLDER;
+        selectInput("Select config.json in working folder:", "configJSONFileSelected");
     }
     else
     {
-        QAsftp = null;
-        
-        //Set up ready to start adding images to this 
-        allItemImages = new ItemImages();
-    
-        // Set up ready to start adding offsets to this
-        allFragmentOffsets = new FragmentOffsets();
-    
-        // Ready to start with first street
-        streetBeingProcessed = 0;
-        nextAction = LOAD_FRAGMENT_OFFSETS;
-    
-        // Display start up msg
-        displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
-         
-        memory.printMemoryUsage();
+        nextAction = CONTINUE_SETUP;
     }
-   
+
 }
 
 public void draw() 
@@ -304,6 +252,79 @@ public void draw()
         case WAITING_FOR_INPUT:
             break;
             
+        case USER_INPUT_CONFIG_FOLDER:
+            // Need to get user to input valid location of config.json
+            // Come here whilst wait for user to select the input
+            
+            if (workingDir.length() > 0)
+            {
+                nextAction = CONTINUE_SETUP;
+            }
+            break;
+            
+        case CONTINUE_SETUP:
+            // Set up config data
+            configInfo = new ConfigInfo();
+            if (!configInfo.readOkFlag())
+            {
+                failNow = true;
+                return;
+            }
+    
+            // Set up debug info dump file and output file
+            if (!printToFile.initPrintToFile())
+            {
+                println("Error opening output files");
+                failNow = true;
+                return;
+            }
+    
+            if (configInfo.readTotalJSONStreetCount() < 1)
+            {
+                // No streets to process - exit
+                printToFile.printDebugLine(this, "No streets to process - exiting", 3);
+                failNow = true;
+                return;
+            }
+    
+            if (!setupWorkingDirectories())
+            {
+                printToFile.printDebugLine(this, "Problems creating working directories", 3);
+                failNow = true;
+                return;
+            }
+    
+            // Set up connection to remote server if not using vagrant
+            if (!configInfo.readUseVagrantFlag())
+            {
+
+                QAsftp = new Sftp(configInfo.readServerName(), configInfo.readServerUsername(), false, configInfo.readServerPort());  
+                QAsftp.setPassword(configInfo.readServerPassword());
+                QAsftp.start(); // start the thread
+                displayMgr.showInfoMsg("Connecting to server ... please wait");
+                nextAction = START_SERVER;
+            }
+            else
+            {
+                QAsftp = null;
+        
+                //Set up ready to start adding images to this 
+                allItemImages = new ItemImages();
+    
+                // Set up ready to start adding offsets to this
+                allFragmentOffsets = new FragmentOffsets();
+    
+                // Ready to start with first street
+                streetBeingProcessed = 0;
+                nextAction = LOAD_FRAGMENT_OFFSETS;
+    
+                // Display start up msg
+                displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
+         
+                memory.printMemoryUsage();
+            }
+            break;
+            
         case START_SERVER:
             
             if (QAsftp != null)
@@ -311,7 +332,21 @@ public void draw()
                 if (QAsftp.readSessionConnect())
                 {
                     // Server has been connected successfully - so can continue
-                
+                    
+                    // First validate the fixtures/persdata paths on the server
+                    if (!QAsftp.executeCommand("ls", configInfo.readFixturesPath(), "silent"))
+                    {
+                        println("Fixtures directory ", configInfo.readFixturesPath(), " does not exist on server");
+                        failNow = true;
+                        return;
+                    }
+                    if (!QAsftp.executeCommand("ls", configInfo.readPersdataPath(), "silent"))
+                    {
+                        println("Persdata directory ", configInfo.readPersdataPath(), " does not exist on server");
+                        failNow = true;
+                        return;
+                    }
+
                     //Set up ready to start adding images to this 
                     allItemImages = new ItemImages();
     
@@ -552,19 +587,19 @@ boolean setupWorkingDirectories()
     //Need to have a hardcoded path for this - datapath + NewJSONs
     //Also need 3rd dirctory - uploadedJSONs
     
-    if (!Utils.emptyDir(dataPath("") + "/NewJSONs"))
+    if (!Utils.emptyDir(workingDir + File.separatorChar +"NewJSONs"))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
         return false;
     }
     
-    if (!Utils.emptyDir(dataPath("") + "/OrigJSONs"))
+    if (!Utils.emptyDir(workingDir + File.separatorChar + "OrigJSONs"))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
         return false;
     }
     
-    if (!Utils.emptyDir(dataPath("") + "/UploadedJSONs"))
+    if (!Utils.emptyDir(workingDir + File.separatorChar +"UploadedJSONs"))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
         return false;
@@ -581,6 +616,75 @@ void keyPressed()
         println("x pressed");
         return;
     }
+}
+
+boolean validConfigJSONLocation()
+{
+    // Searches for the configLocation.txt file which contains the saved location of the config.json file
+    // That location is returned by this function.
+    String  configLocation = "";
+    File file = new File(sketchPath("configLocation.txt"));
+    if (!file.exists())
+    {
+        return false;
+    }
+    
+    // File exists - now validate
+    //Read contents - first line is config.json location
+    String [] configFileContents = loadStrings(sketchPath("configLocation.txt"));
+    configLocation = configFileContents[0];
+    
+    // Have read in location - check it exists
+    if (configLocation.length() > 0)
+    {
+        file = new File(configLocation + File.separatorChar + "config.json");
+        if (!file.exists())
+        {
+            println("Missing config.json file from ", configLocation);
+            return false;
+        }
+    }
+    workingDir = configLocation;  
+    return true;
+    
+}
+
+void configJSONFileSelected(File selection)
+{
+    if (selection == null) 
+    {
+        println("Window was closed or the user hit cancel.");
+        failNow = true;
+        return;
+    }      
+    else 
+    {
+        println("User selected " + selection.getAbsolutePath());
+        if (selection.getAbsolutePath().indexOf("config.json") == -1)
+        {
+            println("Please select a config.json file");
+            failNow = true;
+            return;
+        }
+        
+        // User selected correct file name so now save
+        String[] list = new String[1];
+        // Strip out config.json part of name - to just get folder name
+        list[0] = selection.getAbsolutePath().replace(File.separatorChar + "config.json", "");
+        try
+        {
+            saveStrings(sketchPath("configLocation.txt"), list);
+        }
+        catch (Exception e)
+        {
+            println(e);
+            println("error detected saving config.json location to configLocation.txt");
+            failNow = true;
+            return;
+        }
+        workingDir = list[0];
+    }
+ 
 }
 
    public static void printHashCodes(final Object object)

@@ -25,7 +25,7 @@ class ConfigInfo {
     public ConfigInfo()
     {
         okFlag = true;
-    
+            
         // Read in config info from JSON file
         if (!readConfigData())
         {
@@ -39,10 +39,21 @@ class ConfigInfo {
     {
         JSONObject json;
         // Open the config file
+        File file = new File(sketchPath("configLocation.txt"));
+        if (!file.exists())
+        {
+            println("Unable to load configLocation.txt - ERROR");
+            return false;
+        }
+
+        //Read contents - first line is config.json location
+        String [] configFileContents = loadStrings(sketchPath("configLocation.txt"));
+        String configJSONDir = configFileContents[0];
+
         try
         {
         // Read in stuff from the config file
-            json = loadJSONObject("config.json"); 
+            json = loadJSONObject(workingDir + File.separatorChar + "config.json"); 
         }
         catch(Exception e)
         {
@@ -70,8 +81,8 @@ class ConfigInfo {
                 println(Utils.readErrMsg());
                 println("Failed to read vagrant_info in config.json file");
                 return false;
-            }
-             serverName = "";
+            }           
+            serverName = "";
             serverUsername = "";
             serverPassword = "";
             serverPort = 0;
@@ -138,7 +149,8 @@ class ConfigInfo {
                 println("Failed to read fixtures_path from server_dirs in config.json file");
             }
             return false;
-        }
+        }      
+        
         persdataPath = Utils.readJSONString(fileSystemInfo, "persdata_path", true);
         if (!Utils.readOkFlag() || persdataPath.length() == 0)
         {
@@ -153,6 +165,27 @@ class ConfigInfo {
             }
             return false;
         }
+        // Check that the directories exist
+        if (useVagrant)
+        {
+            File myDir = new File(fixturesPath);
+            if (!myDir.exists())
+            {
+                println("Fixtures directory ", fixturesPath, " does not exist");
+                return false;
+            }
+            myDir = new File(persdataPath);
+            if (!myDir.exists())
+            {
+                println("Persdata directory ", persdataPath, " does not exist");
+                return false;
+            }
+            
+        }
+        else
+        {
+            // Will validate the fixtures/persdata paths on server once session has been established
+        }
         
         
         streetSnapPath = Utils.readJSONString(json, "street_snap_path", true);
@@ -162,6 +195,13 @@ class ConfigInfo {
             println("Failed to read street_snap_path in config.json file");
             return false;
         }
+        File myDir = new File(streetSnapPath);
+        if (!myDir.exists())
+        {
+            println("Street snap archive directory ", streetSnapPath, " does not exist");
+            return false;
+        }
+               
         outputFile = Utils.readJSONString(json, "output_file", true);
         if (!Utils.readOkFlag() || outputFile.length() == 0)
         {

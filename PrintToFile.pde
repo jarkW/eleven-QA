@@ -17,6 +17,24 @@ class PrintToFile {
     
     public boolean initPrintToFile()
     {       
+                
+        // Open debug file
+        if (debugLevel > 0)
+        {
+            // Collecting debug info so open file
+            try
+            {
+                debugOutput = createWriter(workingDir + File.separatorChar + "debug_info.txt");
+            }
+            catch(Exception e)
+            {
+                println(e);
+                // Cannot write this error to debug file ...
+                println("Failed to open debug file");
+                return false;
+            }
+        }
+        
         // Open output file
         if (configInfo.readAppendToOutputFile())
         {
@@ -39,23 +57,7 @@ class PrintToFile {
             printToFile.printDebugLine(this, "Failed to open output file " + configInfo.readOutputFilename(), 3);
             return false;
         }
-        
-        // Open debug file
-        if (debugLevel > 0)
-        {
-            // Collecting debug info so open file
-            try
-            {
-                debugOutput = createWriter("debug_info.txt");
-            }
-            catch(Exception e)
-            {
-                println(e);
-                // Cannot write this error to debug file ...
-                println("Failed to open debug file");
-                return false;
-            }
-        }
+
         
         initDone = true;
         

@@ -87,7 +87,7 @@ public class Sftp extends Thread {
             }
             catch (JSchException e)
             {
-                 if (e.getCause() != null && e.getCause().getClass().equals(java.net.UnknownHostException.class))
+                if (e.getCause() != null && e.getCause().getClass().equals(java.net.UnknownHostException.class))
                 {
                     printToFile.printDebugLine(this, "Failed to login - unrecognised host " + host, 3);
                 }
@@ -231,13 +231,22 @@ public class Sftp extends Thread {
         if (cmds[0].equals("ls") || cmds[0].equals("dir"))
         {
             String path=".";
+            boolean silent = false;
+            
             if (s2 != null)
             {
                 path=s2;
             }
+            if ((s3 != null) && s3.equals("silent"))
+            {
+                silent = true;
+            }
             try
             {
-                println("path ", path, "sftp ", sftp);
+                if (!silent)
+                {
+                    println("path ", path, "sftp ", sftp);
+                }
                 java.util.Vector vv=sftp.ls(path);
                 if (vv!=null)
                 {
@@ -246,16 +255,32 @@ public class Sftp extends Thread {
                         Object obj=vv.elementAt(ii);
                         if (obj instanceof com.jcraft.jsch.ChannelSftp.LsEntry)
                         {
-                            System.out.println(((com.jcraft.jsch.ChannelSftp.LsEntry)obj).getLongname());
+                            if (!silent)
+                            {
+                                System.out.println(((com.jcraft.jsch.ChannelSftp.LsEntry)obj).getLongname());
+                            }
                         }
                     }
                 }
             }
             catch(SftpException e)
             {
-                System.out.println(e.toString());
+                if (e.getMessage().equals("No such file"))
+                {
+                    printToFile.printDebugLine(this, "SFTP LS FAILED: \"no such file\" : check source folder/file exists for " + s2, 3);
+                }
+                else
+                {
+                    printToFile.printDebugLine(this, "SFTP LS FAILED with SftpException: " + e.getMessage(), 3);
+                }
                 return false;
             }
+            catch (Exception e)
+            {
+                printToFile.printDebugLine(this, "SFTP LS FAILED with Exception: " + e.getMessage(), 3);
+                return false;
+            }
+            
             return true;
         }
 
@@ -282,10 +307,29 @@ public class Sftp extends Thread {
                 sftp.get(p1, p2, monitor, mode);
             } 
             catch (SftpException e) 
-            {
+            { 
                 //e.printStackTrace();
-                printToFile.printDebugLine(this, "SFTP GET FAILED: " + e.getMessage(), 3);
+                if (e.getMessage().equals("No such file"))
+                {
+                    printToFile.printDebugLine(this, "SFTP GET FAILED: \"no such file\" : check source folder/file exists for " + p1, 3);
+                }
+                else if (e.getCause() != null && e.getCause().getClass().equals(java.io.FileNotFoundException.class))
+                {
+                    printToFile.printDebugLine(this, "SFTP GET FAILED: Cannot write destination file - check folder permissions for "+ p2, 3);
+                }
+                else if (e.getCause() != null && e.getCause().getClass().equals(java.lang.NullPointerException.class))
+                {
+                    printToFile.printDebugLine(this, "SFTP GET FAILED: sftp connection is down", 3);
+                }
+                else
+                {
+                    printToFile.printDebugLine(this, "SFTP GET FAILED with SftpException: " + e.getMessage(), 3);
+                }
                 return false;
+            }
+            catch (Exception e)
+            {
+                printToFile.printDebugLine(this, "SFTP GET FAILED with Exception: " + e.getMessage(), 3);
             }
             printToFile.printDebugLine(this, " SFTP GET suceeded: " + p1 + " to " + p2, 1);
             return true;
@@ -315,15 +359,28 @@ public class Sftp extends Thread {
             } 
             catch (SftpException e) 
             {
+                //e.printStackTrace();
                 if (e.getMessage().equals("No such file"))
                 {
-                    printToFile.printDebugLine(this, "SFTP PUT FAILED: \"no such file\" : check destination folder permissions ", 3);
+                    printToFile.printDebugLine(this, "SFTP PUT FAILED: \"no such file\" : check destination folder exists or has correct permissions for " + p2, 3);
+                }
+                else if (e.getCause() != null && e.getCause().getClass().equals(java.io.FileNotFoundException.class))
+                {
+                    printToFile.printDebugLine(this, "SFTP PUT FAILED: Cannot find file "+ p1, 3);
+                }
+                else if (e.getCause() != null && e.getCause().getClass().equals(java.lang.NullPointerException.class))
+                {
+                    printToFile.printDebugLine(this, "SFTP PUT FAILED: sftp connection is down", 3);
                 }
                 else
                 {
-                    printToFile.printDebugLine(this, "SFTP PUT FAILED: " + e.getMessage(), 3);
+                    printToFile.printDebugLine(this, "SFTP PUT FAILED with SftpException: " + e.getMessage(), 3);
                 }
                 return false;
+            }
+            catch (Exception e)
+            {
+                printToFile.printDebugLine(this, "SFTP PUT FAILED with Exception: " + e.getMessage(), 3);
             }
             printToFile.printDebugLine(this, " SFTP PUT succeeded: " + p1 + " to " + p2, 1);
             return true;

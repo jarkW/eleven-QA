@@ -100,7 +100,7 @@ class PNGFile
         
         if (isStreetSnapFlag)
         {
-            fullFileName = configInfo.readStreetSnapPath() + "/" + PNGImageName;
+            fullFileName = configInfo.readStreetSnapPath() + File.separatorChar + PNGImageName;
         }
         else
         {
