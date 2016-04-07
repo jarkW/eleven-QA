@@ -64,6 +64,7 @@ public class Sftp extends Thread {
         try 
         {
             System.out.println("Attempting to connect.");
+            displayMgr.showLoginInfoMsg("Attempting to connect.");
             jsch=new JSch();
             //session = jsch.getSession(user, host, 22);
             try
@@ -80,6 +81,7 @@ public class Sftp extends Thread {
             UserInfo ui=new PromptUser(prompt,password);
             session.setUserInfo(ui);
             System.out.println("Logging in.");
+            displayMgr.showLoginInfoMsg("Logging in.");
             
             try
             {
@@ -114,6 +116,7 @@ public class Sftp extends Thread {
             }
 
             System.out.println("Connected, session started.");
+            displayMgr.showLoginInfoMsg("Connected, session started.");
             Channel channel;
             try
             {
@@ -265,9 +268,9 @@ public class Sftp extends Thread {
             }
             catch(SftpException e)
             {
-                if (e.getMessage().equals("No such file"))
+                if (!silent && e.getMessage().equals("No such file"))
                 {
-                    printToFile.printDebugLine(this, "SFTP LS FAILED: \"no such file\" : check source folder/file exists for " + s2, 3);
+                    printToFile.printDebugLine(this, "SFTP LS FAILED: \"no such file\" : check source folder/file exists for " + s2, 1);
                 }
                 else
                 {
@@ -311,7 +314,7 @@ public class Sftp extends Thread {
                 //e.printStackTrace();
                 if (e.getMessage().equals("No such file"))
                 {
-                    printToFile.printDebugLine(this, "SFTP GET FAILED: \"no such file\" : check source folder/file exists for " + p1, 3);
+                    printToFile.printDebugLine(this, "SFTP GET FAILED: \"no such file\" : check source folder/file exists for " + p1, 1);
                 }
                 else if (e.getCause() != null && e.getCause().getClass().equals(java.io.FileNotFoundException.class))
                 {

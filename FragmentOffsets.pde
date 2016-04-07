@@ -130,10 +130,6 @@ class FragmentOffsets
             Offsets itemOffsets = new Offsets(fragOffsetX, fragOffsetY);
             if (info.length() > 0)
             {
-                if (info.equals("currants"))
-                {
-                    printToFile.printDebugLine(this, " currants quoin offsets are x " + fragOffsetX + " y " + fragOffsetY, 1);
-                }
                 itemOffsetHashMap.put(tsid + "_" + info, itemOffsets);
             }
             else
@@ -143,7 +139,6 @@ class FragmentOffsets
         }
         
         printToFile.printDebugLine(this, "Number of offsets recorded is " + itemOffsetHashMap.size(), 1);
-        println("Number of offsets recorded is " + itemOffsetHashMap.size());
         return true;
     }
     

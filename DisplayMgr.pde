@@ -49,6 +49,21 @@ class DisplayMgr
         // Want text to go along bottom - so set relative to height of display
         text(info, 10, height - 50, width, 50);  // Text wraps within text box
     }
+    
+    public void showLoginInfoMsg(String info)
+    {
+        showInfoMsg(info);
+        /*
+        // clear existing text box
+        clearTextBox(0, height - 20, width, 20);
+        
+        // print out message
+        fill(50);
+        textSize(10);
+        // Want text to go along bottom - so set relative to height of display
+        text(info, 10, height - 20, width, 20);  // Text wraps within text box
+        */
+    }
         
     public void setStreetName(String streetName, String streetTSID, int streetNum, int totalStreets)
     {

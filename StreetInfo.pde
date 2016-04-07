@@ -1,3 +1,5 @@
+import java.nio.file.Path;
+
 class StreetInfo
 {
     boolean okFlag;
@@ -58,54 +60,17 @@ class StreetInfo
     
     boolean readStreetData()
     {
-        // Now read in item list and street from L* file
-        String locFileName = configInfo.readPersdataPath() + File.separatorChar + streetTSID + ".json";
-        
-        
-        // NB Will either need to fail or carry on with warnings - need to update debug and output files
-        // Safest to do 'put' as dir/filename? So don't risk creating odd files because dir does not exist
-        // although should never happen as we're using the dir we've already created. 
-        /*
-        println("locFileName is ", locFileName);
-        //works
-        if (!QAsftp.executeCommand("get", locFileName, "C:/Glitch/QA2/temp/" + streetTSID + ".json"))
-        {
-            println("Get failed for ", locFileName);
-        }
-        if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "/home/qateam/jark_tmp/jark1.json"))
-        //if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "c:/Program Files/Temp/jark1.json"))
-        {
-            println("Put failed for jark.json2 to Tii jark1.json");
-        }
-        if (!QAsftp.executeCommand("exit", null, null))
-        {
-            println("exit error");
-        }
-        delay (5000);
-        if (!QAsftp.executeCommand("get", locFileName, "C:/Glitch/QA2/temp/" + streetTSID + ".json"))
-        {
-            println("Get failed for ", locFileName);
-        }
-                if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "/home/qateam/jark_tmp/jark1.json"))
-        //if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "c:/Program Files/Temp/jark1.json"))
-        {
-            println("Put failed for jark.json2 to Tii jark1.json");
-        }
-          */        
-        // First check L* file exists
+        // Now read in item list and street from L* file - use the version which has been downloaded/copied to OrigJSONs
+        String locFileName = workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar+ streetTSID + ".json";
+     
+        // First check L* file exists - if it wasn't copied/downloaded, then report that skipping this street
         File file = new File(locFileName);
         if (!file.exists())
         {
-            // Retrieve from fixtures
-            locFileName = configInfo.readFixturesPath() + File.separatorChar + "locations-json" + File.separatorChar + streetTSID + ".json";
-            file = new File(locFileName);
-            if (!file.exists())
-            {
-                printToFile.printDebugLine(this, "SKIPPING MISSING street location file - " + locFileName, 3);
-                displayMgr.setSkippedStreetsMsg("Skipping street - Missing location JSON file for TSID " + streetTSID);
-                invalidStreet = true;
-                return false;
-            }
+            printToFile.printDebugLine(this, "SKIPPING MISSING street location file - " + streetTSID, 3);
+            displayMgr.setSkippedStreetsMsg("Skipping street - Missing location JSON file for TSID " + streetTSID);
+            invalidStreet = true;
+            return false;
         } 
                 
         JSONObject json;
@@ -158,7 +123,274 @@ class StreetInfo
         return true;
     }
     
+    public boolean getStreetJSONFiles()
+    {
+        // Get the street L* file
+        if (!getJSONFile(streetTSID))
+        {
+            // Unable to get L* file
+            printToFile.printDebugLine(this, "Failed to copy/download street JSON file for " + streetTSID, 3);
+            return false;
+        }
+        
+        // Get the street G* file
+        if (!getJSONFile(streetTSID.replaceFirst("L", "G")))
+        {
+            // Unable to get G* file
+            printToFile.printDebugLine(this, "Failed to copy/download street JSON file for " + streetTSID.replaceFirst("L", "G"), 3);
+            return false;
+        }
+        
+          // Now read in item list and street from L* file - use the version which has been downloaded/copied to OrigJSONs
+        String locFileName = workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar+ streetTSID + ".json";
+     
+        // First check L* file exists - should only reach this point if the L* file was retrieved successfully, this 
+        // should never happen
+        File file = new File(locFileName);
+        if (!file.exists())
+        {
+            printToFile.printDebugLine(this, "Unexpected error -  street location file - " + locFileName + " is missing from OrigJSONs directory", 3);
+            return false;
+        } 
+                
+        JSONObject json;
+        try
+        {
+            // load L* file
+            json = loadJSONObject(locFileName);
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "Fail to load street JSON file " + locFileName, 3);
+            return false;
+        } 
     
+        // Read in the list of street items
+        streetItems = Utils.readJSONArray(json, "items", true);
+        if (!Utils.readOkFlag())
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, "Fail to read in item array in street JSON file " + locFileName, 3);
+            return false;
+        } 
+        
+        // Now loop through the item array retrieving each item file  
+        for (int i = 0; i < streetItems.size(); i++) 
+        {
+            String itemTSID = Utils.readJSONString(streetItems.getJSONObject(i), "tsid", true); 
+            
+            if (!getJSONFile(itemTSID))
+            {
+                // Unable to get L* file
+                printToFile.printDebugLine(this, "Failed to copy/download item JSON file for " + itemTSID, 3);
+                return false;
+            }  
+        }   
+        
+        // NB Will either need to fail or carry on with warnings - need to update debug and output files
+        // Safest to do 'put' as dir/filename? So don't risk creating odd files because dir does not exist
+        // although should never happen as we're using the dir we've already created. 
+        /*
+        println("locFileName is ", locFileName);
+        //works
+        if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "/home/qateam/jark_tmp/jark1.json"))
+        //if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "c:/Program Files/Temp/jark1.json"))
+        {
+            println("Put failed for jark.json2 to Tii jark1.json");
+        }
+        if (!QAsftp.executeCommand("exit", null, null))
+        {
+            println("exit error");
+        }
+        delay (5000);
+                if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "/home/qateam/jark_tmp/jark1.json"))
+        //if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "c:/Program Files/Temp/jark1.json"))
+        {
+            println("Put failed for jark.json2 to Tii jark1.json");
+        }
+          */        
+        // Everything OK
+        return true;
+    }
+       
+    public boolean getJSONFile(String TSID)
+    {
+        String JSONFileName = TSID + ".json";
+        String sourcePath; 
+        String destPath = workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + JSONFileName;
+        
+        if (configInfo.readUseVagrantFlag())
+        {
+           sourcePath = configInfo.readPersdataPath() + File.separatorChar + JSONFileName;
+            // First check file exists in persdata
+            File file = new File(sourcePath);
+            if (!file.exists())
+            {
+                // Retrieve from fixtures
+                if (TSID.startsWith("L") || TSID.startsWith("G"))
+                {
+                    sourcePath = configInfo.readFixturesPath() + File.separatorChar + "locations-json" + File.separatorChar + JSONFileName;
+                }
+                else
+                {
+                    sourcePath = configInfo.readFixturesPath() + File.separatorChar + "world-items" + File.separatorChar + JSONFileName;
+                }
+                file = new File(sourcePath);
+                if (!file.exists())
+                {
+                    // Can't get file so give up - error will be reported when do actual processing
+                    printToFile.printDebugLine(this, "Unable to find file on vagrant - " + sourcePath, 3);
+                    return false;
+                }
+
+            }                          
+            // copy file to OrigJSONs directory
+            if (!copyFile(sourcePath, destPath))
+            {
+                printToFile.printDebugLine(this, "Unable to copy JSON file - " + sourcePath + " to " + destPath, 3);
+                return false;
+            }
+            printToFile.printDebugLine(this, "Copied JSON file - " + sourcePath + " to " + destPath, 1);
+        }
+        else
+        {
+            // Use sftp to download the file from server
+            sourcePath = configInfo.readPersdataPath() + "/" + JSONFileName;
+            // See if file exists in persdata     
+            if (!QAsftp.executeCommand("get", sourcePath, destPath))
+            {
+                println("Server - missing from persdata ", sourcePath);
+                // See if file exists in fixtures
+                if (TSID.startsWith("L") || TSID.startsWith("G"))
+                {
+                    sourcePath = configInfo.readFixturesPath() + "/locations-json/" + JSONFileName;
+                }
+                else
+                {
+                    sourcePath = configInfo.readFixturesPath() + "/world-items/" + JSONFileName;
+                }
+                
+                if (!QAsftp.executeCommand("get", sourcePath, destPath))
+                {
+                    // Can't get JSON file from fixtures either - so give up - error will be reported when do actual processing
+                    printToFile.printDebugLine(this, "Unable to find JSON file on server - " + sourcePath, 3);
+                    return false;
+                }
+            } 
+            
+            printToFile.printDebugLine(this, "Downloaded JSON file - " + sourcePath + " to " + destPath, 1);
+        }
+        return true;
+    }
+    
+    boolean putStreetItemJSONFiles()
+    {
+        // Retrieves the list of item files from the L* file - and if they exist in the NewJSONs dir, 
+        // then uploads/copies to persdata and moves the file to the UploadedJSONs dir
+               
+        String locFileName = workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar+ streetTSID + ".json";
+     
+        // First check L* file exists - if it wasn't copied/downloaded, then this is an error
+        File file = new File(locFileName);
+        if (!file.exists())
+        {
+            printToFile.printDebugLine(this, "MISSING street location file in OrigJSONs dir - " + streetTSID, 3);
+            failNow = true;
+            return false;
+        } 
+                
+        JSONObject json;
+        try
+        {
+            // load L* file
+            json = loadJSONObject(locFileName);
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "Fail to load street JSON file " + locFileName, 3);
+            return false;
+        } 
+        printToFile.printDebugLine(this, "Reading location file " + locFileName, 2);
+    
+        // Read in the list of street items
+        streetItems = Utils.readJSONArray(json, "items", true);
+        if (!Utils.readOkFlag())
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            printToFile.printDebugLine(this, "Fail to read in item array in street JSON file " + locFileName, 3);
+            return false;
+        } 
+        
+         // Now loop through the item array copying files to persdata if they exist in NewJSONs
+         // and moving to UploadedJSONs
+        for (int i = 0; i < streetItems.size(); i++) 
+        {
+            String itemTSID = Utils.readJSONString(streetItems.getJSONObject(i), "tsid", true); 
+            
+            if (!putJSONFile(itemTSID))
+            {
+                // Unable to copy/upload file
+                printToFile.printDebugLine(this, "Failed to copy/upload item JSON file for " + itemTSID, 3);
+                return false;
+            }  
+        }          
+ 
+         // Everything OK   
+        return true;
+        
+    }
+    
+    boolean putJSONFile(String TSID)
+    {
+        String JSONFileName = TSID + ".json";
+        String sourcePath = workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + JSONFileName; 
+        String destPath = workingDir + File.separatorChar + "UploadedJSONs" + File.separatorChar + JSONFileName;
+        
+        File sFile = new File(sourcePath);
+        if (!sFile.exists())
+        {
+            // If this does not exist in NewJSONs then there is nothing to upload - return success
+            return true;
+        }
+        
+        if (configInfo.readUseVagrantFlag())
+        {
+            // Copy file to persdata
+            if (!copyFile(sourcePath, configInfo.readPersdataPath() + File.separatorChar + JSONFileName))
+            {
+                printToFile.printDebugLine(this, "Unable to copy JSON file - " + sourcePath + " to " + configInfo.readPersdataPath() + File.separatorChar + JSONFileName, 3);
+                return false;
+            }
+            printToFile.printDebugLine(this, "SUCCESS COPYING " + TSID + ".json file to " + configInfo.readPersdataPath(), 3);
+            printToFile.printOutputLine("SUCCESS COPYING " + TSID + ".json file to " + configInfo.readPersdataPath());
+        }
+        else
+        {
+            // Use sftp to download the file from server  
+            if (!QAsftp.executeCommand("put", sourcePath, configInfo.readPersdataPath() + "/" + JSONFileName))
+            {
+                 printToFile.printDebugLine(this, "Unable to upload JSON file from " + sourcePath + " to persdata on server - " + configInfo.readPersdataPath() + "/" + JSONFileName, 3);
+                 return false;   
+            } 
+            
+            printToFile.printDebugLine(this, "SUCCESS UPLOADING " + TSID + ".json file to " + configInfo.readPersdataPath(), 3);
+            printToFile.printOutputLine("SUCCESS UPLOADING " + TSID + ".json file to " + configInfo.readPersdataPath());
+        }
+        
+        // Only reach here if file uploaded OK - so move from     
+        // newJSONs to uploadedJSONs directory
+        File dFile = new File(destPath);
+        if (!sFile.renameTo(dFile))
+        {
+            printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath, 3);
+            return false;
+        }
+        printToFile.printDebugLine(this, "Moved JSON file from " + sourcePath + " to " + destPath, 1);
+        
+        return true;
+    } 
     boolean readStreetItemData()
     {
         printToFile.printDebugLine(this, "Read item TSID from street L file", 2);   
@@ -203,23 +435,16 @@ class StreetInfo
     boolean readStreetGeoInfo()
     {
         
-        // Now read in information about contrast etc from the G* file if it exists
-        String geoFileName = configInfo.readPersdataPath() + File.separatorChar + streetTSID.replaceFirst("L", "G") + ".json";
-   
+        // Now read in information about contrast etc from the G* file if it exists - should have been downloaded to OrigJSONs dir
+        String geoFileName = workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + streetTSID.replaceFirst("L", "G") + ".json";  
         // First check G* file exists
         File file = new File(geoFileName);
         if (!file.exists())
         {
-            // Retrieve from fixtures
-            geoFileName = configInfo.readFixturesPath() + File.separatorChar + "locations-json" + File.separatorChar + streetTSID.replaceFirst("L", "G") + ".json";
-            file = new File(geoFileName);
-            if (!file.exists())
-            {
-                printToFile.printDebugLine(this, "SKIPPING - MISSING street geo file - " + geoFileName, 3);
-                displayMgr.setSkippedStreetsMsg("Skipping street - Missing geo JSON file for TSID " + streetTSID);
-                invalidStreet = true;
-                return false;
-            }
+            printToFile.printDebugLine(this, "SKIPPING - MISSING street geo file - " + geoFileName, 3);
+            displayMgr.setSkippedStreetsMsg("Skipping street - Missing geo JSON file for TSID " + streetTSID);
+            invalidStreet = true;
+            return false;
         } 
                 
         JSONObject json;

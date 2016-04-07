@@ -51,8 +51,8 @@ import sftp.*;
  // setup - if I/L* files missing, then mark street as skipped and delete all the I/L* files that
  // do have
  // As upload the newJSON files to persdata - move to uploadedJSONs. At end of program
- // if newJSONs is empty ... successful end. Otherwise could list the JSONs on the screen 
- // or just do count of files in newJSONs.
+ // if NewJSONs is empty ... successful end. Otherwise could list the JSONs on the screen 
+ // or just do count of files in NewJSONs.
  // Create/replace the errStrings array which is reported at the end? Or create new one for
  // failed JSONs so that it can be reported on new section of screen, just need display.setFailedJSON or something
  // Should also report failure to upload JSON files in the output directory
@@ -75,6 +75,8 @@ import sftp.*;
  // i.e. x,y, variant, and some added fields. 
  
  // TO DO update the quoin type settings for all the other regions. 
+ 
+ // TO DO change config.json to just read in eleven dir - and then default fixtures/persdata from that
  
  // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
@@ -143,6 +145,7 @@ import sftp.*;
 // Shrines - npc_shrine_uralia_*
 // shrines - npc_shrine_ix_
 
+// Directory where config.json is, and all saved JSON files - both original/new
 String workingDir;
 // Contains all the info read in from config.json
 ConfigInfo configInfo;
@@ -172,13 +175,17 @@ final static int MISSING_COORDS = 32700;
 int nextAction;
 final static int USER_INPUT_CONFIG_FOLDER = 10;
 final static int CONTINUE_SETUP = 11;
-final static int START_SERVER = 20;
+final static int WAIT_FOR_SERVER_START = 20;
 final static int LOAD_ITEM_IMAGES = 30;
 final static int LOAD_FRAGMENT_OFFSETS = 31;
-final static int INIT_STREET = 40;
-final static int INIT_STREET_DATA = 41;
-final static int SHOW_FAILED_STREET_MSG = 42;
-final static int PROCESS_STREET = 50;
+final static int GET_JSON_FILES = 40;
+final static int INIT_STREET = 50;
+final static int INIT_STREET_DATA = 51;
+final static int SHOW_FAILED_STREET_MSG = 52;
+final static int PROCESS_STREET = 60;
+final static int WAIT_FOR_SERVER_START_2 = 70;
+final static int WRITE_JSON_FILES_TO_PERSDATA = 71;
+final static int SHOW_FAILED_STREETS_MSG = 78;
 final static int WAITING_FOR_INPUT = 90;
 final static int IDLING = 100;
 final static int EXIT_NOW = 110;
@@ -203,7 +210,7 @@ public void setup()
     // width, height
     // Must be first line in setup()
     size(1200,800);
-    
+        
     nextAction = 0;
     
     // Start up display manager
@@ -230,6 +237,12 @@ public void setup()
         nextAction = CONTINUE_SETUP;
     }
 
+}
+
+public void stop()
+{
+    println("In stop");
+    exit();
 }
 
 public void draw() 
@@ -302,30 +315,22 @@ public void draw()
                 QAsftp.setPassword(configInfo.readServerPassword());
                 QAsftp.start(); // start the thread
                 displayMgr.showInfoMsg("Connecting to server ... please wait");
-                nextAction = START_SERVER;
+                nextAction = WAIT_FOR_SERVER_START;
             }
             else
             {
                 QAsftp = null;
-        
-                //Set up ready to start adding images to this 
-                allItemImages = new ItemImages();
-    
-                // Set up ready to start adding offsets to this
-                allFragmentOffsets = new FragmentOffsets();
     
                 // Ready to start with first street
                 streetBeingProcessed = 0;
-                nextAction = LOAD_FRAGMENT_OFFSETS;
+                nextAction = GET_JSON_FILES;
     
                 // Display start up msg
-                displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
-         
-                memory.printMemoryUsage();
+                displayMgr.showInfoMsg("Copying street/item JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             }
             break;
             
-        case START_SERVER:
+        case WAIT_FOR_SERVER_START:
             
             if (QAsftp != null)
             {
@@ -346,21 +351,13 @@ public void draw()
                         failNow = true;
                         return;
                     }
-
-                    //Set up ready to start adding images to this 
-                    allItemImages = new ItemImages();
-    
-                    // Set up ready to start adding offsets to this
-                    allFragmentOffsets = new FragmentOffsets();
     
                     // Ready to start with first street
                     streetBeingProcessed = 0;
-                    nextAction = LOAD_FRAGMENT_OFFSETS;
+                    nextAction = GET_JSON_FILES;
     
                     // Display start up msg
-                    displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
-            
-                    memory.printMemoryUsage();
+                    displayMgr.showInfoMsg("Downloading street/item JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
                 }
                 else
                 {
@@ -372,6 +369,61 @@ public void draw()
                         return;
                     }
                 }
+            }
+            break;
+            
+                        
+        case GET_JSON_FILES:
+            // get items for this street, together with L*/G* file - from either server or vagrant
+            
+            // NB shouldn't return fail here? OK to fail?????
+            if (!handleStreetAndItemJSONFiles(true))
+            {
+                printToFile.printDebugLine(this, "Error getting street/item JSON files for street BUT WILL CONTINUE" + configInfo.readStreetTSID(streetBeingProcessed), 3);
+                //failNow = true;
+                //return;
+            }
+            streetBeingProcessed++;
+            
+            // See if uploaded/copied all the files we can
+            if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
+            {                         
+                //Set up ready to start adding images to this 
+                allItemImages = new ItemImages();
+    
+                // Set up ready to start adding offsets to this
+                allFragmentOffsets = new FragmentOffsets();
+    
+                // Ready to start with first street
+                streetBeingProcessed = 0;
+                nextAction = LOAD_FRAGMENT_OFFSETS;
+    
+                // Display start up msg
+                displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
+                
+                // Tear down the sftp session - will relogin at end of run
+                if (QAsftp != null && QAsftp.readRunningFlag())
+                {
+                    if (!QAsftp.executeCommand("exit", "session", null))
+                    {
+                        println("exit session failed");
+                    }
+                }
+         
+                memory.printMemoryUsage();
+            }
+            else
+            {
+                String infoMsg;
+                if (!configInfo.readUseVagrantFlag())
+                {
+                    infoMsg = "Downloading street/item JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait";
+                }
+                else
+                {
+                    infoMsg = "Copying street/item JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait";
+                }
+                displayMgr.showInfoMsg(infoMsg);
             }
             break;
                  
@@ -493,17 +545,25 @@ public void draw()
                     // Reached end of list of streets - normal ending
                     streetInfo = null;
                     System.gc();
-                                        
-                    boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();       
-                    printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED\n\n");
-                    printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
-                    if (nothingToShow)
+                    
+                    // Now need to upload all the changed item files
+                    // Reconnect to server if necessary first
+                    if (!configInfo.readUseVagrantFlag())
                     {
-                        nextAction = EXIT_NOW;
+                        QAsftp = new Sftp(configInfo.readServerName(), configInfo.readServerUsername(), false, configInfo.readServerPort());  
+                        QAsftp.setPassword(configInfo.readServerPassword());
+                        QAsftp.start(); // start the thread
+                        displayMgr.showInfoMsg("Reconnecting to server ... please wait");
+                        nextAction = WAIT_FOR_SERVER_START_2;
                     }
                     else
                     {
-                        nextAction = WAITING_FOR_INPUT;
+                        // Can just get on with copying files across to persdata
+                        nextAction = WRITE_JSON_FILES_TO_PERSDATA;
+    
+                        // Display msg
+                        streetBeingProcessed = 0;
+                        displayMgr.showInfoMsg("Copying changed item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
                     }
                     return;
                 }
@@ -520,6 +580,89 @@ public void draw()
             }
             //printToFile.printDebugLine(this, "End top level processStreet memory", 1);
             //memory.printMemoryUsage();
+            break;
+            
+        case WAIT_FOR_SERVER_START_2:
+            
+            if (QAsftp != null)
+            {
+                if (QAsftp.readSessionConnect())
+                {
+                    // Server has been connected successfully - so can continue
+                    nextAction = WRITE_JSON_FILES_TO_PERSDATA;
+    
+                    // Display msg
+                    streetBeingProcessed = 0;
+                    displayMgr.showInfoMsg("Uploading changed item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                }
+                else
+                {
+                    // Session still not connected
+                    // Abort if the error flag is set
+                    if (!QAsftp.readRunningFlag())
+                    {
+                        failNow = true;
+                        return;
+                    }
+                }
+            }
+            break;
+            
+        case WRITE_JSON_FILES_TO_PERSDATA:
+        
+            // Work through streets, one at a time, uploading any changed item files
+            if (!handleStreetAndItemJSONFiles(false))
+            {
+                printToFile.printDebugLine(this, "Error uploading/copying item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed), 3);
+                failNow = true;
+                return;
+            }
+            streetBeingProcessed++;
+            
+            // See if uploaded/copied all the files we can
+            if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
+            {                                           
+                // Tear down the sftp session - will relogin at end of run
+                if (QAsftp != null && QAsftp.readRunningFlag())
+                {
+                    if (!QAsftp.executeCommand("exit", "session", null))
+                    {
+                        println("exit session failed");
+                    }
+                }
+                
+                // Now just exit - after showing the list of rejected streets
+                nextAction = SHOW_FAILED_STREETS_MSG;
+         
+                memory.printMemoryUsage();
+            }
+            else
+            {
+                String infoMsg;
+                if (!configInfo.readUseVagrantFlag())
+                {
+                    infoMsg = "Uploading street/item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait";
+                }
+                else
+                {
+                    infoMsg = "Copying street/item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait";
+                }
+                displayMgr.showInfoMsg(infoMsg);
+            }
+            break;
+            
+        case SHOW_FAILED_STREETS_MSG:
+            boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();       
+            printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED\n\n");
+            printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
+            if (nothingToShow)
+            {
+                 nextAction = EXIT_NOW;
+            }
+            else
+            {
+                nextAction = WAITING_FOR_INPUT;
+            }
             break;
             
         case EXIT_NOW:            
@@ -541,6 +684,54 @@ public void draw()
             printToFile.printDebugLine(this, "Unexpected next action - " + nextAction, 3);
             exit();
     }
+}
+
+boolean handleStreetAndItemJSONFiles(boolean getFiles)
+{
+        
+    // Initialise street and then loads up the items on that street.
+    String streetTSID = configInfo.readStreetTSID(streetBeingProcessed);
+    if (streetTSID.length() == 0)
+    {
+        // Failure to retrieve TSID
+        printToFile.printDebugLine(this, "Failed to read street TSID number " + str(streetBeingProcessed) + " from config.json", 3); 
+        return false;
+    }
+    
+    streetInfo = null;
+    System.gc();
+    streetInfo = new StreetInfo(streetTSID); 
+            
+    // Now read the error flag for the street array added
+    if (!streetInfo.readOkFlag())
+    {
+       printToFile.printDebugLine(this, "Error creating street data structure", 3);
+       return false;
+    }
+        
+    printToFile.printDebugLine(this, "Read street data for TSID " + streetTSID, 2);
+            
+    if (getFiles)
+    {
+        // Now get street L*/G*/I* files 
+        if (!streetInfo.getStreetJSONFiles())
+        {
+            printToFile.printDebugLine(this, "Error getting street L*/G*/I* files for TSID " + streetTSID, 3);
+            return false;
+        }
+    }
+    else
+    {
+        // Put changed item files into persdata
+        if (!streetInfo.putStreetItemJSONFiles())
+        {
+            printToFile.printDebugLine(this, "Error getting street L*/G*/I* files for TSID " + streetTSID, 3);
+            return false;
+        }
+    }
+                 
+    // All OK
+    return true;
 }
 
 boolean initialiseStreet()
@@ -582,24 +773,20 @@ boolean initialiseStreet()
 boolean setupWorkingDirectories()
 {
     // Checks that we have working directories for the JSONs - create them if they don't exist
-    // If they exist - then empty them
-    
-    //Need to have a hardcoded path for this - datapath + NewJSONs
-    //Also need 3rd dirctory - uploadedJSONs
-    
-    if (!Utils.emptyDir(workingDir + File.separatorChar +"NewJSONs"))
+    // If they exist - then empty them if not keeping the files   
+    if (!Utils.setupDir(workingDir + File.separatorChar +"NewJSONs", configInfo.readDebugSaveOrigAndNewJSONs()))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
         return false;
     }
     
-    if (!Utils.emptyDir(workingDir + File.separatorChar + "OrigJSONs"))
+    if (!Utils.setupDir(workingDir + File.separatorChar + "OrigJSONs", configInfo.readDebugSaveOrigAndNewJSONs()))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
         return false;
     }
     
-    if (!Utils.emptyDir(workingDir + File.separatorChar +"UploadedJSONs"))
+    if (!Utils.setupDir(workingDir + File.separatorChar +"UploadedJSONs", configInfo.readDebugSaveOrigAndNewJSONs()))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
         return false;
@@ -613,7 +800,15 @@ void keyPressed()
     if ((key == 'x') || (key == 'X'))
     {
         nextAction = EXIT_NOW;
-        println("x pressed");
+        return;
+    }
+    
+    // Make sure ESC closes window cleanly - and closes window
+    if(key==27)
+    {
+        println("ESC pressed");
+        key = 0;
+        nextAction = EXIT_NOW;
         return;
     }
 }
@@ -698,3 +893,53 @@ void configJSONFileSelected(File selection)
          + (object != null ? object.hashCode() : "N/A"));
       println("Identity   hashCode: " + System.identityHashCode(object));
    }
+   
+   
+    public boolean copyFile(String sourcePath, String destPath)
+    {
+        InputStream is = createInput(sourcePath);
+        OutputStream os = createOutput(destPath);
+        
+        if (is == null || os == null)
+        {
+            // Error setting up streams.
+            printToFile.printDebugLine(this, "Error setting up streams for " + sourcePath + " and/or " + destPath, 3);
+            return false;
+        }
+        
+        byte[] buf = new byte[1024];
+        int len;
+        try 
+        {
+            while ((len = is.read(buf)) > 0) 
+            {
+                os.write(buf, 0, len);
+            }
+            
+        }
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+            printToFile.printDebugLine(this, "I/O exception copying " + sourcePath + " to " + destPath, 3);
+            return false;
+        }
+        finally 
+        {
+            try 
+            {
+                is.close();
+                os.flush();
+                os.close();
+
+            } 
+            catch (IOException e) 
+            {
+                e.printStackTrace();
+                printToFile.printDebugLine(this, "I/O exception closing " + sourcePath + " and/or " + destPath, 3);
+                return false;
+            }
+        }
+    
+        return true;
+    }
+    

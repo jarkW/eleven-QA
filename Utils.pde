@@ -321,7 +321,7 @@ static class Utils
     {
         return errMsg;
     }
-    static public boolean emptyDir(String dirName)
+    static public boolean setupDir(String dirName, boolean keepFileContents)
     {
         File myDir = new File(dirName);
         if (!myDir.exists())
@@ -341,17 +341,22 @@ static class Utils
         }
         else
         {
-            // Delete all the contents of the file
-            File[] contents = myDir.listFiles();
-            if (contents != null) 
+            // Delete all the contents of the file - if not keeping the contents for debug purposes
+            if (!keepFileContents)
             {
-                for (int i=0; i< contents.length; i++)
+                File[] contents = myDir.listFiles();
+                if (contents != null) 
                 {
-                    contents[i].delete();
+                    for (int i=0; i< contents.length; i++)
+                    {
+                        contents[i].delete();
+                    }
                 }
             }
         }
         return true;
     }
+    
+
 
 }

@@ -13,7 +13,7 @@ class ConfigInfo {
     String serverPassword;
     int serverPort;
     boolean appendToOutputFile;
-    boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in newJSONs directory under processing sketch
+    boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
     
     boolean debugSaveOrigAndNewJSONs;
     boolean debugShowBWFragments;
@@ -39,20 +39,16 @@ class ConfigInfo {
     {
         JSONObject json;
         // Open the config file
-        File file = new File(sketchPath("configLocation.txt"));
+        File file = new File(workingDir + File.separatorChar + "config.json");
         if (!file.exists())
         {
-            println("Unable to load configLocation.txt - ERROR");
+            println("Missing config.json file from ", workingDir);
             return false;
         }
-
-        //Read contents - first line is config.json location
-        String [] configFileContents = loadStrings(sketchPath("configLocation.txt"));
-        String configJSONDir = configFileContents[0];
-
+        println("Trying to load config.json from ", workingDir+ File.separatorChar + "config.json");
         try
         {
-        // Read in stuff from the config file
+            // Read in stuff from the config file
             json = loadJSONObject(workingDir + File.separatorChar + "config.json"); 
         }
         catch(Exception e)

@@ -83,20 +83,15 @@ class ItemInfo
     }
       
     public boolean initialiseItemInfo()
-    {
-        // Now open the relevant I* file from the appropriate place - try persdata first
-        String itemFileName = configInfo.readPersdataPath() + File.separatorChar + itemTSID + ".json";
+    {        
+        // Now open the relevant I* file - use the version which has been downloaded/copied to OrigJSONs
+        // If it is not there then report an error
+        String itemFileName = workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar+ itemTSID  + ".json";
         File file = new File(itemFileName);
         if (!file.exists())
         {
-            // Retrieve from fixtures
-            itemFileName = configInfo.readFixturesPath() + File.separatorChar + "world-items" + File.separatorChar + itemTSID + ".json";
-            file = new File(itemFileName);
-            if (!file.exists())
-            {
-                printToFile.printDebugLine(this, "Missing file - " + itemFileName, 3);
-                return false;
-            }
+            printToFile.printDebugLine(this, "Missing file - " + itemFileName, 3);
+            return false;
         } 
                 
         printToFile.printDebugLine(this, "Item file name is " + itemFileName, 2); 
@@ -115,19 +110,7 @@ class ItemInfo
         }
         
         printToFile.printDebugLine(this, "Loaded item JSON OK", 1);
-        
-        // Make a copy of the original JSON - so that is can be compared against the final one              
-        try
-        {
-            saveJSONObject(itemJSON, workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json");
-        }    
-        catch(Exception e)
-        {
-            println(e);
-            printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + workingDir + File.separatorChar + "OrigJSONs", 3);
-            return false;
-        }
-        
+                
         // These fields are always present - so if missing = error
         origItemX = Utils.readJSONInt(itemJSON, "x", true);
         if (!Utils.readOkFlag())
@@ -888,25 +871,6 @@ class ItemInfo
             // Displays message to user in both debug/output files
             jsonDiff.displayInfoMsg();
                                 
-            // Write to persdata and then delete the one in the temporary directory
-            // As this is the default behaviour in the real tool - will be set to true if flag absent from config file
-            if (configInfo.readWriteJSONsToPersdata())
-            {
-                try
-                {
-                    saveJSONObject(itemJSON, configInfo.readPersdataPath() + File.separatorChar + itemTSID + ".json");
-                }    
-                catch(Exception e)
-                {
-                    println(e);
-                    printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
-                    printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
-                    return false;
-                }
-                
-                printToFile.printDebugLine(this, "SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath(), 3);
-                printToFile.printOutputLine("SUCCESS WRITING " + itemTSID + ".json file to " + configInfo.readPersdataPath());
-            }
          } // end if changes to save to JSON file
          else
          {
