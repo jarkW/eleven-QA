@@ -16,33 +16,49 @@ import sftp.*;
  * version of the item is determined by comparing all versions of the item with the
  * street snap. 
  *
- * For quoins, all available snaps will be searched in order to provide as much information
+ * For quoins, all available snaps of the correct resolution (as given in the G* file)
+ * will be searched in order to provide as much information
  *( as possible about quoin types/x,y. Any quoins not located in this manner will be 
  * set to 'mystery' unless the 'do_xy_only' flag is set in the config file. 
  *
  * The new x,y values and variant information are written to JSON files in persdata.
  *
+ * The output file contains details of the changed files and the success of copying/uploading.
+ * Warnings are also given if items are found to have the same x,y which can happen for a group
+ * of closely spaced quoins - the program has no way of knowing if the quoin 20px away is the 
+ * missing neighbour or an incorrectly placed quoin to that neighbour. 
+ *
  * NB It is up to the user to ensure that snaps are correctly labelled with the street 
- * name as it appears in the game i.e. with spaces between words. 
+ * name as it appears in the game i.e. with spaces between words. Snaps which do not match
+ * the resolution as given in the G* file will be ignored.
  *
  */
  
- // Can dump out exception.class - to see actual error returned e.g. for missing files
- // Also test out trying to save to dir that write protected (set persdata to program files dir)
- // As well as testing for specific failures, incude def final catch Exception so that info
- // gets dumped (and failed returned)
- // for file get/put - break the connection - then do the get/put and see what class of 
- // error returns - so can trap it specifically
- // For any errors in getting, stop the program. But for errors putting ... carry on
- // because user can then manually update them to Tii (give message about having to
- // remove remaining files in data/NewJSONs manually (or rerunning tool)
+ // TO DO - if output file already exists, then rename it to be name_1.txt (where number = number of files that exist with the first part
+ // of the output file name (so if got region.txt and region_1.txt, then region.txt -> region_2.txt before start new region.txt
+ 
+ // To do - handle closure of screen better - if got items handled individually, does closing the x mean the sftp stops? If so, then 
+ // don't need to add anything in. But if not, then see https://forum.processing.org/one/topic/run-code-on-exit.html (ericsoco SHUTDOWN HOOK)
+ // which gets run however you exit the program.
+ // NB the key handler is asyn so always detected - so if ESC pressed, then could set a flag in the top level - and then in sftp
+ // check that flag before doing anything - and if set, run the sftp exit command. Could also set this flag when exit/x pressed
+ /// But seems more difficult to detect the x button being pressed 
+ 
+ // To do Replace displayMgr.showLoginInfoMsg messages in sftp - probably safest to just display the messages from my FSM as I know when I'm attempting to connect/connected 
+ // and that is probably good enough. Will stop stuff being overwritten. Might need to just move the info field to the bottom of the screen, and introduce a new row above for
+ // the street name? 
  
  // BUG? xy variant only
  // Does it load up the single image for other non-quoin items with variant field?
  // Except wood trees - where still needs to test all tree images.
  // Also in JSON diff, ensure that only x,y have changed, error otherwise
  
- 
+ // CHANGE STRUCTURE
+ // Manage one street at a time. Download all the files for the street, process, and then upload all the changed files. 
+ // Could have a flag in the item class for upload_me
+ // DO the above first. Then break out so download/upload each file individually, returning to top level each time 
+ // so can give a useful msg saying what is happening for each file. Also means if user quits, then any file transfer would stop.
+ // Would just need an itemBeingProcessed field in the street structure.
  
  // TO DO - need to upload all the L*/G*/I* files to OrigJSONs (or copy from vagrant dir) ... 
  // and as go through them,
@@ -58,18 +74,6 @@ import sftp.*;
  // Should also report failure to upload JSON files in the output directory
  // When using vagrant - need to check if fail trying to write files e.g. c:program files/temp or something - so catch that kind of error in all places
  //
- // 
- // Need to do a test to see if file arrived safely - see http://stackoverflow.com/questions/23918070/how-to-tell-if-an-sftp-upload-was-successful-using-jsch
- // Could implement the stat/lstat command - pass "stat", "--format "%Y"" "filename" which 
- // will give the time of last modification in seconds since Epoch (so would need to know
- // the baseline value loaded when start programe). But might just be simpler to assume
- // it has worked ... if no errors.
- 
- // TO DO Change all the places where I do '/' in paths and replace with File.separatorChar so
- // that works on Mac and PC
- 
- // Check that all PC defined paths exist in config loading - abort otherwise
- // Also empty all files from OrigJSONs/NewJSONs/UploadedJSONs
  
  // Should I check in JSONDiff that the only fields changed are the expected ones???
  // i.e. x,y, variant, and some added fields. 
@@ -197,7 +201,7 @@ boolean failNow = false;    // abnormal ending/error
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 1;
+int debugLevel = 3;
 boolean debugToConsole = true;
 boolean doDelay = false;
 boolean usingBlackWhiteComparison = true; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
@@ -211,6 +215,8 @@ public void setup()
     // Must be first line in setup()
     size(1200,800);
         
+    surface.setTitle("QA tool for setting co-ordinates and variants of items in Ur"); 
+    
     nextAction = 0;
     
     // Start up display manager
@@ -224,7 +230,7 @@ public void setup()
         failNow = true;
         return;
     }
-    
+        
     // Find the directory that contains the config.json 
     workingDir = "";
     if (!validConfigJSONLocation())
@@ -237,12 +243,6 @@ public void setup()
         nextAction = CONTINUE_SETUP;
     }
 
-}
-
-public void stop()
-{
-    println("In stop");
-    exit();
 }
 
 public void draw() 
@@ -291,6 +291,8 @@ public void draw()
                 failNow = true;
                 return;
             }
+            
+            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
     
             if (configInfo.readTotalJSONStreetCount() < 1)
             {
@@ -337,7 +339,7 @@ public void draw()
                 if (QAsftp.readSessionConnect())
                 {
                     // Server has been connected successfully - so can continue
-                    
+                    printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
                     // First validate the fixtures/persdata paths on the server
                     if (!QAsftp.executeCommand("ls", configInfo.readFixturesPath(), "silent"))
                     {
@@ -376,7 +378,9 @@ public void draw()
         case GET_JSON_FILES:
             // get items for this street, together with L*/G* file - from either server or vagrant
             
-            // NB shouldn't return fail here? OK to fail?????
+            // Although this is a failure case, the reporting of this is done in the next stage
+            // because then decent error messages can be reported to the user. For now just log and continue
+            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
             if (!handleStreetAndItemJSONFiles(true))
             {
                 printToFile.printDebugLine(this, "Error getting street/item JSON files for street BUT WILL CONTINUE" + configInfo.readStreetTSID(streetBeingProcessed), 3);
@@ -429,6 +433,7 @@ public void draw()
                  
         case LOAD_FRAGMENT_OFFSETS:
             // Validates/loads all item images 
+            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
             if(!allFragmentOffsets.loadFragmentDefaultsForItems())
             {
                 printToFile.printDebugLine(this, "Error loading fragment offsets for images", 3);
@@ -443,6 +448,7 @@ public void draw()
             
         case LOAD_ITEM_IMAGES:
             // Validates/loads all item images 
+            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
             if(!allItemImages.loadAllItemImages())
             {
                 printToFile.printDebugLine(this, "Error loading image snaps", 3);
@@ -457,6 +463,7 @@ public void draw()
             
         case INIT_STREET:
             // Carries out the setting up of the street and associated items 
+            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
             displayMgr.clearDisplay();
             if (!initialiseStreet())
             {
@@ -474,20 +481,13 @@ public void draw()
                 return;
             }
             
-            /*
-            if (!okToContinue)
-            {
-                // Need to wait for user input
-                return;
-            }*/
-            
             // Reload up the first street image ready to go
             if (!streetInfo.loadStreetImage(0))
             {
                 failNow = true;
                 return;
             }
-            
+            memory.printMemoryUsage();
             nextAction = INIT_STREET_DATA;
             break;
             
@@ -516,7 +516,7 @@ public void draw()
             break;
             
         case INIT_STREET_DATA:
-        
+            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
             if (!streetInfo.readStreetItemData())
             {
                 printToFile.printDebugLine(this, "Error in readStreetItemData", 3);
@@ -528,7 +528,7 @@ public void draw()
             streetInfo.initStreetItemVars();
              
             printToFile.printDebugLine(this, "street initialised is " + configInfo.readStreetTSID(streetBeingProcessed) + " (" + streetBeingProcessed + ")", 1);
-            
+            memory.printMemoryUsage();
             nextAction = PROCESS_STREET;
             break;
             
@@ -609,7 +609,7 @@ public void draw()
             break;
             
         case WRITE_JSON_FILES_TO_PERSDATA:
-        
+            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
             // Work through streets, one at a time, uploading any changed item files
             if (!handleStreetAndItemJSONFiles(false))
             {
@@ -665,17 +665,9 @@ public void draw()
             }
             break;
             
-        case EXIT_NOW:            
+        case EXIT_NOW:  
+            doExitCleanUp();
             memory.printMemoryUsage();
-            // Close sftp session
-            if (QAsftp != null && QAsftp.readRunningFlag())
-            {
-                if (!QAsftp.executeCommand("exit", "session", null))
-                {
-                    println("exit session failed");
-                }
-            }
-            println("exit() issued");
             exit();
             break;
            
@@ -684,6 +676,40 @@ public void draw()
             printToFile.printDebugLine(this, "Unexpected next action - " + nextAction, 3);
             exit();
     }
+}
+
+void doExitCleanUp()
+{
+
+    // Close sftp session
+    if (QAsftp != null && QAsftp.readRunningFlag())
+    {
+        if (!QAsftp.executeCommand("exit", "session", null))
+        {
+            println("exit session failed");
+        }
+    }
+    
+    // Give warning if NewJSONs directory not empty
+    String dirName = workingDir + File.separatorChar + "NewJSONs";
+    File myDir = new File(dirName);
+    if (myDir.exists())
+    {
+        // No point reporting error if it does not exist. So only continue if the directory if found
+        File[] contents = myDir.listFiles();
+        if (contents != null && contents.length > 0) 
+        {
+            printToFile.printOutputLine("\n WARNING: Following changed item file(s) have NOT been copied/uploaded - will need to be manually added to persdata\n");
+            printToFile.printDebugLine(this, "\n WARNING: Following changed item file(s) have NOT been copied/uploaded - will need to be manually added to persdata\n", 3);
+            for (int i=0; i< contents.length; i++)
+            {
+                printToFile.printOutputLine("\t" + dirName + File.separatorChar + contents[i].getName());
+                printToFile.printDebugLine(this, "\t" + dirName + File.separatorChar + contents[i].getName(), 3);
+            }
+        }
+    }
+    
+    
 }
 
 boolean handleStreetAndItemJSONFiles(boolean getFiles)
@@ -725,7 +751,7 @@ boolean handleStreetAndItemJSONFiles(boolean getFiles)
         // Put changed item files into persdata
         if (!streetInfo.putStreetItemJSONFiles())
         {
-            printToFile.printDebugLine(this, "Error getting street L*/G*/I* files for TSID " + streetTSID, 3);
+            printToFile.printDebugLine(this, "Error uploading/copying I* files for TSID " + streetTSID, 3);
             return false;
         }
     }
@@ -795,6 +821,7 @@ boolean setupWorkingDirectories()
     return true; 
 }
 
+
 void keyPressed() 
 {
     if ((key == 'x') || (key == 'X'))
@@ -807,6 +834,7 @@ void keyPressed()
     if(key==27)
     {
         println("ESC pressed");
+            printToFile.printDebugLine(this, "ESC PRESSED", 3);
         key = 0;
         nextAction = EXIT_NOW;
         return;
@@ -942,4 +970,5 @@ void configJSONFileSelected(File selection)
     
         return true;
     }
+
     

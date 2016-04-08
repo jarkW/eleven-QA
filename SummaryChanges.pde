@@ -108,7 +108,8 @@ class SummaryChanges implements Comparable
             if (Y1 == Y2)
             {
                 // Should never happen
-                printToFile.printDebugLine(this, "Error -  Two items " + TSID + " and " + n.TSID + " with same x,y", 3);
+                printToFile.printDebugLine(this, "Error -  Two items " + TSID + " and " + n.TSID + " with same x,y " + X1 + "," + Y1, 3);
+                printToFile.printOutputLine("Error -  Two items " + TSID + " and " + n.TSID + " with same x,y " + X1 + "," + Y1);
                 return 0;
             }
             else if (Y1 > Y2)

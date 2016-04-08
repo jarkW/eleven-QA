@@ -68,6 +68,7 @@ class StreetInfo
         if (!file.exists())
         {
             printToFile.printDebugLine(this, "SKIPPING MISSING street location file - " + streetTSID, 3);
+            printToFile.printOutputLine("\nSKIPPING - MISSING street location file for " + streetTSID +"\n");
             displayMgr.setSkippedStreetsMsg("Skipping street - Missing location JSON file for TSID " + streetTSID);
             invalidStreet = true;
             return false;
@@ -187,29 +188,7 @@ class StreetInfo
                 return false;
             }  
         }   
-        
-        // NB Will either need to fail or carry on with warnings - need to update debug and output files
-        // Safest to do 'put' as dir/filename? So don't risk creating odd files because dir does not exist
-        // although should never happen as we're using the dir we've already created. 
-        /*
-        println("locFileName is ", locFileName);
-        //works
-        if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "/home/qateam/jark_tmp/jark1.json"))
-        //if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "c:/Program Files/Temp/jark1.json"))
-        {
-            println("Put failed for jark.json2 to Tii jark1.json");
-        }
-        if (!QAsftp.executeCommand("exit", null, null))
-        {
-            println("exit error");
-        }
-        delay (5000);
-                if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "/home/qateam/jark_tmp/jark1.json"))
-        //if (!QAsftp.executeCommand("put", "C:/Glitch/QA2/temp/" + streetTSID + ".json", "c:/Program Files/Temp/jark1.json"))
-        {
-            println("Put failed for jark.json2 to Tii jark1.json");
-        }
-          */        
+             
         // Everything OK
         return true;
     }
@@ -260,7 +239,6 @@ class StreetInfo
             // See if file exists in persdata     
             if (!QAsftp.executeCommand("get", sourcePath, destPath))
             {
-                println("Server - missing from persdata ", sourcePath);
                 // See if file exists in fixtures
                 if (TSID.startsWith("L") || TSID.startsWith("G"))
                 {
@@ -361,10 +339,11 @@ class StreetInfo
             if (!copyFile(sourcePath, configInfo.readPersdataPath() + File.separatorChar + JSONFileName))
             {
                 printToFile.printDebugLine(this, "Unable to copy JSON file - " + sourcePath + " to " + configInfo.readPersdataPath() + File.separatorChar + JSONFileName, 3);
+                printToFile.printOutputLine("FAILED TO COPY " + TSID + ".json file to " + configInfo.readPersdataPath());
                 return false;
             }
-            printToFile.printDebugLine(this, "SUCCESS COPYING " + TSID + ".json file to " + configInfo.readPersdataPath(), 3);
-            printToFile.printOutputLine("SUCCESS COPYING " + TSID + ".json file to " + configInfo.readPersdataPath());
+            printToFile.printDebugLine(this, "Success copying " + TSID + ".json file to " + configInfo.readPersdataPath(), 3);
+            printToFile.printOutputLine("Success copying " + TSID + ".json file to " + configInfo.readPersdataPath());
         }
         else
         {
@@ -372,11 +351,12 @@ class StreetInfo
             if (!QAsftp.executeCommand("put", sourcePath, configInfo.readPersdataPath() + "/" + JSONFileName))
             {
                  printToFile.printDebugLine(this, "Unable to upload JSON file from " + sourcePath + " to persdata on server - " + configInfo.readPersdataPath() + "/" + JSONFileName, 3);
+                 printToFile.printOutputLine("FAILED TO UPLOAD " + TSID + ".json file to " + configInfo.readPersdataPath());
                  return false;   
             } 
             
-            printToFile.printDebugLine(this, "SUCCESS UPLOADING " + TSID + ".json file to " + configInfo.readPersdataPath(), 3);
-            printToFile.printOutputLine("SUCCESS UPLOADING " + TSID + ".json file to " + configInfo.readPersdataPath());
+            printToFile.printDebugLine(this, "Success uploading " + TSID + ".json file to " + configInfo.readPersdataPath(), 3);
+            printToFile.printOutputLine("Success uploading " + TSID + ".json file to " + configInfo.readPersdataPath());
         }
         
         // Only reach here if file uploaded OK - so move from     
@@ -387,10 +367,11 @@ class StreetInfo
             printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath, 3);
             return false;
         }
-        printToFile.printDebugLine(this, "Moved JSON file from " + sourcePath + " to " + destPath, 1);
+        printToFile.printDebugLine(this, "Moved JSON file " + JSONFileName + " from " + workingDir + File.separatorChar + "NewJSONs" + " to " + workingDir + File.separatorChar + "UploadedJSONs", 1);
         
         return true;
     } 
+    
     boolean readStreetItemData()
     {
         printToFile.printDebugLine(this, "Read item TSID from street L file", 2);   
@@ -442,6 +423,7 @@ class StreetInfo
         if (!file.exists())
         {
             printToFile.printDebugLine(this, "SKIPPING - MISSING street geo file - " + geoFileName, 3);
+            printToFile.printOutputLine("\nSKIPPING - MISSING street geo file for " + streetTSID + "\n");
             displayMgr.setSkippedStreetsMsg("Skipping street - Missing geo JSON file for TSID " + streetTSID);
             invalidStreet = true;
             return false;
@@ -577,6 +559,7 @@ class StreetInfo
         if (snapFilenames == null || snapFilenames.length == 0)
         {
             printToFile.printDebugLine(this, "SKIPPING STREET - No street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
+            printToFile.printOutputLine("\nSKIPPING - No street image files found for " + streetName + "(" + streetTSID + ")\n");
             displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No street snaps found");
             invalidStreet = true;
             return false;
@@ -674,6 +657,7 @@ class StreetInfo
         if (streetSnaps.size() == 0)
         {
             printToFile.printDebugLine(this, "SKIPPING STREET - No valid street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName + " with resolution " + geoWidth + " x " + geoHeight + " pixels", 3);
+            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ") with resolution " + geoWidth + " x " + geoHeight + " pixels\n");
             displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No valid street snaps found with resolution " + geoWidth + " x " + geoHeight + " pixels");
             invalidStreet = true;
             return false;

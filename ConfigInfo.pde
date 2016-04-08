@@ -45,7 +45,7 @@ class ConfigInfo {
             println("Missing config.json file from ", workingDir);
             return false;
         }
-        println("Trying to load config.json from ", workingDir+ File.separatorChar + "config.json");
+        
         try
         {
             // Read in stuff from the config file
