@@ -13,7 +13,6 @@ To create a valid config.json  file do the following:
 	persdata_path - set to path for eleven-throwaway-server/persdata 
 	street_snap_path - set to path containing all the archive street snaps for these streets
 	output_file - set to path/name of file which contain a summary of all the changes made by this tool. 
-	append_to_output_file - if set to false, then a fresh output_file is written each time the tool is run 
 	search_radius - defaulted to 50 pixels. Making the number smaller will speed up the searches, but may miss items which are almost in the right place
 	change_xy_only - the tool will only change the x,y values in the item files (useful if street has already been QA'd)
 	3) Copy and paste everything inside/including braces to new file. There must NOT be a trailing comma
@@ -42,7 +41,6 @@ To create a valid config.json  file do the following:
   },
   "street_snap_path": "C:/Glitch/QA2/StreetSnapsArchive/Snaps",
   "output_file": "C:/Glitch/QA2/region.txt",
-  "append_to_output_file": true,
   "search_radius": 50,
   "change_xy_only": false
 }

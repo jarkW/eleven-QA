@@ -9,7 +9,7 @@ static class Utils
     
     // Loads up a list of png files with the right street name 
     // NB The names return do not include the path, just the filename
-    static public String[] loadFilenames(String path, final String nameToFind) 
+    static public String[] loadFilenames(String path, final String nameToFind, final String fileSuffix) 
     {
         File folder = new File(path);
  
@@ -17,7 +17,7 @@ static class Utils
         {
             public boolean accept(File dir, String name) 
             {
-                if (name.startsWith(nameToFind) && name.toLowerCase().endsWith(".png"))
+                if (name.startsWith(nameToFind) && name.toLowerCase().endsWith(fileSuffix))
                 {
                     return true;
                 }

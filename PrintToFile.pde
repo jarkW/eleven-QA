@@ -36,16 +36,12 @@ class PrintToFile {
         }
         
         // Open output file
-        if (configInfo.readAppendToOutputFile())
+        // If file already exists - then rename before creating this output file  
+        if (!renameExistingOutputFile())
         {
-            existingOutputText = new StringList(); 
-            if (!saveExistingOutputFileText())
-            {
-                printToFile.printDebugLine(this, "Failed to open output file for append " + configInfo.readOutputFilename(), 3);
-                return false;
-            }
+            return false;
         }
-        
+
         // Now have saved any existing Output file contents, can open the output file ready for writing     
         try
         {
@@ -59,69 +55,58 @@ class PrintToFile {
         }
 
         
-        initDone = true;
+        initDone = true;        
+        return true;
+    } 
+    
+    boolean renameExistingOutputFile()
+    {
+        // If the output file already exists, then rename before continuing on
         
-        // Is now save to write back the output file contents if this is a pseudo-append
-        if (configInfo.readAppendToOutputFile())
+        File f = new File(configInfo.readOutputFilename());
+        if (!f.exists())
         {
-            // Now rewrite back the saved lines to the top of this output file
-            for (int i = 0; i < existingOutputText.size(); i++)
-            {
-                printOutputLine(existingOutputText.get(i));
-            }
+            // Does not exist - so OK to continue
+            return true;
         }
         
-        return true;
-    }
-    
-    public boolean saveExistingOutputFileText()
-    {
-        // Cannot append to files easily in Processing
-        // So if the file exists, open, and read into an array
-        File file = new File(configInfo.readOutputFilename());
-        if (file.exists())
-        {            
-            // Read in contents of the file
-            BufferedReader reader;
-            String line;
-            reader = createReader(configInfo.readOutputFilename());
+        // Output file already exists. So rename
+        String outputFileName = f.getName();
+        String outputFileNamePrefix = outputFileName.replace(".txt", "");
+        String outputFileDir = configInfo.readOutputFilename().replace(File.separatorChar + outputFileName, "");
+        String [] outputFiles = Utils.loadFilenames(outputFileDir, outputFileNamePrefix, ".txt");
+        if (outputFiles.length == 0)
+        {
+            println("Unexpected error setting up outputfile ", configInfo.readOutputFilename(), " - please remove all versions of the outputfile before retrying");
+            return false;
+        }
 
-            boolean eof = false;
-            while (!eof)
+        // If outputFile is the only one that exists, then will be renamed to _1 etc etc. 
+        // This will fail if the user has manually changed the numbers so e.g. get outputFile and outputFile_2 being present - 
+        // the attempt to rename outputFile to outputFile_2 will fail. But this is the simplest way of renaming a file
+        // because the loadFilenames function returns files in alphabetical order so outputFile22 is earlier in the list than 
+        // outputFile_8 ... 
+        String destFilename = outputFileDir + File.separatorChar + outputFileNamePrefix + "_" + outputFiles.length + ".txt";;
+        File destFile = new File(destFilename);
+        try
+        {
+            if (!f.renameTo(destFile))
             {
-                try 
-                {
-                    line = reader.readLine();
-                } 
-                catch (IOException e) 
-                {
-                    e.printStackTrace();
-                    printToFile.printDebugLine(this, "IO exception when reading in existing output file " + configInfo.readOutputFilename(), 3);
-                    line = null;
-                }
-                catch(Exception e)
-                {
-                    println(e);
-                    printToFile.printDebugLine(this, "General exception when reading in existing output file (= ERROR) " + configInfo.readOutputFilename(), 3);
-                    return false;
-                } 
-
-                if (line == null) 
-                {
-                    // Stop reading because of an error or file is empty
-                    printToFile.printDebugLine(this, configInfo.readOutputFilename() + " is empty or IO exception encountered", 1);
-                    eof = true;  
-                } 
-                else 
-                {
-                    existingOutputText.append(line);
-                }
-            }           
-        } 
+                println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
+                return false;
+            }
+        }
+        catch (Exception e)
+        {
+             // if any error occurs
+             e.printStackTrace();  
+             println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
+             return false;
+        }
         
+        println("Moving ", configInfo.readOutputFilename(), " to ", destFilename);
         return true;
     }
-    
  
     // Used to just print debug information - so can filter out minor messages
     // if not needed

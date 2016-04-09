@@ -12,7 +12,6 @@ class ConfigInfo {
     String serverUsername;
     String serverPassword;
     int serverPort;
-    boolean appendToOutputFile;
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
     
     boolean debugSaveOrigAndNewJSONs;
@@ -211,16 +210,7 @@ class ConfigInfo {
             println("Output file (output_file) needs to be a .txt file");
             return false;
         } 
-        
-        appendToOutputFile = Utils.readJSONBool(json, "append_to_output_file", true);
-        if (!Utils.readOkFlag())
-        {
-            println(Utils.readErrMsg());
-            println("Failed to read append_to_output_file in config.json file");
-            return false;
-        }
-         
-        
+                
         changeXYOnly = Utils.readJSONBool(json, "change_xy_only", true);
         if (!Utils.readOkFlag())
         {
@@ -353,11 +343,6 @@ class ConfigInfo {
     {
         return outputFile;
     } 
-    
-    public boolean readAppendToOutputFile()
-    {
-        return appendToOutputFile;
-    }
     
     public int readSearchRadius()
     {

@@ -34,9 +34,7 @@ import sftp.*;
  *
  */
  
- // TO DO - if output file already exists, then rename it to be name_1.txt (where number = number of files that exist with the first part
- // of the output file name (so if got region.txt and region_1.txt, then region.txt -> region_2.txt before start new region.txt
- 
+
  // To do - handle closure of screen better - if got items handled individually, does closing the x mean the sftp stops? If so, then 
  // don't need to add anything in. But if not, then see https://forum.processing.org/one/topic/run-code-on-exit.html (ericsoco SHUTDOWN HOOK)
  // which gets run however you exit the program.

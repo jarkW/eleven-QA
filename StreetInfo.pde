@@ -554,7 +554,7 @@ class StreetInfo
         // NB smaller images are removed from the list of snaps automatically
         // Will unload the street snaps immediately - as only interested in the list of valid street snaps for now
         // Work out how many street snaps exist
-        String [] snapFilenames = Utils.loadFilenames(configInfo.readStreetSnapPath(), streetName);
+        String [] snapFilenames = Utils.loadFilenames(configInfo.readStreetSnapPath(), streetName, ".png");
 
         if (snapFilenames == null || snapFilenames.length == 0)
         {

@@ -85,7 +85,7 @@ class ItemImages
         
         // Now create one entry for each of the rock snaps
         String [] imageFilenames = null;
-        imageFilenames = Utils.loadFilenames(dataPath(""), "rock_");
+        imageFilenames = Utils.loadFilenames(dataPath(""), "rock_", ".png");
         if ((imageFilenames == null) || (imageFilenames.length == 0))
         {
             printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for rock*.png", 3);
@@ -103,7 +103,7 @@ class ItemImages
 
         // Now create one entry for each of the shrine snaps - one per shrine as only come in right versions
         imageFilenames = null;
-        imageFilenames = Utils.loadFilenames(dataPath(""), "npc_shrine");
+        imageFilenames = Utils.loadFilenames(dataPath(""), "npc_shrine", ".png");
         if ((imageFilenames == null) || (imageFilenames.length == 0))
         {
             printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for npc_shrine*.png", 3);
@@ -134,7 +134,7 @@ class ItemImages
         
         // Now create one entry for each of the peat snaps
         imageFilenames = null;
-        imageFilenames = Utils.loadFilenames(dataPath(""), "peat_");
+        imageFilenames = Utils.loadFilenames(dataPath(""), "peat_", ".png");
         if ((imageFilenames == null) || (imageFilenames.length == 0))
         {
             printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for peat*.png", 3);
