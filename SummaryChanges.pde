@@ -16,15 +16,16 @@ class SummaryChanges implements Comparable
     int itemY;
     int result; 
     
-    String TSID; // used for debugging error case only
+    // If sort reveals that quoins have been stacked onto the same x,y
+    boolean misplacedQuoin;
 
         
     public SummaryChanges( ItemInfo item)
     {
         itemInfo = item;
-        TSID = itemInfo.readItemTSID();
+        misplacedQuoin = false;
         
-        printToFile.printDebugLine(this, TSID + " found=" + itemInfo.readItemFound() + " orig x,y=" + itemInfo.readOrigItemX() + "," +
+        printToFile.printDebugLine(this, itemInfo.readItemTSID() + " found=" + itemInfo.readItemFound() + " orig x,y=" + itemInfo.readOrigItemX() + "," +
                                     itemInfo.readOrigItemY() + " new x,y=" + itemInfo.readNewItemX() + "," +  itemInfo.readNewItemY() + " change in info " + itemInfo.readItemFound(), 1);
                                     
         
@@ -107,9 +108,51 @@ class SummaryChanges implements Comparable
             int Y2 = n.itemY;
             if (Y1 == Y2)
             {
-                // Should never happen
-                printToFile.printDebugLine(this, "Error -  Two items " + TSID + " and " + n.TSID + " with same x,y " + X1 + "," + Y1, 3);
-                printToFile.printOutputLine("Error -  Two items " + TSID + " and " + n.TSID + " with same x,y " + X1 + "," + Y1);
+                // Should never happen - but can happen to closely clustered quoins. So mark these for resetting back to orig x,y/mystery after giving the appropriate warning message
+                // The processing will done after the first time the items have been sorted on x,y - that way if there are 3 or more items clustered together, it won't matter if this
+                // flag is set twice, the check will still be valid for whether x1,y1 = x2,y2 or not
+                // Only report the warning in the user output file if this matching of x,y is found on the second sorting of items - should not happen
+                String info;
+                if (streetInfo.readNumberTimesResultsSortedSoFar() > 0)
+                {
+                    info = "!!! WARNING !!! - ";
+                }
+                else
+                {
+                    info = "!!! INFO !!! - ";
+                }
+                
+                if (itemInfo.readItemClassTSID().equals("quoin") && (n.itemInfo.readItemClassTSID().equals("quoin")))
+                {
+                    info = info + "Two quoins " + itemInfo.readItemTSID() + " and " + n.itemInfo.readItemTSID();
+                }
+                else
+                {
+                    info = info + "Two items " + itemInfo.readItemTSID() + " and " + n.itemInfo.readItemTSID();
+                }   
+                
+                if (streetInfo.readNumberTimesResultsSortedSoFar() > 0)
+                {
+                    info = info + " are clustered together at x,y " + X1 + "," + Y1 + " and will need to be manually configured";
+                    printToFile.printDebugLine(this, info, 3);
+                    printToFile.printOutputLine(info);
+                }
+                else
+                {
+                    // Don't print anything to the user output file for the first sorting of the results
+                    info = info + " have been set to the same x,y " + X1 + "," + Y1 + " - if one/both is a quoin then then it will be redefined as missing";
+                    printToFile.printDebugLine(this, info, 3);
+                }               
+                
+                // If either/both items are quoins then mark them for reprocessing - although this will only be acted  on
+                if (itemInfo.readItemClassTSID().equals("quoin"))
+                {
+                    misplacedQuoin = true;
+                }
+                if (n.itemInfo.readItemClassTSID().equals("quoin"))
+                {
+                    n.misplacedQuoin = true;
+                }
                 return 0;
             }
             else if (Y1 > Y2)
@@ -149,50 +192,14 @@ class SummaryChanges implements Comparable
         return result;
     }
     
-    public String readItemClassTSID()
+    public boolean readMisplacedQuoin()
     {
-        return itemInfo.readItemClassTSID();
-    }
-        
-    public String readItemTSID()
-    {
-        return TSID;
+        return misplacedQuoin;
     }
     
-    public boolean readChangedJSON()
+    public ItemInfo readItemInfo()
     {
-        return itemInfo.readSaveChangedJSONfile();
+        return itemInfo;
     }
-    
-    public int readOrigItemX()
-    {
-        return itemInfo.readOrigItemX();
-    }
-    
-    public int readOrigItemY()
-    {
-        return itemInfo.readOrigItemY();
-    }
-    
-    public String readOrigItemExtraInfo()
-    {
-        return itemInfo.readOrigItemExtraInfo();
-    }
-    
-    public String readOrigItemClassName()
-    {
-        return itemInfo.readOrigItemClassName();
-    }
-    
-    public String readNewItemExtraInfo()
-    {
-        return itemInfo.readNewItemExtraInfo();
-    }
-    
-    public String readNewItemClassName()
-    {
-        return itemInfo.readNewItemClassName();
-    }
-
 
 }

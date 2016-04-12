@@ -20,6 +20,7 @@ class StreetInfo
     
     // List of item results - so can sort e.g. on skipped items
     ArrayList<SummaryChanges> itemResults;
+    int numberTimesResultsSortedSoFar;
     
     // Data read in from each I* file
     int itemBeingProcessed;
@@ -48,6 +49,7 @@ class StreetInfo
         itemInfo = new ArrayList<ItemInfo>();
         streetSnaps = new ArrayList<PNGFile>();
         itemResults = new ArrayList<SummaryChanges>();
+        numberTimesResultsSortedSoFar = 0;
          
         geoTintColor = 0;
         geoContrast = 0;
@@ -838,16 +840,52 @@ class StreetInfo
                     itemResults.add(new SummaryChanges(itemInfo.get(i)));
                 }
                 
-                
-                streetFinished = true;
+                // Do an initial sort to find any items which have duplicate x,y
+                sortResultsByXY(itemResults);
+                numberTimesResultsSortedSoFar = 1;
+
+                // Now go through the results in reverse order - if any indicate that a quoin needs to be reset to missing
+                // then delete the entry from the itemResults array, redo the item JSON, save it and then recreate the new 
+                // itemResults entry with this mystery quoin.
+                // Doing it in reverse order means that entries can be safely deleted as process the array
+                for (int i = itemResults.size(); i > 0; i--)
+                {
+                    if (itemResults.get(i-1).readMisplacedQuoin())
+                    {
+                        // Mark the quoin as missing before saving the new JSON file
+                        if (!itemResults.get(i-1).readItemInfo().resetAsMissingQuoin())
+                        {
+                            // Should never happen
+                            failNow = true;
+                            return false;
+                        }
+                        
+                        // Now save the new mystery quoin JSON file
+                        if (!itemResults.get(i-1).readItemInfo().saveItemChanges())
+                        {
+                            failNow = true;
+                            return false;
+                        }
+                        
+                        // OK to add the new entry - will not interfere with deleting the 'bad' entry
+                        itemResults.add(new SummaryChanges(itemResults.get(i-1).readItemInfo()));
+                        
+                        // Now delete this bad array entry 
+                        itemResults.remove(i-1);
+                    }
+                }
                 
                 // Now print out the summary array
+                // The second sorting of item results shouldn't throw up any duplicate x,y - if it happens they'll just be reported as warnings
                 if (! printToFile.printSummary(itemResults))
                 {
                     failNow = true;
                     return false;
                 }
 
+                // Mark street as done
+                streetFinished = true;
+                
                 //printToFile.printDebugLine(this, "Exit 1 processItem memory ", 1);
                 //memory.printMemoryUsage();
                 return false;
@@ -925,6 +963,17 @@ class StreetInfo
             }
         }
         return true;
+    }
+    
+    void sortResultsByXY (ArrayList<SummaryChanges> itemResults)
+    {               
+        // Sort array by x co-ord so listing items from L to R
+        // This will also flag up a warning if any items end up with the 
+        // same x,y - which can happen for closely packed quoins
+        Collections.sort(itemResults);
+        
+        // Increase this counter - it is only the first sort which is clear of output errors to the user
+        numberTimesResultsSortedSoFar++;
     }
     
     // Simple functions to read/set variables
@@ -1022,6 +1071,11 @@ class StreetInfo
     public int readGeoWidth()
     {
         return geoWidth;
+    }
+    
+    public int readNumberTimesResultsSortedSoFar()
+    {
+        return numberTimesResultsSortedSoFar;
     }
     
 }

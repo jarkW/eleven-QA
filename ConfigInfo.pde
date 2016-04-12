@@ -29,6 +29,7 @@ class ConfigInfo {
         if (!readConfigData())
         {
             println("Error in readConfigData");
+            // displayMgr.showInfoMsg("Error in readConfigData"); - not do this as overwrites the information given by readConfigData call to this function
             okFlag = false;
             return;
         }
@@ -42,6 +43,7 @@ class ConfigInfo {
         if (!file.exists())
         {
             println("Missing config.json file from ", workingDir);
+            displayMgr.showInfoMsg("Missing config.json file from " + workingDir);
             return false;
         }
         
@@ -54,6 +56,7 @@ class ConfigInfo {
         {
             println(e);
             println("Failed to load config.json file");
+            displayMgr.showInfoMsg("Failed to load config.json file");
             return false;
         }
    
@@ -63,6 +66,7 @@ class ConfigInfo {
         {
             println(Utils.readErrMsg());
             println("Failed to read use_vagrant_dirs in config.json file");
+            displayMgr.showInfoMsg("Failed to read use_vagrant_dirs in config.json file");
             return false;
         }
         
@@ -75,6 +79,7 @@ class ConfigInfo {
             {
                 println(Utils.readErrMsg());
                 println("Failed to read vagrant_info in config.json file");
+                displayMgr.showInfoMsg("Failed to read vagrant_info in config.json file");
                 return false;
             }           
             serverName = "";
@@ -90,6 +95,7 @@ class ConfigInfo {
             {
                 println(Utils.readErrMsg());
                 println("Failed to read server_info in config.json file");
+                displayMgr.showInfoMsg("Failed to read server_info in config.json file");
                 return false;
             }  
             serverName = Utils.readJSONString(serverInfo, "host", true);
@@ -97,6 +103,7 @@ class ConfigInfo {
             {
                 println(Utils.readErrMsg());
                 println("Failed to read server host name in config.json file");
+                displayMgr.showInfoMsg("Failed to read server host name in config.json file");
                 return false;
             }  
             serverUsername = Utils.readJSONString(serverInfo, "username", true);
@@ -104,6 +111,7 @@ class ConfigInfo {
             {
                  println(Utils.readErrMsg());
                  println("Failed to read server username in config.json file");
+                 displayMgr.showInfoMsg("Failed to read server username in config.json file");
                  return false;
             }            
             serverPassword = Utils.readJSONString(serverInfo, "password", true);
@@ -111,6 +119,7 @@ class ConfigInfo {
             {
                println(Utils.readErrMsg());
                println("Failed to read server password in config.json file");
+               displayMgr.showInfoMsg("Failed to read server password in config.json file");
                return false;
             }
             serverPort = Utils.readJSONInt(serverInfo, "port", true);
@@ -118,6 +127,7 @@ class ConfigInfo {
             {
                println(Utils.readErrMsg());
                println("Failed to read port in config.json file");
+               displayMgr.showInfoMsg("Failed to read port in config.json file");
                return false;
             }
             
@@ -126,6 +136,7 @@ class ConfigInfo {
             {
                 println(Utils.readErrMsg());
                 println("Failed to read server_dirs in config.json file");
+                displayMgr.showInfoMsg("Failed to read server_dirs in config.json file");
                 return false;
             }
         }
@@ -138,10 +149,12 @@ class ConfigInfo {
             if (useVagrant)
             {
                 println("Failed to read fixtures_path from vagrant_dirs in config.json file");
+                displayMgr.showInfoMsg("Failed to read fixtures_path from vagrant_dirs in config.json file");
             }
             else
             {
                 println("Failed to read fixtures_path from server_dirs in config.json file");
+                displayMgr.showInfoMsg("Failed to read fixtures_path from server_dirs in config.json file");
             }
             return false;
         }      
@@ -153,10 +166,12 @@ class ConfigInfo {
             if (useVagrant)
             {
                 println("Failed to read persdata_path from vagrant_dirs in config.json file");
+                displayMgr.showInfoMsg("Failed to read persdata_path from vagrant_dirs in config.json file");
             }
             else
             {
                 println("Failed to read persdata_path from server_dirs in config.json file");
+                displayMgr.showInfoMsg("Failed to read persdata_path from server_dirs in config.json file");
             }
             return false;
         }
@@ -167,12 +182,14 @@ class ConfigInfo {
             if (!myDir.exists())
             {
                 println("Fixtures directory ", fixturesPath, " does not exist");
+                displayMgr.showInfoMsg("Fixtures directory " + fixturesPath + " does not exist");
                 return false;
             }
             myDir = new File(persdataPath);
             if (!myDir.exists())
             {
                 println("Persdata directory ", persdataPath, " does not exist");
+                displayMgr.showInfoMsg("Persdata directory " + persdataPath + " does not exist");
                 return false;
             }
             
@@ -188,12 +205,14 @@ class ConfigInfo {
         {
             println(Utils.readErrMsg());
             println("Failed to read street_snap_path in config.json file");
+            displayMgr.showInfoMsg("Failed to read street_snap_path in config.json file");
             return false;
         }
         File myDir = new File(streetSnapPath);
         if (!myDir.exists())
         {
             println("Street snap archive directory ", streetSnapPath, " does not exist");
+            displayMgr.showInfoMsg("Street snap archive directory " + streetSnapPath + " does not exist");
             return false;
         }
                
@@ -202,12 +221,14 @@ class ConfigInfo {
         {
             println(Utils.readErrMsg());
             println("Failed to read output_file in config.json file");
+            displayMgr.showInfoMsg("Failed to read output_file in config.json file");
             return false;
         }        
         // Need to check that output file is a text file
         if (outputFile.indexOf(".txt") == -1)
         {
             println("Output file (output_file) needs to be a .txt file");
+            displayMgr.showInfoMsg("Output file (output_file) needs to be a .txt file");
             return false;
         } 
                 
@@ -216,6 +237,7 @@ class ConfigInfo {
         {
             println(Utils.readErrMsg());
             println("Failed to read change_xy_only in config.json file");
+            displayMgr.showInfoMsg("Failed to read change_xy_only in config.json file");
             return false;
         }
         
@@ -224,6 +246,7 @@ class ConfigInfo {
         {
             println(Utils.readErrMsg());
             println("Failed to read search_radius in config.json file");
+            displayMgr.showInfoMsg("Failed to read search_radius in config.json file");
             return false;
         }
         
@@ -252,6 +275,7 @@ class ConfigInfo {
         {
             println(Utils.readErrMsg());
             println("Failed to read in streets array from config.json");
+            displayMgr.showInfoMsg("Failed to read in streets array from config.json");
             return false;
         }
         try
@@ -265,6 +289,7 @@ class ConfigInfo {
                 {
                     println(Utils.readErrMsg());
                     println("Missing value for street tsid");
+                    displayMgr.showInfoMsg("Missing value for street tsid");
                     return false;
                 }
                 streetTSIDs.append(tsid);
@@ -273,7 +298,8 @@ class ConfigInfo {
         catch(Exception e)
         {
             println(e);
-            println("Failed to read in street array from config.json");
+            println("Failed to read (exception) in street array from config.json");
+            displayMgr.showInfoMsg("Failed to read (exception) in street array from config.json");
             return false;
         }  
         

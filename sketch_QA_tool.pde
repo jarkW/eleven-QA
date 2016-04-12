@@ -34,6 +34,14 @@ import sftp.*;
  *
  */
  
+ // BUG
+ // Need to have an error line along the bottom or top of the screen. So when start up, anything which at the moment goes to println
+ // instead appears on the screen because the application doesn't have a print window to show the user. So they wouldn't know that the
+ // config json file was corrupted or whatever. 
+ /// Could also do this in red. May be introduce an reportError vs reportInfo function - one in red, one in black, but can use the same bottom line
+ // move the street name/street up by a row so keep that if relevant e.g. when uploading files to server
+ 
+ // TODO Introduce 2 different search radiuses - one for quoins (20) and one for items (50). 
 
  // To do - handle closure of screen better - if got items handled individually, does closing the x mean the sftp stops? If so, then 
  // don't need to add anything in. But if not, then see https://forum.processing.org/one/topic/run-code-on-exit.html (ericsoco SHUTDOWN HOOK)
@@ -78,7 +86,8 @@ import sftp.*;
  
  // TO DO update the quoin type settings for all the other regions. 
  
- // TO DO change config.json to just read in eleven dir - and then default fixtures/persdata from that
+ // TO DO change config.json to just read in eleven dir - and then default fixtures/persdata from that (NB only do this once happy with sftp - as am relying on having a different persdata
+ // path for testing purposes (so don't write anything that is brooken)
  
  // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
@@ -199,7 +208,7 @@ boolean failNow = false;    // abnormal ending/error
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 3;
+int debugLevel = 1;
 boolean debugToConsole = true;
 boolean doDelay = false;
 boolean usingBlackWhiteComparison = true; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
@@ -212,7 +221,8 @@ public void setup()
     // width, height
     // Must be first line in setup()
     size(1200,800);
-        
+    
+    // Used for final application title bar
     surface.setTitle("QA tool for setting co-ordinates and variants of items in Ur"); 
     
     nextAction = 0;
@@ -225,6 +235,7 @@ public void setup()
     if (!printToFile.readOkFlag())
     {
         println("Error setting up printToFile object");
+        displayMgr.showInfoMsg("Error setting up printToFile object");
         failNow = true;
         return;
     }
@@ -249,9 +260,14 @@ public void draw()
     // Each time we enter the loop check for error/end flags
     if (failNow)
     {
-        println("failNow flag set - exiting with errors");
-        printToFile.printOutputLine("\n\n!!!!! EXITING WITH ERRORS !!!!!\n\n");
-        printToFile.printDebugLine(this, "failNow flag set - exiting with errors", 3);
+        // Give the user a chance to see the error message
+        // Needed principally for config.json errors which can happen before we've set up a debug.txt/output.txt file
+        // On the final application there is no print window, just the screen to show the user what is happening.
+        delay(3000);
+        
+        println("failNow flag set - exiting with errors - see debug_info.txt for more information");
+        printToFile.printOutputLine("\n\n!!!!! EXITING WITH ERRORS !!!!!\n\n See " + workingDir + File.separatorChar + "debug_info.txt for more information");
+        printToFile.printDebugLine(this, "failNow flag set - exiting with errors - See " + workingDir + File.separatorChar + "debug_info.txt for more information", 3);
         nextAction = EXIT_NOW;;
     }
     
@@ -747,6 +763,12 @@ boolean handleStreetAndItemJSONFiles(boolean getFiles)
     else
     {
         // Put changed item files into persdata
+        if (!configInfo.readWriteJSONsToPersdata())
+        {
+            // Don't write the files, just return
+            return true;
+        }
+        
         if (!streetInfo.putStreetItemJSONFiles())
         {
             printToFile.printDebugLine(this, "Error uploading/copying I* files for TSID " + streetTSID, 3);
@@ -797,7 +819,7 @@ boolean initialiseStreet()
 boolean setupWorkingDirectories()
 {
     // Checks that we have working directories for the JSONs - create them if they don't exist
-    // If they exist - then empty them if not keeping the files   
+    // If they exist - then empty them if not keeping the files becase debug option set 
     if (!Utils.setupDir(workingDir + File.separatorChar +"NewJSONs", configInfo.readDebugSaveOrigAndNewJSONs()))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);

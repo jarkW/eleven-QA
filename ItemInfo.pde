@@ -23,7 +23,7 @@ class ItemInfo
     String newItemClassName;    // used for quoins only
     int    newItemX;
     int    newItemY;
-    
+       
     // show if need to write out changed JSON file
     boolean saveChangedJSONfile;
       
@@ -481,71 +481,10 @@ class ItemInfo
                 }
 
                 // Now need to set up the type and class_name field in the JSON structure
-                // First determine the default quoin fields assocated with this type
-                QuoinFields quoinInstanceProps = new QuoinFields();                   
-                if (!quoinInstanceProps.defaultFields(streetInfo.readHubID(), streetInfo.readStreetTSID(), newItemExtraInfo))
+                if (!setQuoinInstanceProps(instanceProps))
                 {
-                    printToFile.printDebugLine(this, "Error defaulting fields in quoin instanceProps structure", 3);
                     return false;
-                }
-                newItemClassName = quoinInstanceProps.readClassName();
-                 
-                if (newItemClassName.equals(origItemClassName))
-                {
-                    // Nothing to save so return without setting flag
-                    return true;
-                }
-                // Now save the fields in instanceProps
-                if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
-                {
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    return false;
-                }
-                                         
-                if (!Utils.setJSONString(instanceProps, "class_name", newItemClassName))
-                {
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    return false;
-                }
-                    
-                if (!Utils.setJSONInt(instanceProps, "respawn_time", quoinInstanceProps.readRespawnTime()))
-                {
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    return false;
-                }
-                    
-                if (!Utils.setJSONString(instanceProps, "is_random", quoinInstanceProps.readIsRandom()))
-                {
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    return false;
-                }
-                    
-                if (!Utils.setJSONString(instanceProps, "benefit", quoinInstanceProps.readBenefit()))
-                {
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    return false;
-                }
-                    
-                if (!Utils.setJSONString(instanceProps, "benefit_floor", quoinInstanceProps.readBenefitFloor()))
-                {
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    return false;
-                }
-                    
-                if (!Utils.setJSONString(instanceProps, "benefit_ceil", quoinInstanceProps.readBenefitCeiling()))
-                {
-                    printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    return false;
-                }
-                    
-                if (newItemExtraInfo.equals("favor"))
-                {
-                    if (!Utils.setJSONString(instanceProps, "giant", quoinInstanceProps.readGiant()))
-                    {
-                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        return false;
-                    }
-                }                    
+                }                  
                 break;
                     
             case "wood_tree":
@@ -669,6 +608,78 @@ class ItemInfo
         saveChangedJSONfile = true;
         return true;
     } 
+    
+    boolean setQuoinInstanceProps(JSONObject instanceProps)
+    {
+        // Sets up the rest of the instanceProps fields depending on the setting of the newItemExtraInfo field    
+        QuoinFields quoinInstanceProps = new QuoinFields();                   
+        if (!quoinInstanceProps.defaultFields(streetInfo.readHubID(), streetInfo.readStreetTSID(), newItemExtraInfo))
+        {
+            printToFile.printDebugLine(this, "Error defaulting fields in quoin instanceProps structure", 3);
+            return false;
+        }
+        newItemClassName = quoinInstanceProps.readClassName();
+                 
+        if (newItemClassName.equals(origItemClassName))
+        {
+            // Nothing to save so return without setting flag
+            return true;
+        }
+        
+        // Now save the fields in instanceProps
+        if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            return false;
+        }
+                                         
+        if (!Utils.setJSONString(instanceProps, "class_name", newItemClassName))
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            return false;
+        }
+                    
+        if (!Utils.setJSONInt(instanceProps, "respawn_time", quoinInstanceProps.readRespawnTime()))
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            return false;
+        }
+                    
+        if (!Utils.setJSONString(instanceProps, "is_random", quoinInstanceProps.readIsRandom()))
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            return false;
+        }
+                    
+        if (!Utils.setJSONString(instanceProps, "benefit", quoinInstanceProps.readBenefit()))
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            return false;
+        }
+                    
+        if (!Utils.setJSONString(instanceProps, "benefit_floor", quoinInstanceProps.readBenefitFloor()))
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            return false;
+        }
+                    
+        if (!Utils.setJSONString(instanceProps, "benefit_ceil", quoinInstanceProps.readBenefitCeiling()))
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            return false;
+        }
+                    
+        if (newItemExtraInfo.equals("favor"))
+        {
+            if (!Utils.setJSONString(instanceProps, "giant", quoinInstanceProps.readGiant()))
+            {
+                 printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                 return false;
+            }
+        }
+        
+        return true;
+    }
         
     public boolean saveItemChanges()
     {
@@ -703,21 +714,13 @@ class ItemInfo
                 }
                 //printToFile.printOutputLine(s);
                 printToFile.printDebugLine(this, s, 2);         
-                if (!configInfo.readDebugSaveOrigAndNewJSONs())
-                {
-                    // Now remove the file from the temporary directories.
-                    f = new File(workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json");
-                    if (f.exists())
-                    {
-                        f.delete();
-                    }
-                }
-                // nothing else to do for these missing/skipped items
+
+                // nothing else to do for these missing/skipped items - do not save
                 return true;
             }
             else
             {
-                 // Reset the quoin type if the x,y was not found - set to mystery, with the existing x,y
+                 // Reset the quoin type if the x,y was not found - set to mystery, with the original x,y
                 newItemX = origItemX;
                 newItemY = origItemY;
                 if (!configInfo.readChangeXYOnly())
@@ -734,6 +737,15 @@ class ItemInfo
                 // OK to then carry on in this function
             }
         } 
+        
+        // Just to double check - do not continue if the new x or y is still set to MISSING_COORDS as it would be disastrous for this to 
+        // end up in a new JSON file!
+        // This code should never be hit - hence treated as failure case
+        if (newItemX == MISSING_COORDS || newItemY == MISSING_COORDS)
+        {
+            printToFile.printDebugLine(this, "ERROR for " + itemTSID + "  which has new x,y set to " + newItemX + "," + newItemY, 3);
+            return false;
+        }
         
         // dump out all the y values nb 'max y' is the most negative
         // Only do this occasionally when want to correct the quoin images offset manually
@@ -894,26 +906,7 @@ class ItemInfo
             }
             //printToFile.printOutputLine(s);
             printToFile.printDebugLine(this, s, 2);
-        }
-        
-        // Now clean up the copies of the old/new JSONs if they exist
-        // If in debug mode then this step is skipped
-        if (!configInfo.readDebugSaveOrigAndNewJSONs())
-        {
-            // Now remove the file from the temporary directories.
-            f = new File(workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json");
-            if (f.exists())
-            {
-                f.delete();
-            }
-                
-            f = new File(workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + itemTSID + ".json");
-            if (f.exists())
-            {
-                f.delete();
-            }
-        }
-        
+        }        
         
         return true;
     }
@@ -1066,6 +1059,22 @@ class ItemInfo
         return true;
     }
     
+    public boolean resetAsMissingQuoin()
+    {
+        // This function is called if it is a quoin found to have the same x,y as another quoin
+        // This quoin will be reset as a 'missing' quoin and the changes saved as a JSON file
+        if (!itemClassTSID.equals("quoin"))
+        {
+            printToFile.printDebugLine(this, "Error - resetAsMissingQuoin should not be called for item " + itemClassTSID, 3);
+            return false;
+        }
+        itemFound = false;
+        newItemX = MISSING_COORDS;
+        newItemY = MISSING_COORDS;        
+        return true;
+        
+    }
+    
     // Simple functions to read/set variables
     public boolean readItemFinished()
     {
@@ -1200,7 +1209,6 @@ class ItemInfo
     public boolean readOkFlag()
     {
         return okFlag;
-    }  
-   
+    }     
 
 }

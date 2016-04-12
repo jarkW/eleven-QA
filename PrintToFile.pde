@@ -31,6 +31,7 @@ class PrintToFile {
                 println(e);
                 // Cannot write this error to debug file ...
                 println("Failed to open debug file");
+                displayMgr.showInfoMsg("Failed to open debug file");
                 return false;
             }
         }
@@ -51,6 +52,7 @@ class PrintToFile {
         {
             println(e);
             printToFile.printDebugLine(this, "Failed to open output file " + configInfo.readOutputFilename(), 3);
+            displayMgr.showInfoMsg("Failed to open output file " + configInfo.readOutputFilename());
             return false;
         }
 
@@ -78,6 +80,7 @@ class PrintToFile {
         if (outputFiles.length == 0)
         {
             println("Unexpected error setting up outputfile ", configInfo.readOutputFilename(), " - please remove all versions of the outputfile before retrying");
+            displayMgr.showInfoMsg("Unexpected error setting up outputfile " + configInfo.readOutputFilename() + " - please remove all versions of the outputfile before retrying");
             return false;
         }
 
@@ -93,6 +96,7 @@ class PrintToFile {
             if (!f.renameTo(destFile))
             {
                 println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
+                displayMgr.showInfoMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying");
                 return false;
             }
         }
@@ -101,10 +105,12 @@ class PrintToFile {
              // if any error occurs
              e.printStackTrace();  
              println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
+             displayMgr.showInfoMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying");
              return false;
         }
         
         println("Moving ", configInfo.readOutputFilename(), " to ", destFilename);
+        displayMgr.showInfoMsg("Moving " + configInfo.readOutputFilename() + " to " + destFilename);
         return true;
     }
  
@@ -198,8 +204,27 @@ class PrintToFile {
             
                 
         // Sort array by x co-ord so listing items from L to R
+        // This will also flag up a warning if any items end up with the 
+        // same x,y - which can happen for closely packed quoins
+        
+        // By doing this check earlier in streetInfo - can then reset the quoin back to mystery
+        // But then need to redo the sort .... because quoins will now be out of order
         Collections.sort(itemResults);
-                
+        /*
+        Check that don't get any error reported in the next loop, if already done the first sort, corrected the fields, written out the file and then continued on into this function.
+         Now the resort should just work with no duplicate x,y and the reverted quoins should appear as mystery with original x,y
+        
+        // IS THERE A WAY OF DOING THIS CHECK EARLIER ON - SO CAN RESET THE QUOINS TO MYSTERY/ORIGX, ORIGY????
+        for (int j = 0; j < itemResults.size(); j++)
+        {
+            if (itemResults.get(j).revertQuoinChanges)
+            {
+                printToFile.printOutputLine(" Quoin " + itemResults.get(j).readItemTSID() + " needs resetting back to original x,y " + itemResults.get(j).readOrigItemX() + "," + itemResults.get(j).readOrigItemY());
+                NEED to reset the x,y here? And set to mystery and mark as "MISSING" so prints out correctly below. In which case not need to report error message in SummaryChanges class
+                And also need load up file from NEWJSONs, reset the x,y, class, type etc. and then resave.
+            }
+        }
+         */       
         int missingCount = 0;
         int skippedCount = 0;
         int quoinEnergy = 0;
@@ -213,7 +238,7 @@ class PrintToFile {
         for (int i = 0; i < itemResults.size(); i++)
         {
             s = "";
-            if (itemResults.get(i).readChangedJSON())
+            if (itemResults.get(i).itemInfo.readSaveChangedJSONfile())
             {
                 // Used to clearly show if JSON has been updated
                 s = "** ";
@@ -222,51 +247,51 @@ class PrintToFile {
             switch (itemResults.get(i).readResult())
             {
                 case SummaryChanges.SKIPPED:
-                    s = s + "SKIPPED " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
-                    s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
+                    s = s + "SKIPPED " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                    s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo());
                     skippedCount++;
                     break;    
                             
                 case SummaryChanges.MISSING:
-                    if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "MISSING quoin " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
-                        s = s + "(" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                        s = s + "MISSING quoin " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                         s = s + " defaulted to (mystery/placement tester)";
                     }
                     else
                     {
-                         s = s + "MISSING " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
-                         s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
+                         s = s + "MISSING " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                         s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo());
                     }
                     missingCount++;
                     break; 
                             
                 case SummaryChanges.COORDS_ONLY:
-                    s = s + "Changed co-ords " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
-                    if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                    s = s + "Changed co-ords " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo());
                     }
                     break;
                          
                 case SummaryChanges.VARIANT_ONLY:
-                    s = s + "Changed variant " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
-                    if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                    s = s + "Changed variant " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).readNewItemExtraInfo() + "/" + itemResults.get(i).readNewItemClassName() + ")";
-                        s = s + " (was " + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
+                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemExtraInfo());
-                        if (itemResults.get(i).readOrigItemExtraInfo().length() > 0)
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemExtraInfo());
+                        if (itemResults.get(i).itemInfo.readOrigItemExtraInfo().length() > 0)
                         {
-                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
+                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo()) + ")";
                         }
                         else
                         {
@@ -276,18 +301,18 @@ class PrintToFile {
                     break;
                             
                 case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
-                    s = s + "Changed variant & co-ords " + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
-                    if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                    s = s + "Changed variant & co-ords " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).readNewItemExtraInfo() + "/" + itemResults.get(i).readNewItemClassName() + ")";
-                        s = s + " (was " + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
+                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).readNewItemExtraInfo());
-                        if (itemResults.get(i).readOrigItemExtraInfo().length() > 0)
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemExtraInfo());
+                        if (itemResults.get(i).itemInfo.readOrigItemExtraInfo().length() > 0)
                         {
-                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo()) + ")";
+                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo()) + ")";
                         }
                         else
                         {
@@ -303,20 +328,20 @@ class PrintToFile {
                         // This handles the case of e.g. shrine where x,y unchanged and just inserted the missing dir field
                         // Had to fake up the missing variant field in order to correctly handle images
                         s = s + "Changed variant ";
-                        s = s + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                        s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                     }
                     else
                     {*/
                         s = s + "Unchanged ";
-                        s = s + itemResults.get(i).readItemTSID() + ": " + itemResults.get(i).readItemClassTSID();
+                        s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                     //}
-                    if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).readOrigItemExtraInfo() + "/" + itemResults.get(i).readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).readOrigItemExtraInfo());
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo());
                     }
                     break;
                             
@@ -329,14 +354,14 @@ class PrintToFile {
             s = s + " at x,y " + itemResults.get(i).readItemX() + "," + itemResults.get(i).readItemY();
             if (itemResults.get(i).readResult() == SummaryChanges.COORDS_ONLY || itemResults.get(i).readResult() == SummaryChanges.VARIANT_AND_COORDS_CHANGED)
             {
-                s = s + " (was " + itemResults.get(i).readOrigItemX() + "," +  itemResults.get(i).readOrigItemY() + ")"; 
+                s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemX() + "," +  itemResults.get(i).itemInfo.readOrigItemY() + ")"; 
             }
             
             printOutputLine(s);
 
-            if (itemResults.get(i).readItemClassTSID().equals("quoin"))
+            if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
             {
-                switch (itemResults.get(i).readNewItemExtraInfo())
+                switch (itemResults.get(i).itemInfo.readNewItemExtraInfo())
                 {
                     case "xp":
                         quoinXP++;
@@ -367,7 +392,7 @@ class PrintToFile {
                         break;
                         
                     default:
-                        printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).readNewItemExtraInfo(), 3);
+                        printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemExtraInfo(), 3);
                         failNow = true;
                         return false;
                 }
