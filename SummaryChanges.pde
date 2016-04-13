@@ -89,9 +89,18 @@ class SummaryChanges implements Comparable
         }
         else
         {
+            // If the original item was a mystery quoin, then this is an unchanged item rather than missing 
+            // Means the tool has been run twice - so picking up a mystery quoin second time around
+            if (itemInfo.readItemClassTSID().equals("quoin") && itemInfo.readOrigItemExtraInfo().equals("mystery"))
+            {
+                result = UNCHANGED;
+            }
+            else
+            {
+                result = MISSING;
+            }
             itemX = itemInfo.readOrigItemX();
             itemY = itemInfo.readOrigItemY();
-            result = MISSING;
         }
         
     }
@@ -133,26 +142,31 @@ class SummaryChanges implements Comparable
                 
                 if (streetInfo.readNumberTimesResultsSortedSoFar() > 0)
                 {
-                    info = info + " are clustered together at x,y " + X1 + "," + Y1 + " and will need to be manually configured";
+                    info = info + " appear to be clustered together at x,y " + X1 + "," + Y1 + " and so will need to be manually configured";
                     printToFile.printDebugLine(this, info, 3);
                     printToFile.printOutputLine(info);
                 }
                 else
                 {
+                    // If either/both items are quoins then mark them for reprocessing - only done for first sorting
+                    // As will never get two non-quoin items at the same x,y, is OK to only ever assume the quoins are incorrect
+                    String quoinInfo = "For reference:";
+                    if (itemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        misplacedQuoin = true;
+                        quoinInfo = quoinInfo + " " + itemInfo.readItemTSID() + " would have been of type " + itemInfo.readNewItemExtraInfo();
+                    }
+                    if (n.itemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        n.misplacedQuoin = true;
+                        quoinInfo = quoinInfo + " " + n.itemInfo.readItemTSID() + " would have been of type " + n.itemInfo.readNewItemExtraInfo();
+                    }
                     // Don't print anything to the user output file for the first sorting of the results
                     info = info + " have been set to the same x,y " + X1 + "," + Y1 + " - if one/both is a quoin then then it will be redefined as missing";
                     printToFile.printDebugLine(this, info, 3);
+                    printToFile.printDebugLine(this, quoinInfo, 3);
+                    
                 }               
-                
-                // If either/both items are quoins then mark them for reprocessing - although this will only be acted  on
-                if (itemInfo.readItemClassTSID().equals("quoin"))
-                {
-                    misplacedQuoin = true;
-                }
-                if (n.itemInfo.readItemClassTSID().equals("quoin"))
-                {
-                    n.misplacedQuoin = true;
-                }
                 return 0;
             }
             else if (Y1 > Y2)

@@ -7,7 +7,8 @@ class ConfigInfo {
     String persdataPath;
     String streetSnapPath;
     boolean changeXYOnly;
-    int searchRadius;
+    int quoinSearchRadius;
+    int nonQuoinSearchRadius;
     String serverName;
     String serverUsername;
     String serverPassword;
@@ -241,12 +242,21 @@ class ConfigInfo {
             return false;
         }
         
-        searchRadius = Utils.readJSONInt(json, "search_radius", true);
+        nonQuoinSearchRadius = Utils.readJSONInt(json, "non_quoin_search_radius", true);
         if (!Utils.readOkFlag())
         {
             println(Utils.readErrMsg());
-            println("Failed to read search_radius in config.json file");
-            displayMgr.showInfoMsg("Failed to read search_radius in config.json file");
+            println("Failed to read non_quoin_search_radius in config.json file");
+            displayMgr.showInfoMsg("Failed to read non_quoin_search_radius in config.json file");
+            return false;
+        }
+        
+        quoinSearchRadius = Utils.readJSONInt(json, "quoin_search_radius", true);
+        if (!Utils.readOkFlag())
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read quoin_search_radius in config.json file");
+            displayMgr.showInfoMsg("Failed to read quoin_search_radius in config.json file");
             return false;
         }
         
@@ -370,9 +380,14 @@ class ConfigInfo {
         return outputFile;
     } 
     
-    public int readSearchRadius()
+    public int readNonQuoinSearchRadius()
     {
-        return searchRadius;
+        return nonQuoinSearchRadius;
+    }
+    
+    public int readQuoinSearchRadius()
+    {
+        return quoinSearchRadius;
     }
     
     public String readServerName()

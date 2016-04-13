@@ -831,7 +831,7 @@ class StreetInfo
                 {
                     
                     // Now save the item changes
-                    if (!itemInfo.get(i).saveItemChanges())
+                    if (!itemInfo.get(i).saveItemChanges(false))
                     {
                         failNow = true;
                         return false;
@@ -861,7 +861,7 @@ class StreetInfo
                         }
                         
                         // Now save the new mystery quoin JSON file
-                        if (!itemResults.get(i-1).readItemInfo().saveItemChanges())
+                        if (!itemResults.get(i-1).readItemInfo().saveItemChanges(true))
                         {
                             failNow = true;
                             return false;

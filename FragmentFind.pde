@@ -98,7 +98,8 @@ class FragmentFind
         
         // For most items, the search will only be done once so the starting point is the JSON x,y. And the search box will be the default
         // 20x20 size. But for quoins/QQ the search is done on all streets even if a match is found - to find the y variation. In this case
-        // is more efficient to start the search with the latest x,y co-ords.         
+        // is more efficient to start the search with the latest x,y co-ords.  
+
         if ((thisItemInfo.readItemClassTSID().equals("quoin") || thisItemInfo.readItemClassTSID().equals("marker_qurazy")) && thisItemInfo.readNewItemX() != MISSING_COORDS)
         {
             // Already have the co-ordinates for a matching quoin/QQ - so use those to start this search
@@ -106,6 +107,7 @@ class FragmentFind
             startItemY = thisItemInfo.readNewItemY();
             searchBoxWidth = NARROW_SEARCH_WIDTH_BOX;
             searchBoxHeight = DEF_SEARCH_BOX;
+            if (thisItemInfo.readItemClassTSID().equals("quoin"))
             printToFile.printDebugLine(this, "Continuing search for quoin/QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + startItemX + "," + startItemY, 1);
         }
         else
@@ -121,11 +123,18 @@ class FragmentFind
         spiralSearch = null;
         System.gc();
         int adjustment = 0;
+        int searchRadius = configInfo.readNonQuoinSearchRadius();
         if (thisItemInfo.readItemClassTSID().equals("npc_sloth"))
         {
             // extend the search area for sloths - otherwise branches difficult to find
             adjustment = SLOTH_ADJUSTMENT;
         }
+        else if (thisItemInfo.readItemClassTSID().equals("quoin"))
+        {
+            // reset the search radius to the lower value for quoins - should help differentiate closely clustered quoins
+            searchRadius = configInfo.readQuoinSearchRadius();
+        }
+        
         spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
             streetSnapImage.readPNGImage(), 
             thisItemInfo.readItemClassTSID(),
@@ -133,7 +142,7 @@ class FragmentFind
             startItemY, 
             itemImages.get(itemImageBeingUsed).readFragOffsetX(),
             itemImages.get(itemImageBeingUsed).readFragOffsetY(),
-            searchBoxWidth, searchBoxHeight, adjustment);
+            searchBoxWidth, searchBoxHeight, searchRadius, adjustment);
 
         if (!spiralSearch.readOkFlag()) 
         {
@@ -210,10 +219,16 @@ class FragmentFind
                     spiralSearch = null; 
                     System.gc();
                     int adjustment = 0;
+                    int searchRadius = configInfo.readNonQuoinSearchRadius();
                     if (thisItemInfo.readItemClassTSID().equals("npc_sloth"))
                     {
                         // extend the search area for sloths - otherwise branches difficult to find
                         adjustment = SLOTH_ADJUSTMENT;
+                    }
+                    else if (thisItemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        // reset the search radius to the lower value for quoins - should help differentiate closely clustered quoins
+                        searchRadius = configInfo.readQuoinSearchRadius();
                     }
                     spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
                         streetSnapImage.readPNGImage(), 
@@ -222,7 +237,7 @@ class FragmentFind
                         startItemY,
                         itemImages.get(itemImageBeingUsed).readFragOffsetX(),
                         itemImages.get(itemImageBeingUsed).readFragOffsetY(),
-                        searchBoxWidth, searchBoxHeight, adjustment);                    
+                        searchBoxWidth, searchBoxHeight, searchRadius, adjustment);                    
 
                     if (!spiralSearch.readOkFlag()) 
                     {

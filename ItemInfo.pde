@@ -481,12 +481,14 @@ class ItemInfo
                 }
 
                 // Now need to set up the type and class_name field in the JSON structure
+                // As we won't know until the instance props have been populated as to whether there are changes
+                // to be saved, then setQuoinInstanceProps is responsible for setting the saveChangedJSONFile flag
                 if (!setQuoinInstanceProps(instanceProps))
                 {
                     return false;
-                }                  
-                break;
-                    
+                }
+                return true;
+             
             case "wood_tree":
             case "npc_mailbox":
             case "dirt_pile":
@@ -677,15 +679,15 @@ class ItemInfo
                  return false;
             }
         }
-        
+        // Show changes made to instanceProps that need to be changed
+        saveChangedJSONfile = true;
         return true;
     }
         
-    public boolean saveItemChanges()
+    public boolean saveItemChanges(boolean secondTimeThrough)
     {
         // Called once all the street snaps have been searched for this item
         String s = "";
-        File f;
 
         // Need to handle the missing items first
         if (newItemX == MISSING_COORDS)
@@ -723,6 +725,22 @@ class ItemInfo
                  // Reset the quoin type if the x,y was not found - set to mystery, with the original x,y
                 newItemX = origItemX;
                 newItemY = origItemY;
+                // As might be coming through this a second time after marking a quoin as missing because of duplication of x,y finding, need to write the new x,y to the JSON file
+                if (secondTimeThrough)
+                {
+                    if (!Utils.setJSONInt(itemJSON, "x", newItemX))
+                    {
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    if (!Utils.setJSONInt(itemJSON, "y", newItemY))
+                    {
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    saveChangedJSONfile = true;
+                }
+                
                 if (!configInfo.readChangeXYOnly())
                 {
                     printToFile.printDebugLine(this, "Set missing quoin " + itemTSID + " to be type = mystery", 1);
@@ -733,8 +751,8 @@ class ItemInfo
                     // Do not reset to mystery, leave as is
                     newItemExtraInfo = origItemExtraInfo;
                 }
-                
                 // OK to then carry on in this function
+
             }
         } 
         
@@ -746,7 +764,7 @@ class ItemInfo
             printToFile.printDebugLine(this, "ERROR for " + itemTSID + "  which has new x,y set to " + newItemX + "," + newItemY, 3);
             return false;
         }
-        
+                       
         // dump out all the y values nb 'max y' is the most negative
         // Only do this occasionally when want to correct the quoin images offset manually
         // as have to allow for bounce.
@@ -788,6 +806,7 @@ class ItemInfo
         // Sets up the special fields e.g. 'dir' or 'type' fields based on ExtraInfo field
         // Only do this if not doing an x,y_only kind of search - which leaves the special fields
         // as originally set
+        // Sets the saveChangedJSONFile flag as needed
         if (!configInfo.readChangeXYOnly())
         {
             if (!setItemInfoInJSON())
@@ -795,7 +814,7 @@ class ItemInfo
                 return false;
             }
         }
-
+        
         // Note that the saveChangedJSONFile flag may have been set earlier when the JSON file was read in and dir/state fields
         // were found to be missing, and so added to the item JSON in advance of the searches happening
         if (saveChangedJSONfile)
@@ -855,8 +874,7 @@ class ItemInfo
             }
 
             //printToFile.printOutputLine(s);
-            printToFile.printDebugLine(this, s, 2);
-                
+            printToFile.printDebugLine(this, s, 2);   
             // Write the JSON file out to temporary place before checking that the new file length = old one plus calculated diff
             try
             {
@@ -931,7 +949,7 @@ class ItemInfo
                 // Item was successfully found on the street
                 if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy")) && newItemX != MISSING_COORDS)
                 {                   
-                    // This is the 2nd time or more that we've found this quoin/QQ
+                    // This is the 2nd time or more that we've found this quoin/QQ - because only save the newItemX in the next few lines, so if not missing_coords, then been here already
                     // Only save the Y-cord if lower than the one we already have i.e. less negative
                     if (collectItemYValues)
                     {

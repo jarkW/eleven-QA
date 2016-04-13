@@ -68,7 +68,7 @@ class SpiralSearch
     //final float GOOD_ENOUGH_QQ_TOTAL_RGB = 3 * GOOD_ENOUGH_TOTAL_RGB;
     final float GOOD_ENOUGH_QQ_TOTAL_RGB = 5 * GOOD_ENOUGH_TOTAL_RGB;
 
-    public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int itemX, int itemY, int offsetX, int offsetY, int widthBox, int heightBox, int searchAdjustment)
+    public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int itemX, int itemY, int offsetX, int offsetY, int widthBox, int heightBox, int searchRadius, int searchAdjustment)
     {
         okFlag = true;
         
@@ -102,8 +102,8 @@ class SpiralSearch
         // Set the search width to whatever was specified in the config.json file
         // For some items e.g. sloths, will manually extend the search radius as the branches have been
         // very poorly configured so far
-        widthSearchBox = widthBox + configInfo.readSearchRadius() + searchAdjustment;
-        heightSearchBox = heightBox + configInfo.readSearchRadius()+ searchAdjustment;
+        widthSearchBox = widthBox + searchRadius + searchAdjustment;
+        heightSearchBox = heightBox + searchRadius+ searchAdjustment;
         
          // convert the searchbox to be even numbers
          // deal with odd sizes of box - by adding 1 before do divide so box

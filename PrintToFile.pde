@@ -190,7 +190,7 @@ class PrintToFile {
         }
         else
         {
-            printOutputLine("DEBUG No JSON filesx being written to persdata");
+            printOutputLine("DEBUG No JSON files being written to persdata");
         }
         
         if (!usingBlackWhiteComparison)
