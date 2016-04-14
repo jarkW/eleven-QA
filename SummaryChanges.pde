@@ -117,10 +117,91 @@ class SummaryChanges implements Comparable
             int Y2 = n.itemY;
             if (Y1 == Y2)
             {
+                // Closely clustered quoins can sometimes be incorrectly deduced - so that two or more can end up with the same x,y values. 
+                // So look at both items - if it is a quoin/non-quoin combination then set the quoin to be missing (not sure this scenario will happen
+                // but just in case.
+                // But if two quoins have the same x,y, then measure the distance between the original x,y for both quoins and this deduced x,y - and set
+                // the quoin which is furthest away as missing - assume the quoin which was already nearest the deduced x,y is the correct one.
+                // However it is possible that e.g. in a large cluster could have 3 or more with the same co-ordinates, so will need to keep repeating this
+                // sorting process until all co-located items have been resolved. E.g. first sort results in  A, B and C having the same co-ordinates which 
+                // could be detected as A-B and B-C being compared. If B is the actual quoin, then A is reset to original x,y. But B-C still have the same
+                // co-ordinates. 
+                if (streetInfo.readNumberTimesResultsSortedSoFar() >= StreetInfo.MAX_SORT_COUNT)
+                {
+                    // We've exceeded the sanity count - to prevent any infinite looping - so set the flag for any quoins which are present
+                    if (itemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        misplacedQuoin = true;
+                        printToFile.printDebugLine(this, "Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured", 3);
+                        printToFile.printOutputLine("Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured");
+                    }
+                    if (n.itemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        n.misplacedQuoin = true;
+                        printToFile.printDebugLine(this, "Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured", 3);
+                        printToFile.printOutputLine("Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured");
+                    }
+                }
+                else
+                {
+                    // If both items are quoins then reset the one furthest away
+                    if (itemInfo.readItemClassTSID().equals("quoin") && (n.itemInfo.readItemClassTSID().equals("quoin")))
+                    {
+                        float quoin1Distance = Utils.distanceBetweenX1Y1_X2Y2(itemInfo.readOrigItemX(), itemInfo.readOrigItemY(), X1, Y1);
+                        float quoin2Distance = Utils.distanceBetweenX1Y1_X2Y2(n.itemInfo.readOrigItemX(), n.itemInfo.readOrigItemY(), X1, Y1);
+
+                        if (quoin1Distance < quoin2Distance)
+                        {
+                            // As the first quoin was originally nearer X1,Y1, then mark the second quoin as missing
+                            n.misplacedQuoin = true;
+                            printToFile.printDebugLine(this, "Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured", 3);
+                            printToFile.printOutputLine("Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured");
+                        }
+                        else
+                        {
+                            // Treat the second quoin as being at X1, Y1 - and mark the first quoin as missing
+                            misplacedQuoin = true;
+                            printToFile.printDebugLine(this, "Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured", 3);
+                            printToFile.printOutputLine("Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured");
+                        }
+                    }
+                    else
+                    {
+                        // Means we have an overlap between an item/quoin (rare) - so just reset the quoin
+                        if (itemInfo.readItemClassTSID().equals("quoin"))
+                        {
+                            misplacedQuoin = true;
+                            printToFile.printDebugLine(this, "Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured", 3);
+                            printToFile.printOutputLine("Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured");
+                        }
+                    
+                        if (n.itemInfo.readItemClassTSID().equals("quoin"))
+                        {
+                            n.misplacedQuoin = true;
+                            printToFile.printDebugLine(this, "Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured", 3);
+                            printToFile.printOutputLine("Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured");
+                        }
+                        
+                    }
+                }
+                
+                
+                /*
+                // 1st ATTEMPT
+                // REDO THIS TEXT
                 // Should never happen - but can happen to closely clustered quoins. So mark these for resetting back to orig x,y/mystery after giving the appropriate warning message
                 // The processing will done after the first time the items have been sorted on x,y - that way if there are 3 or more items clustered together, it won't matter if this
                 // flag is set twice, the check will still be valid for whether x1,y1 = x2,y2 or not
                 // Only report the warning in the user output file if this matching of x,y is found on the second sorting of items - should not happen
+                
+                // Let the closest one win - and set the further one to be reset as mystery quoin
+                // Might also do this comparison several times until there are no colocated items any more - might have A-B and B-C co-located. If B is the nearest one then A->mystery. But B-C are still colocated. Need C-> mystery
+                // In which case there should be a loop counter - and at max, just set everything to mystery/original so that the colocation stops completely
+                /* Define your two points. Point 1 at (x1, y1) and Point 2 at (x2, y2).
+
+ 
+    
+                
                 String info;
                 if (streetInfo.readNumberTimesResultsSortedSoFar() > 0)
                 {
@@ -166,7 +247,8 @@ class SummaryChanges implements Comparable
                     printToFile.printDebugLine(this, info, 3);
                     printToFile.printDebugLine(this, quoinInfo, 3);
                     
-                }               
+                }   
+                */
                 return 0;
             }
             else if (Y1 > Y2)

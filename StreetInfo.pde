@@ -21,6 +21,9 @@ class StreetInfo
     // List of item results - so can sort e.g. on skipped items
     ArrayList<SummaryChanges> itemResults;
     int numberTimesResultsSortedSoFar;
+    // Need this so don't loop infinitely if things go wrong
+    public final static int MAX_SORT_COUNT = 10;
+    
     
     // Data read in from each I* file
     int itemBeingProcessed;
@@ -268,6 +271,12 @@ class StreetInfo
     {
         // Retrieves the list of item files from the L* file - and if they exist in the NewJSONs dir, 
         // then uploads/copies to persdata and moves the file to the UploadedJSONs dir
+        
+        if (!configInfo.readWriteJSONsToPersdata())
+        {
+            // Do not want to write stuff to persdata - so just return
+            return true;
+        }
                
         String locFileName = workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar+ streetTSID + ".json";
      
@@ -839,45 +848,20 @@ class StreetInfo
                     // Add info to the results array for subsequent printing out
                     itemResults.add(new SummaryChanges(itemInfo.get(i)));
                 }
-                
-                // Do an initial sort to find any items which have duplicate x,y
-                sortResultsByXY(itemResults);
-                numberTimesResultsSortedSoFar = 1;
-
-                // Now go through the results in reverse order - if any indicate that a quoin needs to be reset to missing
-                // then delete the entry from the itemResults array, redo the item JSON, save it and then recreate the new 
-                // itemResults entry with this mystery quoin.
-                // Doing it in reverse order means that entries can be safely deleted as process the array
-                for (int i = itemResults.size(); i > 0; i--)
+                // Write output header info for this street so that any warnings produced when cleaning up duplicate quoin locations
+                // are recorded below the street title
+                printToFile.printSummaryHeader();
+                                
+                // Need to sort this results array until there are no duplicate x,y entries
+                if (!resolveAllItemsAtSameCoOrds())
                 {
-                    if (itemResults.get(i-1).readMisplacedQuoin())
-                    {
-                        // Mark the quoin as missing before saving the new JSON file
-                        if (!itemResults.get(i-1).readItemInfo().resetAsMissingQuoin())
-                        {
-                            // Should never happen
-                            failNow = true;
-                            return false;
-                        }
-                        
-                        // Now save the new mystery quoin JSON file
-                        if (!itemResults.get(i-1).readItemInfo().saveItemChanges(true))
-                        {
-                            failNow = true;
-                            return false;
-                        }
-                        
-                        // OK to add the new entry - will not interfere with deleting the 'bad' entry
-                        itemResults.add(new SummaryChanges(itemResults.get(i-1).readItemInfo()));
-                        
-                        // Now delete this bad array entry 
-                        itemResults.remove(i-1);
-                    }
+                   failNow = true;
+                   return false;
                 }
-                
+ 
                 // Now print out the summary array
                 // The second sorting of item results shouldn't throw up any duplicate x,y - if it happens they'll just be reported as warnings
-                if (! printToFile.printSummary(itemResults))
+                if (! printToFile.printSummaryData(itemResults))
                 {
                     failNow = true;
                     return false;
@@ -928,6 +912,57 @@ class StreetInfo
                 printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " ON STREET SNAP " + streetSnapBeingUsed, 1);
             }
         }
+        return true;
+    }
+    
+    boolean resolveAllItemsAtSameCoOrds()
+    {
+        // Loops through until there are no entries left which have duplicate x,y - or until exceed boundary condition 
+        boolean noDuplicatesFound = false;
+        for (numberTimesResultsSortedSoFar = 1; numberTimesResultsSortedSoFar <= MAX_SORT_COUNT && !noDuplicatesFound; numberTimesResultsSortedSoFar++)
+        {
+            // The sort method includes marking some quoins as missing (sets misPlacedQuoin flag) if found to have the same x,y as another
+            sortResultsByXY(itemResults);
+
+            // Now go through the results in reverse order - if any indicate that a quoin needs to be reset to missing
+            // then delete the entry from the itemResults array, redo the item JSON, save it and then recreate the new 
+            // itemResults entry with this mystery quoin.
+            // Doing it in reverse order means that entries can be safely deleted as process the array
+            boolean checkForDuplicates = false;
+            for (int i = itemResults.size(); i > 0; i--)
+            {
+                if (itemResults.get(i-1).readMisplacedQuoin())
+                {
+                    // Mark the quoin as missing before saving the new JSON file
+                    if (!itemResults.get(i-1).readItemInfo().resetAsMissingQuoin())
+                    {
+                        // Should never happen
+                        return false;
+                    }
+                       
+                    // Now save the new mystery quoin JSON file
+                    if (!itemResults.get(i-1).readItemInfo().saveItemChanges(true))
+                    {
+                        return false;
+                    }
+                     
+                    // OK to add the new entry - will not interfere with deleting the 'bad' entry
+                    itemResults.add(new SummaryChanges(itemResults.get(i-1).readItemInfo()));
+                        
+                    // Now delete this bad array entry 
+                    itemResults.remove(i-1);
+                    
+                    // Show that a duplicate was found this time around
+                    checkForDuplicates = true;
+                }
+            }
+            if (!checkForDuplicates)
+            {
+                // No duplicates found this time through
+                noDuplicatesFound = true;
+            }
+        }
+        
         return true;
     }
     

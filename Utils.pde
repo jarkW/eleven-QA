@@ -357,6 +357,11 @@ static class Utils
         return true;
     }
     
-
+    static public float distanceBetweenX1Y1_X2Y2(int x1, int y1, int x2, int y2)
+    {
+         int xd = x1 - x2;
+         int yd = y1 - y2;
+         return (sqrt((xd * xd) + (yd * yd)));
+    }
 
 }

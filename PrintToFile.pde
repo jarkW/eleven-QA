@@ -169,9 +169,8 @@ class PrintToFile {
         infoOutput.flush();
     }
     
-    public boolean printSummary(ArrayList<SummaryChanges> itemResults)
+    public void printSummaryHeader()
     {
-        // Now print out the summary array
         String s = "\nResults for " + streetInfo.readStreetName() + " (" + streetInfo.readStreetTSID() + ")";
         printOutputLine(s);
         
@@ -201,30 +200,17 @@ class PrintToFile {
         {
             printOutputLine("DEBUG Converting images to black/white for compare");
         }
-            
-                
+    }
+    
+    public boolean printSummaryData(ArrayList<SummaryChanges> itemResults)
+    {
+        String s;
+        // Now print out the summary array
+  
         // Sort array by x co-ord so listing items from L to R
-        // This will also flag up a warning if any items end up with the 
-        // same x,y - which can happen for closely packed quoins
-        
-        // By doing this check earlier in streetInfo - can then reset the quoin back to mystery
-        // But then need to redo the sort .... because quoins will now be out of order
+        // There won't be any colocated items because these have already been resolved
         Collections.sort(itemResults);
-        /*
-        Check that don't get any error reported in the next loop, if already done the first sort, corrected the fields, written out the file and then continued on into this function.
-         Now the resort should just work with no duplicate x,y and the reverted quoins should appear as mystery with original x,y
-        
-        // IS THERE A WAY OF DOING THIS CHECK EARLIER ON - SO CAN RESET THE QUOINS TO MYSTERY/ORIGX, ORIGY????
-        for (int j = 0; j < itemResults.size(); j++)
-        {
-            if (itemResults.get(j).revertQuoinChanges)
-            {
-                printToFile.printOutputLine(" Quoin " + itemResults.get(j).readItemTSID() + " needs resetting back to original x,y " + itemResults.get(j).readOrigItemX() + "," + itemResults.get(j).readOrigItemY());
-                NEED to reset the x,y here? And set to mystery and mark as "MISSING" so prints out correctly below. In which case not need to report error message in SummaryChanges class
-                And also need load up file from NEWJSONs, reset the x,y, class, type etc. and then resave.
-            }
-        }
-         */       
+       
         int missingCount = 0;
         int skippedCount = 0;
         int quoinEnergy = 0;

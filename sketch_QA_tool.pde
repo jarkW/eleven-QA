@@ -712,6 +712,14 @@ void doExitCleanUp()
     // Give warning if NewJSONs directory not empty
     String dirName = workingDir + File.separatorChar + "NewJSONs";
     File myDir = new File(dirName);
+    
+    if (!configInfo.readWriteJSONsToPersdata())
+    {
+        // As files not uploaded to persdata, this directory will be full
+        // which is not an error state, so just return.
+        return;
+    }
+    
     if (myDir.exists())
     {
         // No point reporting error if it does not exist. So only continue if the directory if found
