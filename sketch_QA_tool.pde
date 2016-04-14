@@ -41,13 +41,6 @@ import sftp.*;
  /// Could also do this in red. May be introduce an reportError vs reportInfo function - one in red, one in black, but can use the same bottom line
  // move the street name/street up by a row so keep that if relevant e.g. when uploading files to server
  
- // BUG - if have quoin search radius set to 50 for Saplow Tweeds - run twice (writing to persdata) - the number of mystery quoins increases second time
- // around. Why do the quoins located correctly first time around, get lost when tool is run again? Unless it is some kind of diagonal creep? Might be fixed
- // when fix the next bug
- 
- // BIG BUG When looking for quoins would be worth searching all quoin images simultaneously and then stopping when one of them has a match - that way should be able to locate
- // the nearest quoin to the original x,y. Might fix bug above for closely connected quoins
-
  // To do - handle closure of screen better - if got items handled individually, does closing the x mean the sftp stops? If so, then 
  // don't need to add anything in. But if not, then see https://forum.processing.org/one/topic/run-code-on-exit.html (ericsoco SHUTDOWN HOOK)
  // which gets run however you exit the program.

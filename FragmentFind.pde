@@ -22,6 +22,8 @@ class FragmentFind
     String newItemExtraInfo;
     boolean itemFound;
     
+    ArrayList<QuoinMatchData> quoinMatches;
+    
     int itemImageBeingUsed;
     //int streetImageBeingUsed;
     
@@ -34,6 +36,8 @@ class FragmentFind
     {
         //printToFile.printDebugLine(this, "Create New FragmentFind", 1);
         okFlag = true;
+        
+        quoinMatches = new ArrayList<QuoinMatchData>();
         
         searchDone = false;
         //streetImageBeingUsed = 0;
@@ -167,24 +171,39 @@ class FragmentFind
         
         // Carry out the search for the item and depending on the result might then move on to look at the next image
         printToFile.printDebugLine(this, "Search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " using item image " + itemImages.get(itemImageBeingUsed).readPNGImageName() , 2);
-        if (spiralSearch.searchForItem())
-        {   
-            // Item was found so save the new x,y and other information
-            itemFound = true;
-            // Match has been found - might be perfect or good enough - so save the information            
-            newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
-            newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
-            
-            // As matched item image is the current one, extract the extra information from the item image filename
-            newItemExtraInfo = extractItemInfoFromItemImageFilename();
-            debugInfo = spiralSearch.debugRGBInfo(); 
-            searchDone = true;
-            printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY, 2);
-
-        }
-        else
+        
+        boolean searchSuccess = spiralSearch.searchForItem();
+        if (searchSuccess)
         {
-            // Item was not found on this image, so move on to the next image to search
+            if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS)
+            {
+                // have yet to scan through all images to find the best/closest image 
+                // So save this information before dropping down below to search with the next image available           
+                quoinMatches.add(new QuoinMatchData(spiralSearch.convertToJSONX(spiralSearch.readFoundStepX()),
+                                 spiralSearch.convertToJSONY(spiralSearch.readFoundStepY()),
+                                 extractItemInfoFromItemImageFilename()));
+                debugInfo = spiralSearch.debugRGBInfo(); 
+                printToFile.printDebugLine(this, "searchForFragment - full quoin search found " + extractItemInfoFromItemImageFilename() + " found at x,y " + newItemX + "," + newItemY, 2);
+            }
+            else
+            {
+                // Valid found item so save the new x,y and other information
+                itemFound = true;
+                // Match has been found - might be perfect or good enough - so save the information            
+                newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
+                newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
+            
+                // As matched item image is the current one, extract the extra information from the item image filename
+                newItemExtraInfo = extractItemInfoFromItemImageFilename();
+                debugInfo = spiralSearch.debugRGBInfo(); 
+                searchDone = true;
+                printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY, 2);
+            }
+        }
+        
+        if (!searchDone)
+        {
+            // Item was not found on this image, or still searching through entire set of quoins before deciding on best find, so move on to the next image to search
             // However no point doing this in the case where only looking to update x,y values for quoins (and so won't change their type, are using
             // the JSON as the expected type), or if the quoin has been previously found on a street snap (and so we know what to look for from then onwards).
             if (thisItemInfo.readItemClassTSID().equals("quoin") && (configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != MISSING_COORDS))
@@ -207,6 +226,13 @@ class FragmentFind
                     // Have searched using all the item images
                     // This will include the case of the QQ - as only has one image (but will be searched for as special case on next street snap)
                     printToFile.printDebugLine(this, "searchForFragment - no more images to search", 2);
+                    
+                    // In the case of quoins - need to save the details of the image that was closest to the original co-ordinates
+                    if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS)
+                    {
+                        saveClosestQuoin();
+                    }
+                    
                     searchDone = true;
                 }
                 else
@@ -297,6 +323,49 @@ class FragmentFind
         printToFile.printDebugLine(this, " image name "  + imageName + " for item class tsid " + thisItemInfo.itemClassTSID + " returns variant + " + extraInfo, 1);
         return extraInfo;
     }
+    
+    void saveClosestQuoin()
+    {
+        // Go through the array of results and save the new x,y and type field with the quoin found nearest to the original x,y
+        if (quoinMatches.size() == 0)
+        {
+            // Nothing was found that matched - so mark as not found
+            itemFound = false;        
+            newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
+            newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
+            newItemExtraInfo = "";
+            printToFile.printDebugLine(this, "No quoin images matched", 2);
+        }
+        else
+        {
+            // Need to loop through all the saved entries, saving the details of the nearest image found
+            // So first of all save the first entry, and then go through the remaining ones, if any
+            int i = 0;
+            float nearestQuoinDist = quoinMatches.get(i).distFromOrigXY;
+            newItemX = quoinMatches.get(i).itemX;
+            newItemY = quoinMatches.get(i).itemY;
+            newItemExtraInfo = quoinMatches.get(i).quoinType;
+
+            for (i = 1; i < quoinMatches.size(); i++)
+            {
+                if (quoinMatches.get(i).distFromOrigXY < nearestQuoinDist)
+                {
+                    // Found quoin that is even nearer to original x,y than one that is saved
+                    // Overwrite the values
+                    nearestQuoinDist = quoinMatches.get(i).distFromOrigXY;
+                    newItemX = quoinMatches.get(i).itemX;
+                    newItemY = quoinMatches.get(i).itemY;
+                    newItemExtraInfo = quoinMatches.get(i).quoinType;
+                }
+                else
+                {
+                    printToFile.printDebugLine(this, "ignoring quoin image found for type " + quoinMatches.get(i).quoinType + " at x,y " + quoinMatches.get(i).itemX + "," + quoinMatches.get(i).itemY, 1);
+                }
+            }
+            printToFile.printDebugLine(this, "closest quoin image found for type " + newItemExtraInfo + " at x,y " + newItemX + "," + newItemY, 2);
+            itemFound = true;
+        }
+    }
        
     public boolean readSearchDone()
     {
@@ -326,6 +395,22 @@ class FragmentFind
     public boolean readOkFlag()
     {
         return okFlag;
+    }
+    
+    class QuoinMatchData
+    {
+        int itemX;
+        int itemY;
+        float distFromOrigXY;
+        String quoinType;
+        
+        QuoinMatchData(int foundX, int foundY, String extraInfo)
+        {
+            itemX = foundX;
+            itemY = foundY;
+            quoinType = extraInfo;
+            distFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(thisItemInfo.readOrigItemX(), thisItemInfo.readOrigItemY(), foundX, foundY); 
+        }
     }
     
 }
