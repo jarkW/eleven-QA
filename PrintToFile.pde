@@ -31,7 +31,7 @@ class PrintToFile {
                 println(e);
                 // Cannot write this error to debug file ...
                 println("Failed to open debug file");
-                displayMgr.showInfoMsg("Failed to open debug file");
+                displayMgr.showErrMsg("Failed to open debug file");
                 return false;
             }
         }
@@ -52,7 +52,7 @@ class PrintToFile {
         {
             println(e);
             printToFile.printDebugLine(this, "Failed to open output file " + configInfo.readOutputFilename(), 3);
-            displayMgr.showInfoMsg("Failed to open output file " + configInfo.readOutputFilename());
+            displayMgr.showErrMsg("Failed to open output file " + configInfo.readOutputFilename());
             return false;
         }
 
@@ -80,7 +80,7 @@ class PrintToFile {
         if (outputFiles.length == 0)
         {
             println("Unexpected error setting up outputfile ", configInfo.readOutputFilename(), " - please remove all versions of the outputfile before retrying");
-            displayMgr.showInfoMsg("Unexpected error setting up outputfile " + configInfo.readOutputFilename() + " - please remove all versions of the outputfile before retrying");
+            displayMgr.showErrMsg("Unexpected error setting up outputfile " + configInfo.readOutputFilename() + " - please remove all versions of the outputfile before retrying");
             return false;
         }
 
@@ -96,7 +96,7 @@ class PrintToFile {
             if (!f.renameTo(destFile))
             {
                 println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
-                displayMgr.showInfoMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying");
+                displayMgr.showErrMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying");
                 return false;
             }
         }
@@ -105,12 +105,12 @@ class PrintToFile {
              // if any error occurs
              e.printStackTrace();  
              println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
-             displayMgr.showInfoMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying");
+             displayMgr.showErrMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying");
              return false;
         }
         
         println("Moving ", configInfo.readOutputFilename(), " to ", destFilename);
-        displayMgr.showInfoMsg("Moving " + configInfo.readOutputFilename() + " to " + destFilename);
+        displayMgr.showErrMsg("Moving " + configInfo.readOutputFilename() + " to " + destFilename);
         return true;
     }
  

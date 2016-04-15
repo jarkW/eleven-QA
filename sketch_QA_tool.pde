@@ -34,23 +34,14 @@ import sftp.*;
  *
  */
  
- // BUG
- // Need to have an error line along the bottom or top of the screen. So when start up, anything which at the moment goes to println
- // instead appears on the screen because the application doesn't have a print window to show the user. So they wouldn't know that the
- // config json file was corrupted or whatever. 
- /// Could also do this in red. May be introduce an reportError vs reportInfo function - one in red, one in black, but can use the same bottom line
- // move the street name/street up by a row so keep that if relevant e.g. when uploading files to server
- 
  // To do - handle closure of screen better - if got items handled individually, does closing the x mean the sftp stops? If so, then 
  // don't need to add anything in. But if not, then see https://forum.processing.org/one/topic/run-code-on-exit.html (ericsoco SHUTDOWN HOOK)
  // which gets run however you exit the program.
  // NB the key handler is asyn so always detected - so if ESC pressed, then could set a flag in the top level - and then in sftp
  // check that flag before doing anything - and if set, run the sftp exit command. Could also set this flag when exit/x pressed
  /// But seems more difficult to detect the x button being pressed 
- 
- // To do Replace displayMgr.showLoginInfoMsg messages in sftp - probably safest to just display the messages from my FSM as I know when I'm attempting to connect/connected 
- // and that is probably good enough. Will stop stuff being overwritten. Might need to just move the info field to the bottom of the screen, and introduce a new row above for
- // the street name? 
+ // NB Have added hook - but will only work if return to top level after got each item/L file etc. So hopefully when change structure this
+ // will be fixed for free. 
  
  // BUG? xy variant only
  // Does it load up the single image for other non-quoin items with variant field?
@@ -106,11 +97,6 @@ import sftp.*;
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
  // Rather than failing after an hour. So would just check all the JSON files exist for each
  // of the streets.
- 
- // Need to see if know where the config.json is - if not, then dialog box so user can select.
- // Next time run program, screen shows the path of the json and gives user chance to change/accept
- 
- 
 
 // Have an option where only changes x,y in files (e.g. if on street where already started
 // QA. Or could do something where if street is in persdata-qa, only change the x,y? 
@@ -124,10 +110,6 @@ import sftp.*;
 // And other different quoin regions (party?)
 //
 //NEED TO CHECK USING ALL FUNCTION CALLS - I.E. READ/SET ONES
-
-
-//
-// Update files in vagrant or on server (need to update sftp library to 'put'
 
 // NB Need to credit all people's code I use e.g. sftp (?) when submit to github
 // 
@@ -153,6 +135,11 @@ import sftp.*;
 //Shrines - npc_shrine_firebog_*
 // Shrines - npc_shrine_uralia_*
 // shrines - npc_shrine_ix_
+
+// And also
+// wood_tree_enchanted : Wood Tree
+// street_spirit_zutto (because fixed on ground?)
+// garden_new
 
 // Directory where config.json is, and all saved JSON files - both original/new
 String workingDir;
@@ -206,7 +193,7 @@ boolean failNow = false;    // abnormal ending/error
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 1;
+int debugLevel = 3;
 boolean debugToConsole = true;
 boolean doDelay = false;
 boolean usingBlackWhiteComparison = true; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
@@ -223,6 +210,9 @@ public void setup()
     // Used for final application title bar
     surface.setTitle("QA tool for setting co-ordinates and variants of items in Ur"); 
     
+    // Used to handle different ways user can close the program
+    prepareExitHandler();
+    
     nextAction = 0;
     
     // Start up display manager
@@ -233,7 +223,7 @@ public void setup()
     if (!printToFile.readOkFlag())
     {
         println("Error setting up printToFile object");
-        displayMgr.showInfoMsg("Error setting up printToFile object");
+        displayMgr.showErrMsg("Error setting up printToFile object");
         failNow = true;
         return;
     }
@@ -261,7 +251,7 @@ public void draw()
         // Give the user a chance to see the error message
         // Needed principally for config.json errors which can happen before we've set up a debug.txt/output.txt file
         // On the final application there is no print window, just the screen to show the user what is happening.
-        delay(3000);
+        delay(5000);
         
         println("failNow flag set - exiting with errors - see debug_info.txt for more information");
         printToFile.printOutputLine("\n\n!!!!! EXITING WITH ERRORS !!!!!\n\n See " + workingDir + File.separatorChar + "debug_info.txt for more information");
@@ -859,8 +849,6 @@ void keyPressed()
     // Make sure ESC closes window cleanly - and closes window
     if(key==27)
     {
-        println("ESC pressed");
-            printToFile.printDebugLine(this, "ESC PRESSED", 3);
         key = 0;
         nextAction = EXIT_NOW;
         return;
@@ -996,5 +984,26 @@ void configJSONFileSelected(File selection)
     
         return true;
     }
+    
+    // This makes sure that if user clicks on 'x', the program shuts cleanly.
+    // Handles all kinds of exit.
+    private void prepareExitHandler () 
+    {
+
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+
+        public void run () 
+        {
+
+           // System.out.println("SHUTDOWN HOOK");
+
+           // application exit code here
+           nextAction = EXIT_NOW;
+
+        }
+
+    }));
+
+}
 
     

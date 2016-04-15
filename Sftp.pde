@@ -64,7 +64,6 @@ public class Sftp extends Thread {
         try 
         {
             System.out.println("Attempting to connect.");
-            displayMgr.showLoginInfoMsg("Attempting to connect.");
             jsch=new JSch();
             //session = jsch.getSession(user, host, 22);
             try
@@ -81,7 +80,6 @@ public class Sftp extends Thread {
             UserInfo ui=new PromptUser(prompt,password);
             session.setUserInfo(ui);
             System.out.println("Logging in.");
-            displayMgr.showLoginInfoMsg("Logging in.");
             
             try
             {
@@ -116,7 +114,6 @@ public class Sftp extends Thread {
             }
 
             System.out.println("Connected, session started.");
-            displayMgr.showLoginInfoMsg("Connected, session started.");
             Channel channel;
             try
             {

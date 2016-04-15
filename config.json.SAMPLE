@@ -3,7 +3,7 @@
 This is to be used as the basis for creating the config.json - it is NOT a valid
 JSON file as is (comments are not allowed).
 To create a valid config.json  file do the following:
-	1) Create an empty file named config.json in the same directory.
+	1) Create an empty file named config.json in the working directory.
 	2) Set up the fields to the correct values
 	streets - list of TSIDs to be read (NB last TSID must not have trailing comma)
 	use_vagrant_dirs - set to true if the street/item JSON files are on a PC version of Eleven
@@ -27,8 +27,8 @@ To create a valid config.json  file do the following:
   ],
   "use_vagrant_dirs": true,
   "vagrant_info": {
-	"fixtures_path": "C:/Glitch/eleven/eleven-fixtures",
-	"persdata_path": "C:/Glitch/eleven/eleven-throwaway-server/persdata"
+	"fixtures_path": "C:\\Glitch\\eleven\\eleven-fixtures",
+	"persdata_path": "C:\\Glitch\\eleven\\eleven-throwaway-server\\persdata"
   },
   "server_info": {
   	"host": "",
@@ -40,9 +40,9 @@ To create a valid config.json  file do the following:
 		"persdata_path": ""
 	}
   },
-  "street_snap_path": "C:/Glitch/QA2/StreetSnapsArchive/Snaps",
-  "output_file": "C:/Glitch/QA2/region.txt",
+  "street_snap_path": "C:\\Glitch\\QA2\\StreetSnapsArchive\\Groddle Forest",
+  "output_file": "C:\\Glitch\\QA2\\region.txt",
   "non_quoin_search_radius": 50,
   "quoin_search_radius": 20,
   "change_xy_only": false
-}
+} 

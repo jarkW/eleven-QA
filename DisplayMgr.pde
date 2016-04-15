@@ -1,6 +1,7 @@
 class DisplayMgr
 {
     boolean okFlag;
+    final static int RED_TEXT =  #FF002B;
    
 
     // Add in list of failed streets - can be display at the end when program ends
@@ -50,21 +51,18 @@ class DisplayMgr
         text(info, 10, height - 50, width, 50);  // Text wraps within text box
     }
     
-    public void showLoginInfoMsg(String info)
+    public void showErrMsg(String info)
     {
-        showInfoMsg(info);
-        /*
         // clear existing text box
         clearTextBox(0, height - 20, width, 20);
         
         // print out message
-        fill(50);
-        textSize(10);
+        fill(RED_TEXT);
+        textSize(14);
         // Want text to go along bottom - so set relative to height of display
         text(info, 10, height - 20, width, 20);  // Text wraps within text box
-        */
     }
-        
+            
     public void setStreetName(String streetName, String streetTSID, int streetNum, int totalStreets)
     {
         streetNameMsg = "Processing street " + streetName + " (" + streetTSID + "): " + streetNum + " of " + totalStreets;
@@ -307,7 +305,7 @@ class DisplayMgr
             return;
         }
         //String s = "The following streets were not processed";
-        fill(#FF002B);
+        fill(RED_TEXT);
         //text(s, 10, 100, width-10, 80);  // Text wraps within text box
         
         // Print out each of the messages for this street ... and save to the total message buffer for reporting at end of run
