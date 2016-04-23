@@ -42,7 +42,7 @@ class StreetInfo
     int geoBrightness;
     int geoHeight;
     int geoWidth;
-    
+       
     // constructor/initialise fields
     public StreetInfo(String tsid)
     {
@@ -146,6 +146,10 @@ class StreetInfo
     boolean readStreetItemData()
     {
         String itemTSID = readCurrentItemTSIDBeingProcessed();
+        if (itemTSID.length() == 0)
+        {
+            return false;
+        }
         
         printToFile.printDebugLine(this, "Read item TSID " + itemTSID + " from street L file" + streetTSID, 2);  
         
@@ -220,20 +224,19 @@ class StreetInfo
     boolean uploadStreetItemData()
     {
         String itemTSID = itemInfo.get(itemBeingProcessed).readItemTSID();
+        boolean retOK = true;
         
         printToFile.printDebugLine(this, "Read item TSID " + itemTSID + " from street L file" + streetTSID, 2);  
         
         // Only upload changed items
         if (itemInfo.get(itemBeingProcessed).readSaveChangedJSONfile() && !itemInfo.get(itemBeingProcessed).readSkipThisItem())
         {
+    
             if (!putJSONFile(itemTSID))
             {
                 // Failure occured - will have been logged to output/debug file by putJSONFile
-                // report to user
-                displayMgr.showErrMsg("Problem uploading " + itemTSID + ".json to persdata. Check " + workingDir + File.separatorChar + "debug_info.txt for more information", true);
-                return false;
+               retOK = false;
             }
-            displayMgr.showInfoMsg("Uploading " + itemTSID + ".json to " + configInfo.readPersdataPath());
         }
         
         // move on to next item
@@ -243,8 +246,18 @@ class StreetInfo
             // Reached end of item list
             streetWritingItemsFinished = true;
         }
-            
-        return true;
+        
+        if (!retOK)
+        {
+            // report problem to user - but continue
+            displayMgr.showErrMsg("Problems " + uploadString.toLowerCase() + " " + itemTSID + ".json to persdata/moving JSON from NewJSONs to UploadedJSONs directory. Check " + workingDir + File.separatorChar + "debug_info.txt for more information", false);
+        }
+        else
+        {
+            displayMgr.showInfoMsg(uploadString + " " + itemTSID + ".json to " + configInfo.readPersdataPath());
+        }
+                  
+        return retOK;
     }
     
     boolean readStreetGeoInfo()
@@ -668,6 +681,9 @@ class StreetInfo
             // Finished all items on the street
             // So move onto the next street snap after unloading the current one
             streetSnaps.get(streetSnapBeingUsed).unloadPNGImage();
+            
+            // reset itemBeingProcessed back to 0
+            itemBeingProcessed = 0;
               
             streetSnapBeingUsed++;
             if (streetSnapBeingUsed >= streetSnaps.size() || ifAllItemsFound())
@@ -926,7 +942,7 @@ class StreetInfo
     
     
     boolean putJSONFile(String TSID)
-    {
+    {       
         String JSONFileName = TSID + ".json";
         String sourcePath = workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + JSONFileName; 
         String destPath = workingDir + File.separatorChar + "UploadedJSONs" + File.separatorChar + JSONFileName;
@@ -935,7 +951,9 @@ class StreetInfo
         if (!sFile.exists())
         {
             // If this does not exist in NewJSONs then there is nothing to upload - return success
-            return true;
+            // But should this be an error - as only called if apparently something to upload
+            printToFile.printDebugLine(this, "Unable to find saved JSON file - " + sourcePath, 3);
+            return false;
         }
         
         if (configInfo.readUseVagrantFlag())
@@ -966,12 +984,41 @@ class StreetInfo
         
         // Only reach here if file uploaded OK - so move from     
         // newJSONs to uploadedJSONs directory
+        
+        if (!copyFile(sourcePath, destPath))
+        {
+            printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath + " - failed to copy JSON file from NewJSONs to UploadedJSONs", 3);
+            printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - failed to copy JSON file from NewJSONs to UploadedJSONs");
+            return false;
+        }
+        // Now delete the source
+        File file = new File(sourcePath);
+        if (!file.exists())
+        {
+            printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath + " - " + sourcePath + " does not exist", 3);
+            printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - " + sourcePath + " does not exist");
+            return false;
+        }
+        
+        if (!file.delete())
+        {
+            // problem deleting the original
+            printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath + " - unable to delete " + sourcePath, 3);
+            printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - unable to delete " + sourcePath);
+            return false;
+        }
+
+        /*
+        // The rename below sometimes fails - so
+        
         File dFile = new File(destPath);
         if (!sFile.renameTo(dFile))
         {
             printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath, 3);
+            printToFile.printOutputLine("Warning - unable to move JSON file from " + sourcePath + " to " + destPath);
             return false;
         }
+        */
         printToFile.printDebugLine(this, "Moved JSON file " + JSONFileName + " from " + workingDir + File.separatorChar + "NewJSONs" + " to " + workingDir + File.separatorChar + "UploadedJSONs", 1);
         
         return true;
@@ -1091,8 +1138,25 @@ class StreetInfo
     
     public String readCurrentItemTSIDBeingProcessed()
     {
-        String itemTSID = Utils.readJSONString(streetItems.getJSONObject(itemBeingProcessed), "tsid", true);
-        return (itemTSID);
+        if (itemBeingProcessed >= streetItems.size())
+        {
+            return "";
+        }
+        else
+        {
+            String itemTSID = Utils.readJSONString(streetItems.getJSONObject(itemBeingProcessed), "tsid", true);
+            if (!Utils.readOkFlag())
+            {
+                // Failed
+                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                printToFile.printDebugLine(this, "Failed to read Item TSID string from array in street JSON  ", 3);
+                return "";
+            }
+            else
+            {
+                return (itemTSID);
+            }
+        }
     }
         
 }

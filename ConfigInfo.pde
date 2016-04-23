@@ -88,6 +88,8 @@ class ConfigInfo {
             serverUsername = "";
             serverPassword = "";
             serverPort = 0;
+            uploadString = "Copying";
+            downloadString = "Copying";
         }
         else
         {
@@ -141,6 +143,8 @@ class ConfigInfo {
                 displayMgr.showErrMsg("Failed to read server_dirs in config.json file", true);
                 return false;
             }
+            uploadString = "Uploading";
+            downloadString = "Downloading";
         }
         
         // Now read in the appropriate dirs that contain JSON files

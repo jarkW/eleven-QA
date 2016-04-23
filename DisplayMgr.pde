@@ -2,6 +2,7 @@ class DisplayMgr
 {
     boolean okFlag;
     final static int RED_TEXT =  #FF002B;
+    boolean errsFlag;
    
 
     // Add in list of failed streets - can be display at the end when program ends
@@ -32,6 +33,7 @@ class DisplayMgr
     public DisplayMgr()
     {
         okFlag = true;
+        errsFlag = false;
         textSize(14);
         streetNameMsg = "";
         itemNameMsg = "";
@@ -49,6 +51,7 @@ class DisplayMgr
         textSize(14);
         // Want text to go along bottom - so set relative to height of display
         text(info, 10, height - 50, width, 50);  // Text wraps within text box
+        printToFile.printDebugLine(this, "INFO MSG = " + info, 2);
     }
     
     public void showErrMsg(String info, boolean exitNow)
@@ -69,7 +72,11 @@ class DisplayMgr
         if (exitNow)
         {
             text("!!!!! EXITING WITH ERRORS !!!!! See " + workingDir + File.separatorChar + "debug_info.txt for more information", 10, 140, width-10, 80);
+            text("Press q or x or ESC to close window", 10, 160, width-10, 80);
         }
+        printToFile.printDebugLine(this, "ERR MSG = FATAL ERROR: " + info + " exit now flag = " + exitNow, 3);
+        
+        errsFlag = true;
     }
     
     public void showSuccessMsg()
@@ -81,8 +88,18 @@ class DisplayMgr
         fill(50);
         textSize(16);
         
-        s = "!!!! SUCCESS - No errors detected, please check " + configInfo.readOutputFilename() + " for more information !!!!";
+        if (errsFlag)
+        {
+            // Just in case we flagged up a non-fatal error e.g. because not upload files to server - and so did not end the program at that point
+            // User might have missed the brief red message
+            s = "!!!! Errors detected, please check " + workingDir + File.separatorChar + "debug_info.txt and " + configInfo.readOutputFilename() + " for more information !!!!";
+        }
+        else
+        {
+            s = "!!!! SUCCESS - No errors detected, please check " + configInfo.readOutputFilename() + " for more information !!!!";
+        }
         text(s, 10, 100, width-10, 80);  // Text wraps within text box
+        text("Press q or x or ESC to close window", 10, 120, width-10, 80);
     }
             
     public void setStreetName(String streetName, String streetTSID, int streetNum, int totalStreets)

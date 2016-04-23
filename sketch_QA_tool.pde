@@ -179,6 +179,8 @@ FragmentOffsets allFragmentOffsets;
 
 // Handles all output to screen
 DisplayMgr displayMgr;
+String uploadString;
+String downloadString;
 
 // Handles connection to server
 Sftp QAsftp;
@@ -261,6 +263,7 @@ public void setup()
 
 public void draw() 
 {  
+    String currentItemTSID;
 
     // Each time we enter the loop check for error/end flags
     if (failNow)
@@ -443,7 +446,7 @@ public void draw()
             
             // Ready to start with first street
             streetBeingProcessed = 0;
-            displayMgr.showInfoMsg("Downloading street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+            displayMgr.showInfoMsg(downloadString + " street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             nextAction = INIT_STREET;
             break;
             
@@ -470,7 +473,13 @@ public void draw()
             }
             
             memory.printMemoryUsage();
-            displayMgr.showInfoMsg("Downloading item JSON file " + streetInfo.readCurrentItemTSIDBeingProcessed() + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+            currentItemTSID = streetInfo.readCurrentItemTSIDBeingProcessed();
+            if (currentItemTSID.length() == 0)
+            {
+                failNow = true;
+                return;
+            }
+            displayMgr.showInfoMsg(downloadString + " item JSON file " + currentItemTSID + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             nextAction = INIT_ITEM_DATA;
             break;
             
@@ -493,7 +502,7 @@ public void draw()
                 nextAction = WAITING_FOR_INPUT;
                 return;
             }
-            displayMgr.showInfoMsg("Downloading street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+            displayMgr.showInfoMsg(downloadString + " street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             nextAction = INIT_STREET;
             break;
             
@@ -523,7 +532,13 @@ public void draw()
             }
             else
             {
-                displayMgr.showInfoMsg("Downloading item JSON file " + streetInfo.readCurrentItemTSIDBeingProcessed() + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                currentItemTSID = streetInfo.readCurrentItemTSIDBeingProcessed();
+                if (currentItemTSID.length() == 0)
+                {
+                    failNow = true;
+                    return;
+                }
+                displayMgr.showInfoMsg(downloadString + " item JSON file " + currentItemTSID + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             }
             break;
             
@@ -550,13 +565,19 @@ public void draw()
                     }
                     else
                     {
-                        displayMgr.showInfoMsg("Downloading street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                        displayMgr.showInfoMsg(downloadString + " street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
                         nextAction = INIT_STREET;
                     }
                 }
                 else
                 {
-                    displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + streetInfo.readCurrentItemTSIDBeingProcessed() + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                    currentItemTSID = streetInfo.readCurrentItemTSIDBeingProcessed();
+                    if (currentItemTSID.length() == 0)
+                    {
+                        failNow = true;
+                        return;
+                    }
+                    displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + currentItemTSID + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
                     nextAction = WRITE_ITEM_JSON;
                 }
             }
@@ -571,7 +592,10 @@ public void draw()
             
         case WRITE_ITEM_JSON:
         
-            streetInfo.uploadStreetItemData();
+            if (!streetInfo.uploadStreetItemData())
+            {
+                delay(1000);
+            }
             
             if (streetInfo.readStreetWritingItemsFinished())
             {
@@ -588,14 +612,20 @@ public void draw()
                 }  
                 else
                 {
-                    displayMgr.showInfoMsg("Downloading street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                    displayMgr.showInfoMsg(downloadString + " street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
                     nextAction = INIT_STREET;
                 }
 
             }
             else
             {
-                displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + streetInfo.readCurrentItemTSIDBeingProcessed() + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                currentItemTSID = streetInfo.readCurrentItemTSIDBeingProcessed();
+                if (currentItemTSID.length() == 0)
+                {
+                    failNow = true;
+                    return;
+                }
+                displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + currentItemTSID + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             }           
             break;
           
@@ -612,7 +642,6 @@ public void draw()
             break;
             
         case EXIT_NOW: 
-            delay (2000);
             doExitCleanUp();
             memory.printMemoryUsage();
             exit();
@@ -734,7 +763,7 @@ boolean setupWorkingDirectories()
 
 void keyPressed() 
 {
-    if ((key == 'x') || (key == 'X'))
+    if ((key == 'x') || (key == 'X') || (key == 'q') || (key == 'Q'))
     {
         nextAction = EXIT_NOW;
         return;
