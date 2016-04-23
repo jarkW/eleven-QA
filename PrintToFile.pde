@@ -4,7 +4,8 @@ class PrintToFile {
    PrintWriter debugOutput;
    PrintWriter infoOutput;
    boolean okFlag;
-   boolean initDone;
+   boolean initDebugFileDone;
+   boolean initOutputFileDone;
    
    StringList existingOutputText;
     
@@ -12,10 +13,11 @@ class PrintToFile {
     public PrintToFile()
     {
         okFlag = true;
-        initDone = false;
+        initDebugFileDone = false;
+        initOutputFileDone = false;
     }
     
-    public boolean initPrintToFile()
+    public boolean initPrintToDebugFile()
     {       
                 
         // Open debug file
@@ -31,11 +33,18 @@ class PrintToFile {
                 println(e);
                 // Cannot write this error to debug file ...
                 println("Failed to open debug file");
-                displayMgr.showErrMsg("Failed to open debug file");
+                displayMgr.showErrMsg("Failed to open debug file", true);
                 return false;
             }
         }
-        
+
+        initDebugFileDone = true;        
+        return true;
+    } 
+    
+    public boolean initPrintToOutputFile()
+    {       
+                        
         // Open output file
         // If file already exists - then rename before creating this output file  
         if (!renameExistingOutputFile())
@@ -52,12 +61,12 @@ class PrintToFile {
         {
             println(e);
             printToFile.printDebugLine(this, "Failed to open output file " + configInfo.readOutputFilename(), 3);
-            displayMgr.showErrMsg("Failed to open output file " + configInfo.readOutputFilename());
+            displayMgr.showErrMsg("Failed to open output file " + configInfo.readOutputFilename(), true);
             return false;
         }
 
         
-        initDone = true;        
+        initOutputFileDone = true;        
         return true;
     } 
     
@@ -80,7 +89,7 @@ class PrintToFile {
         if (outputFiles.length == 0)
         {
             println("Unexpected error setting up outputfile ", configInfo.readOutputFilename(), " - please remove all versions of the outputfile before retrying");
-            displayMgr.showErrMsg("Unexpected error setting up outputfile " + configInfo.readOutputFilename() + " - please remove all versions of the outputfile before retrying");
+            displayMgr.showErrMsg("Unexpected error setting up outputfile " + configInfo.readOutputFilename() + " - please remove all versions of the outputfile before retrying", true);
             return false;
         }
 
@@ -96,7 +105,7 @@ class PrintToFile {
             if (!f.renameTo(destFile))
             {
                 println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
-                displayMgr.showErrMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying");
+                displayMgr.showErrMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying", true);
                 return false;
             }
         }
@@ -105,12 +114,12 @@ class PrintToFile {
              // if any error occurs
              e.printStackTrace();  
              println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
-             displayMgr.showErrMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying");
+             displayMgr.showErrMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying", true);
              return false;
         }
         
         println("Moving ", configInfo.readOutputFilename(), " to ", destFilename);
-        displayMgr.showErrMsg("Moving " + configInfo.readOutputFilename() + " to " + destFilename);
+        displayMgr.showInfoMsg("Moving " + configInfo.readOutputFilename() + " to " + destFilename);
         return true;
     }
  
@@ -119,7 +128,7 @@ class PrintToFile {
     public void printDebugLine(Object callingClass, String lineToWrite, int severity)
     {
         // Do nothing if not yet initialised this object
-        if (!initDone)
+        if (!initDebugFileDone)
         {
             return;
         }
@@ -159,7 +168,7 @@ class PrintToFile {
         }
         
         // Do nothing if not yet initialised this object
-        if (!initDone)
+        if (!initOutputFileDone)
         {
             return;
         }
@@ -333,6 +342,7 @@ class PrintToFile {
                             
                 default:
                     printDebugLine(this, "Unexpected results type " + itemResults.get(i).readResult(), 3);
+                    displayMgr.showErrMsg("Unexpected results type " + itemResults.get(i).readResult(), true);
                     failNow = true;
                     return false;  
             }
@@ -379,6 +389,7 @@ class PrintToFile {
                         
                     default:
                         printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemExtraInfo(), 3);
+                        displayMgr.showErrMsg("Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemExtraInfo(), true);
                         failNow = true;
                         return false;
                 }

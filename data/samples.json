@@ -664,5 +664,41 @@
     "offset_x": -102,
     "offset_y": -91,
     "info": ""
+  },
+  {
+    "class_tsid": "wood_tree_enchanted",
+    "offset_x": -11,
+    "offset_y": -66,
+    "info": "1"
+  },
+  {
+    "class_tsid": "street_spirit_zutto",
+    "offset_x": -17,
+    "offset_y": -84,
+    "info": ""
+  },
+  {
+    "class_tsid": "npc_gardening_vendor",
+    "offset_x": -18,
+    "offset_y": -99,
+    "info": ""
+  },
+  {
+    "class_tsid": "wood_tree_enchanted",
+    "offset_x": -9,
+    "offset_y": -68,
+    "info": "3"
+  },
+  {
+    "class_tsid": "wood_tree_enchanted",
+    "offset_x": -13,
+    "offset_y": -50,
+    "info": "2"
+  },
+  {
+    "class_tsid": "wood_tree_enchanted",
+    "offset_x": -11,
+    "offset_y": -54,
+    "info": "4"
   }
 ]}

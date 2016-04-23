@@ -9,8 +9,9 @@ To create a valid config.json  file do the following:
 	use_vagrant_dirs - set to true if the street/item JSON files are on a PC version of Eleven
 					 - set to false if using the QA server/persdata
     server - set up the hostname, port, username and password for server. 
-	fixtures_path - set to path for eleven-fixtures 
-	persdata_path - set to path for eleven-throwaway-server/persdata 
+	eleven_path - set to root directory which contains eleven-fixtures and eleven-throwaway-server
+	(optional) fixtures_path - set to directory which contains fixtures (overrides default eleven_path/eleven-fixtures)
+	(optional) persdata_path - set to directory which contains persdata (overrides default eleven_path/eleven-throwaway-server/persdata)
 	street_snap_path - set to path containing all the archive street snaps for these streets
 	output_file - set to path/name of file which contain a summary of all the changes made by this tool. 
 	non_quoin_search_radius - defaulted to 50 pixels. Making the number smaller will speed up the searches, but may miss items which are almost in the right place
@@ -27,8 +28,7 @@ To create a valid config.json  file do the following:
   ],
   "use_vagrant_dirs": true,
   "vagrant_info": {
-	"fixtures_path": "C:\\Glitch\\eleven\\eleven-fixtures",
-	"persdata_path": "C:\\Glitch\\eleven\\eleven-throwaway-server\\persdata"
+	"eleven_path": "C:\\Glitch\\eleven"
   },
   "server_info": {
   	"host": "",
@@ -36,8 +36,7 @@ To create a valid config.json  file do the following:
     "username": "",
     "password": "",
 	"server_dirs": {
-		"fixtures_path": "",
-		"persdata_path": ""
+		"eleven_path": ""
 	}
   },
   "street_snap_path": "C:\\Glitch\\QA2\\StreetSnapsArchive\\Groddle Forest",

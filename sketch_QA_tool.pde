@@ -34,6 +34,18 @@ import sftp.*;
  *
  */
  
+ // Test out config.json.txt fix
+         // NEED TO SEE WHAT HAPPENS IF SELECT CONFIG.JSON when suffixes turned off
+        // so is actually a config.json.txt
+        // Need to add code in here if the below doesn't work to specifically check for config.json.txt
+ 
+ // Open the debug_info.txt file immediately at start of programme - then open up the output file once read in the config file
+ // which means should be able to log useful failure with config.json directly to debug_info.txt file as will be open
+ // Is it possible to log the exception info to file?
+ // Would be difficult to show it on the screen.
+ // I THINK I@VE DONE THIS _ BUT WOULD BE USEFUL TO DUMP EXCEPTION MESSAGES TO FILE - MAY BE TRAP SPECIFIC ONES???? IF CAN@T DUMP value of e?
+ // E.g. try corruped json files
+ 
  // To do - handle closure of screen better - if got items handled individually, does closing the x mean the sftp stops? If so, then 
  // don't need to add anything in. But if not, then see https://forum.processing.org/one/topic/run-code-on-exit.html (ericsoco SHUTDOWN HOOK)
  // which gets run however you exit the program.
@@ -75,8 +87,14 @@ import sftp.*;
  
  // TO DO update the quoin type settings for all the other regions. 
  
+ // TODO make sure user doesn't select a config.json.txt file - which Notepad might create. Need to check this in situation where PC set up to hide file suffixes for known types - can my program
+ // still locate a config.json.txt in this case? Or might need an option or something?
+ // HAVE STARTED TO IMPLEMENT THE CODE _ MIGHT JUST NEED DIFFERENT IF STATEMENT see if (selection.getAbsolutePath().indexOf("config.json") == -1)
+ 
  // TO DO change config.json to just read in eleven dir - and then default fixtures/persdata from that (NB only do this once happy with sftp - as am relying on having a different persdata
  // path for testing purposes (so don't write anything that is brooken)
+ 
+ // TO DO - skip streets which exist in persdata-qa
  
  // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
@@ -137,9 +155,10 @@ import sftp.*;
 // shrines - npc_shrine_ix_
 
 // And also
-// wood_tree_enchanted : Wood Tree
-// street_spirit_zutto (because fixed on ground?)
-// garden_new
+// wood_tree_enchanted : Wood Tree - x, y and "instanceProps": "variant": 1-4, (treat like paper tree as not planted by players
+// street_spirit_zutto (because fixed on ground?) (x,y only)
+// garden_new (might be too difficult and anyhow will always have different plants in? So left for now (and come in different sizes/variants)
+// npc_gardening_vendor (x,y only)
 
 // Directory where config.json is, and all saved JSON files - both original/new
 String workingDir;
@@ -174,15 +193,13 @@ final static int CONTINUE_SETUP = 11;
 final static int WAIT_FOR_SERVER_START = 20;
 final static int LOAD_ITEM_IMAGES = 30;
 final static int LOAD_FRAGMENT_OFFSETS = 31;
-final static int GET_JSON_FILES = 40;
-final static int INIT_STREET = 50;
-final static int INIT_STREET_DATA = 51;
-final static int SHOW_FAILED_STREET_MSG = 52;
-final static int PROCESS_STREET = 60;
-final static int WAIT_FOR_SERVER_START_2 = 70;
-final static int WRITE_JSON_FILES_TO_PERSDATA = 71;
-final static int SHOW_FAILED_STREETS_MSG = 78;
-final static int WAITING_FOR_INPUT = 90;
+final static int INIT_STREET = 40;
+final static int INIT_ITEM_DATA = 41;
+final static int SHOW_FAILED_STREET_MSG = 42;
+final static int PROCESS_STREET = 50;
+final static int WRITE_ITEM_JSON = 60;
+final static int SHOW_FAILED_STREETS_MSG = 70;
+final static int WAITING_FOR_INPUT = 80;
 final static int IDLING = 100;
 final static int EXIT_NOW = 110;
 
@@ -193,7 +210,7 @@ boolean failNow = false;    // abnormal ending/error
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 3;
+int debugLevel = 1;
 boolean debugToConsole = true;
 boolean doDelay = false;
 boolean usingBlackWhiteComparison = true; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
@@ -223,7 +240,7 @@ public void setup()
     if (!printToFile.readOkFlag())
     {
         println("Error setting up printToFile object");
-        displayMgr.showErrMsg("Error setting up printToFile object");
+        displayMgr.showErrMsg("Error setting up printToFile object", true);
         failNow = true;
         return;
     }
@@ -248,15 +265,10 @@ public void draw()
     // Each time we enter the loop check for error/end flags
     if (failNow)
     {
-        // Give the user a chance to see the error message
+        // Give the user a chance to see any error message
         // Needed principally for config.json errors which can happen before we've set up a debug.txt/output.txt file
         // On the final application there is no print window, just the screen to show the user what is happening.
-        delay(5000);
-        
-        println("failNow flag set - exiting with errors - see debug_info.txt for more information");
-        printToFile.printOutputLine("\n\n!!!!! EXITING WITH ERRORS !!!!!\n\n See " + workingDir + File.separatorChar + "debug_info.txt for more information");
-        printToFile.printDebugLine(this, "failNow flag set - exiting with errors - See " + workingDir + File.separatorChar + "debug_info.txt for more information", 3);
-        nextAction = EXIT_NOW;;
+        nextAction = WAITING_FOR_INPUT;
     }
     
     // Carry out processing depending on whether setting up the street or processing it
@@ -278,18 +290,29 @@ public void draw()
             break;
             
         case CONTINUE_SETUP:
+        
+            // Now we have the working directory, we can set up the debug output file - so can report useful config.json errors
+            if (!printToFile.initPrintToDebugFile())
+            {
+                println("Error creating debug output file");
+                displayMgr.showErrMsg("Error creating debug output file", true);
+                failNow = true;
+                return;
+            }
             // Set up config data
             configInfo = new ConfigInfo();
             if (!configInfo.readOkFlag())
             {
+                // Error message already set up in this function
                 failNow = true;
                 return;
             }
     
-            // Set up debug info dump file and output file
-            if (!printToFile.initPrintToFile())
+            // Set up output file
+            if (!printToFile.initPrintToOutputFile())
             {
-                println("Error opening output files");
+                println("Error opening output file");
+                displayMgr.showErrMsg("Error opening output file", true);
                 failNow = true;
                 return;
             }
@@ -300,6 +323,7 @@ public void draw()
             {
                 // No streets to process - exit
                 printToFile.printDebugLine(this, "No streets to process - exiting", 3);
+                displayMgr.showErrMsg("No streets to process - exiting", true);
                 failNow = true;
                 return;
             }
@@ -307,6 +331,7 @@ public void draw()
             if (!setupWorkingDirectories())
             {
                 printToFile.printDebugLine(this, "Problems creating working directories", 3);
+                displayMgr.showErrMsg("Problems creating working directories", true);
                 failNow = true;
                 return;
             }
@@ -327,7 +352,7 @@ public void draw()
     
                 // Ready to start with first street
                 streetBeingProcessed = 0;
-                nextAction = GET_JSON_FILES;
+                nextAction = LOAD_FRAGMENT_OFFSETS;
     
                 // Display start up msg
                 displayMgr.showInfoMsg("Copying street/item JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
@@ -346,22 +371,24 @@ public void draw()
                     if (!QAsftp.executeCommand("ls", configInfo.readFixturesPath(), "silent"))
                     {
                         println("Fixtures directory ", configInfo.readFixturesPath(), " does not exist on server");
+                        displayMgr.showErrMsg("Fixtures directory " + configInfo.readFixturesPath() + " does not exist on server", true);
                         failNow = true;
                         return;
                     }
                     if (!QAsftp.executeCommand("ls", configInfo.readPersdataPath(), "silent"))
                     {
                         println("Persdata directory ", configInfo.readPersdataPath(), " does not exist on server");
+                        displayMgr.showErrMsg("Persdata directory " + configInfo.readPersdataPath() + " does not exist on server", true);
                         failNow = true;
                         return;
                     }
     
                     // Ready to start with first street
                     streetBeingProcessed = 0;
-                    nextAction = GET_JSON_FILES;
+                    nextAction = LOAD_FRAGMENT_OFFSETS;
     
                     // Display start up msg
-                    displayMgr.showInfoMsg("Downloading street/item JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                    displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
                 }
                 else
                 {
@@ -369,128 +396,82 @@ public void draw()
                     // Abort if the error flag is set
                     if (!QAsftp.readRunningFlag())
                     {
+                        displayMgr.showErrMsg("Problems connecting to server", true);
                         failNow = true;
                         return;
                     }
                 }
             }
             break;
-            
-                        
-        case GET_JSON_FILES:
-            // get items for this street, together with L*/G* file - from either server or vagrant
-            
-            // Although this is a failure case, the reporting of this is done in the next stage
-            // because then decent error messages can be reported to the user. For now just log and continue
-            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
-            if (!handleStreetAndItemJSONFiles(true))
-            {
-                printToFile.printDebugLine(this, "Error getting street/item JSON files for street BUT WILL CONTINUE" + configInfo.readStreetTSID(streetBeingProcessed), 3);
-                //failNow = true;
-                //return;
-            }
-            streetBeingProcessed++;
-            
-            // See if uploaded/copied all the files we can
-            if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
-            {                         
-                //Set up ready to start adding images to this 
-                allItemImages = new ItemImages();
-    
-                // Set up ready to start adding offsets to this
-                allFragmentOffsets = new FragmentOffsets();
-    
-                // Ready to start with first street
-                streetBeingProcessed = 0;
-                nextAction = LOAD_FRAGMENT_OFFSETS;
-    
-                // Display start up msg
-                displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
-                
-                // Tear down the sftp session - will relogin at end of run
-                if (QAsftp != null && QAsftp.readRunningFlag())
-                {
-                    if (!QAsftp.executeCommand("exit", "session", null))
-                    {
-                        println("exit session failed");
-                    }
-                }
-         
-                memory.printMemoryUsage();
-            }
-            else
-            {
-                String infoMsg;
-                if (!configInfo.readUseVagrantFlag())
-                {
-                    infoMsg = "Downloading street/item JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait";
-                }
-                else
-                {
-                    infoMsg = "Copying street/item JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait";
-                }
-                displayMgr.showInfoMsg(infoMsg);
-            }
-            break;
-                 
+                   
         case LOAD_FRAGMENT_OFFSETS:
             // Validates/loads all item images 
             printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
+    
+            // Set up ready to start adding offsets to this
+            allFragmentOffsets = new FragmentOffsets();
+            
             if(!allFragmentOffsets.loadFragmentDefaultsForItems())
             {
                 printToFile.printDebugLine(this, "Error loading fragment offsets for images", 3);
+                displayMgr.showErrMsg("Error loading fragment offsets for images", true);
                 failNow = true;
                 return;
             }
             printToFile.printDebugLine(this, allFragmentOffsets.sizeOf() + " offsets for fragment images now loaded", 1);
             memory.printMemoryUsage();
             
+            displayMgr.showInfoMsg("Loading item images for comparison ... please wait");
             nextAction = LOAD_ITEM_IMAGES;
             break;
             
         case LOAD_ITEM_IMAGES:
             // Validates/loads all item images 
+            //Set up ready to start adding images to this 
+            allItemImages = new ItemImages();
+
             printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
             if(!allItemImages.loadAllItemImages())
             {
                 printToFile.printDebugLine(this, "Error loading image snaps", 3);
+                displayMgr.showErrMsg("Error loading image snaps", true);
                 failNow = true;
                 return;
             }
             printToFile.printDebugLine(this, allItemImages.sizeOf() + " sets of item images now loaded", 1);
             memory.printMemoryUsage();
             
+            // Ready to start with first street
+            streetBeingProcessed = 0;
+            displayMgr.showInfoMsg("Downloading street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             nextAction = INIT_STREET;
             break;
             
         case INIT_STREET:
             // Carries out the setting up of the street and associated items 
-            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
-            displayMgr.clearDisplay();
+            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);        
+            printToFile.printDebugLine(this, "Read street data for TSID " + configInfo.readStreetTSID(streetBeingProcessed), 2);
+           
             if (!initialiseStreet())
             {
                 // fatal error
+                displayMgr.showErrMsg("Error setting up street data", true);
                 failNow = true;
                 return;
             }
             
             if (streetInfo.readInvalidStreet())
             {
-                // The L* file is missing for this street       
+                // The L* or G* file is missing for this street, or invalid data of some sort - so skip the street       
                 // Display the start up error messages
                 displayMgr.showThisSkippedStreetMsg();
                 nextAction = SHOW_FAILED_STREET_MSG;
                 return;
             }
             
-            // Reload up the first street image ready to go
-            if (!streetInfo.loadStreetImage(0))
-            {
-                failNow = true;
-                return;
-            }
             memory.printMemoryUsage();
-            nextAction = INIT_STREET_DATA;
+            displayMgr.showInfoMsg("Downloading item JSON file " + streetInfo.readCurrentItemTSIDBeingProcessed() + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+            nextAction = INIT_ITEM_DATA;
             break;
             
         case SHOW_FAILED_STREET_MSG:
@@ -506,73 +487,77 @@ public void draw()
                 printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
                 if (nothingToShow)
                 {
-                    nextAction = EXIT_NOW;
+                    // Display success message as no error message present
+                    displayMgr.showSuccessMsg();
                 }
-                else
-                {
-                    nextAction = WAITING_FOR_INPUT;
-                }
+                nextAction = WAITING_FOR_INPUT;
                 return;
             }
+            displayMgr.showInfoMsg("Downloading street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             nextAction = INIT_STREET;
             break;
             
-        case INIT_STREET_DATA:
+        case INIT_ITEM_DATA:
             printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
+            
+            // NEED TO LOOP THROUGH THIS UNTIL ALL ITEMS INIT/JSONS GOT
+            // shoud we also get it to show a display message for each JSON??? 
+            // would be done
+            
+            // If fails to load I* file - then give up - means the server connection is down or problems copying files
             if (!streetInfo.readStreetItemData())
             {
-                printToFile.printDebugLine(this, "Error in readStreetItemData", 3);
+                // Error message set by this function
+                println("Error detected in readStreetItemData");
                 failNow = true;
                 return;
             }
             
-            // Reset the item done flags 
-            streetInfo.initStreetItemVars();
-             
-            printToFile.printDebugLine(this, "street initialised is " + configInfo.readStreetTSID(streetBeingProcessed) + " (" + streetBeingProcessed + ")", 1);
-            memory.printMemoryUsage();
-            nextAction = PROCESS_STREET;
+            if (streetInfo.readStreetInitialisationFinished())
+            {
+                // Loaded up all the information from street and item JSON files - can now start processing this street
+                // First street image has already been loaded up (after did validation of snaps
+                 printToFile.printDebugLine(this, "street initialised is " + configInfo.readStreetTSID(streetBeingProcessed) + " (" + streetBeingProcessed + ")", 1);
+                memory.printMemoryUsage();
+                nextAction = PROCESS_STREET;
+            }
+            else
+            {
+                displayMgr.showInfoMsg("Downloading item JSON file " + streetInfo.readCurrentItemTSIDBeingProcessed() + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+            }
             break;
             
         case PROCESS_STREET:
             // Process the street, one street snap at a time, going over each item in turn 
         
             // Process street item unless due to move on to next street
-            printToFile.printDebugLine(this, "Processing street  " + streetBeingProcessed + " streetFinished flag is " + streetInfo.readStreetFinished(), 1);
-            if (streetInfo.readStreetFinished())
-            {            
-                streetBeingProcessed++;
-                if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
+            printToFile.printDebugLine(this, "Processing street  " + streetBeingProcessed + " streetFinished flag is " + streetInfo.readStreetProcessingFinished(), 1);
+            if (streetInfo.readStreetProcessingFinished())
+            {    
+                // Can now start writing the new JSONs to file
+                if (!configInfo.readWriteJSONsToPersdata())
                 {
-                    // Reached end of list of streets - normal ending
-                    streetInfo = null;
-                    System.gc();
-                    
-                    // Now need to upload all the changed item files
-                    // Reconnect to server if necessary first
-                    if (!configInfo.readUseVagrantFlag())
+                    // Do not want to write stuff to persdata - so just move on to next street
+                    streetBeingProcessed++;
+                    if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
                     {
-                        QAsftp = new Sftp(configInfo.readServerName(), configInfo.readServerUsername(), false, configInfo.readServerPort());  
-                        QAsftp.setPassword(configInfo.readServerPassword());
-                        QAsftp.start(); // start the thread
-                        displayMgr.showInfoMsg("Reconnecting to server ... please wait");
-                        nextAction = WAIT_FOR_SERVER_START_2;
+                        // Reached end of list of streets - normal ending
+                        streetInfo = null;
+                        System.gc();
+                    
+                        // Display any messages about failed streets before ending
+                        nextAction = SHOW_FAILED_STREETS_MSG;
                     }
                     else
                     {
-                        // Can just get on with copying files across to persdata
-                        nextAction = WRITE_JSON_FILES_TO_PERSDATA;
-    
-                        // Display msg
-                        streetBeingProcessed = 0;
-                        displayMgr.showInfoMsg("Copying changed item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                        displayMgr.showInfoMsg("Downloading street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                        nextAction = INIT_STREET;
                     }
-                    return;
                 }
                 else
                 {
-                    // OK to move on to the next street
-                    nextAction = INIT_STREET;
+                    displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + streetInfo.readCurrentItemTSIDBeingProcessed() + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                    nextAction = WRITE_ITEM_JSON;
                 }
             }
             else
@@ -584,90 +569,50 @@ public void draw()
             //memory.printMemoryUsage();
             break;
             
-        case WAIT_FOR_SERVER_START_2:
+        case WRITE_ITEM_JSON:
+        
+            streetInfo.uploadStreetItemData();
             
-            if (QAsftp != null)
+            if (streetInfo.readStreetWritingItemsFinished())
             {
-                if (QAsftp.readSessionConnect())
+                // Have written all the item JSON files - so now move onto the next street
+                streetBeingProcessed++;
+                if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
                 {
-                    // Server has been connected successfully - so can continue
-                    nextAction = WRITE_JSON_FILES_TO_PERSDATA;
-    
-                    // Display msg
-                    streetBeingProcessed = 0;
-                    displayMgr.showInfoMsg("Uploading changed item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
-                }
+                    // Reached end of list of streets - normal ending
+                    streetInfo = null;
+                    System.gc();
+                    
+                    // Display any messages about failed streets before ending
+                    nextAction = SHOW_FAILED_STREETS_MSG;
+                }  
                 else
                 {
-                    // Session still not connected
-                    // Abort if the error flag is set
-                    if (!QAsftp.readRunningFlag())
-                    {
-                        failNow = true;
-                        return;
-                    }
+                    displayMgr.showInfoMsg("Downloading street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                    nextAction = INIT_STREET;
                 }
-            }
-            break;
-            
-        case WRITE_JSON_FILES_TO_PERSDATA:
-            printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
-            // Work through streets, one at a time, uploading any changed item files
-            if (!handleStreetAndItemJSONFiles(false))
-            {
-                printToFile.printDebugLine(this, "Error uploading/copying item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed), 3);
-                failNow = true;
-                return;
-            }
-            streetBeingProcessed++;
-            
-            // See if uploaded/copied all the files we can
-            if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
-            {                                           
-                // Tear down the sftp session - will relogin at end of run
-                if (QAsftp != null && QAsftp.readRunningFlag())
-                {
-                    if (!QAsftp.executeCommand("exit", "session", null))
-                    {
-                        println("exit session failed");
-                    }
-                }
-                
-                // Now just exit - after showing the list of rejected streets
-                nextAction = SHOW_FAILED_STREETS_MSG;
-         
-                memory.printMemoryUsage();
+
             }
             else
             {
-                String infoMsg;
-                if (!configInfo.readUseVagrantFlag())
-                {
-                    infoMsg = "Uploading street/item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait";
-                }
-                else
-                {
-                    infoMsg = "Copying street/item JSON files to persdata for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait";
-                }
-                displayMgr.showInfoMsg(infoMsg);
-            }
+                displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + streetInfo.readCurrentItemTSIDBeingProcessed() + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+            }           
             break;
-            
+          
         case SHOW_FAILED_STREETS_MSG:
             boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();       
             printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED\n\n");
             printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
             if (nothingToShow)
             {
-                 nextAction = EXIT_NOW;
+                // Can go ahead and display success message as there are no error messages to show
+                displayMgr.showSuccessMsg();
             }
-            else
-            {
-                nextAction = WAITING_FOR_INPUT;
-            }
+            nextAction = WAITING_FOR_INPUT;
             break;
             
-        case EXIT_NOW:  
+        case EXIT_NOW: 
+            delay (2000);
             doExitCleanUp();
             memory.printMemoryUsage();
             exit();
@@ -722,64 +667,11 @@ void doExitCleanUp()
     
 }
 
-boolean handleStreetAndItemJSONFiles(boolean getFiles)
-{
-        
-    // Initialise street and then loads up the items on that street.
-    String streetTSID = configInfo.readStreetTSID(streetBeingProcessed);
-    if (streetTSID.length() == 0)
-    {
-        // Failure to retrieve TSID
-        printToFile.printDebugLine(this, "Failed to read street TSID number " + str(streetBeingProcessed) + " from config.json", 3); 
-        return false;
-    }
-    
-    streetInfo = null;
-    System.gc();
-    streetInfo = new StreetInfo(streetTSID); 
-            
-    // Now read the error flag for the street array added
-    if (!streetInfo.readOkFlag())
-    {
-       printToFile.printDebugLine(this, "Error creating street data structure", 3);
-       return false;
-    }
-        
-    printToFile.printDebugLine(this, "Read street data for TSID " + streetTSID, 2);
-            
-    if (getFiles)
-    {
-        // Now get street L*/G*/I* files 
-        if (!streetInfo.getStreetJSONFiles())
-        {
-            printToFile.printDebugLine(this, "Error getting street L*/G*/I* files for TSID " + streetTSID, 3);
-            return false;
-        }
-    }
-    else
-    {
-        // Put changed item files into persdata
-        if (!configInfo.readWriteJSONsToPersdata())
-        {
-            // Don't write the files, just return
-            return true;
-        }
-        
-        if (!streetInfo.putStreetItemJSONFiles())
-        {
-            printToFile.printDebugLine(this, "Error uploading/copying I* files for TSID " + streetTSID, 3);
-            return false;
-        }
-    }
-                 
-    // All OK
-    return true;
-}
-
 boolean initialiseStreet()
-{
-        
+{       
     // Initialise street and then loads up the items on that street.
+    displayMgr.clearDisplay();
+    
     String streetTSID = configInfo.readStreetTSID(streetBeingProcessed);
     if (streetTSID.length() == 0)
     {
@@ -802,6 +694,8 @@ boolean initialiseStreet()
     printToFile.printDebugLine(this, "Read street data for TSID " + streetTSID, 2);
             
     // Now populate the street information
+    // Retrieves the G/L* JSON files and places them in OrigJSONs
+    // Reads in the item array, reads in info from G* file and validates the snaps
     if (!streetInfo.initialiseStreetData())
     {
         printToFile.printDebugLine(this, "Error populating street data structure", 3);
@@ -873,7 +767,7 @@ boolean validConfigJSONLocation()
     
     // Have read in location - check it exists
     if (configLocation.length() > 0)
-    {
+    {        
         file = new File(configLocation + File.separatorChar + "config.json");
         if (!file.exists())
         {
@@ -897,9 +791,12 @@ void configJSONFileSelected(File selection)
     else 
     {
         println("User selected " + selection.getAbsolutePath());
-        if (selection.getAbsolutePath().indexOf("config.json") == -1)
+        
+        //if (selection.getAbsolutePath().indexOf("config.json") == -1)
+        if (selection.getAbsolutePath().endsWith("config.json"))
         {
             println("Please select a config.json file");
+            displayMgr.showErrMsg("Please select a config.json file", true);
             failNow = true;
             return;
         }
@@ -915,7 +812,8 @@ void configJSONFileSelected(File selection)
         catch (Exception e)
         {
             println(e);
-            println("error detected saving config.json location to configLocation.txt");
+            println("error detected saving config.json location to configLocation.txt in program directory");
+            displayMgr.showErrMsg("Error detected saving config.json location to configLocation.txt in program directory", true);
             failNow = true;
             return;
         }

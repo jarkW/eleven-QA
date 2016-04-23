@@ -887,7 +887,7 @@ class ItemInfo
                 printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + workingDir + File.separatorChar + "NewJSONs");
                 return false;
             }
-                
+                            
             // Double check the new file is reasonable - has to be done by eye by looking at output from a diff comparison tool
             JSONDiff jsonDiff = new JSONDiff(itemTSID, workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json", 
                                             workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + itemTSID + ".json");
