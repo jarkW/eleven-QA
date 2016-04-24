@@ -33,19 +33,7 @@ import sftp.*;
  * the resolution as given in the G* file will be ignored.
  *
  */
- 
- // Test out config.json.txt fix
-         // NEED TO SEE WHAT HAPPENS IF SELECT CONFIG.JSON when suffixes turned off
-        // so is actually a config.json.txt
-        // Need to add code in here if the below doesn't work to specifically check for config.json.txt
- 
- // Open the debug_info.txt file immediately at start of programme - then open up the output file once read in the config file
- // which means should be able to log useful failure with config.json directly to debug_info.txt file as will be open
- // Is it possible to log the exception info to file?
- // Would be difficult to show it on the screen.
- // I THINK I@VE DONE THIS _ BUT WOULD BE USEFUL TO DUMP EXCEPTION MESSAGES TO FILE - MAY BE TRAP SPECIFIC ONES???? IF CAN@T DUMP value of e?
- // E.g. try corruped json files
- 
+  
  // To do - handle closure of screen better - if got items handled individually, does closing the x mean the sftp stops? If so, then 
  // don't need to add anything in. But if not, then see https://forum.processing.org/one/topic/run-code-on-exit.html (ericsoco SHUTDOWN HOOK)
  // which gets run however you exit the program.
@@ -821,8 +809,8 @@ void configJSONFileSelected(File selection)
     else 
     {
         println("User selected " + selection.getAbsolutePath());
-        
-        //if (selection.getAbsolutePath().indexOf("config.json") == -1)
+
+        // Check that not selected config.json.txt which might look like config.json in the picker (as not seeing file suffixes for known file types on PC)
         if (!selection.getAbsolutePath().endsWith("config.json"))
         {
             println("Please select a config.json file (check does not have hidden .txt ending)");

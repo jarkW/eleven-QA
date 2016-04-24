@@ -69,7 +69,12 @@ class DisplayMgr
         fill(RED_TEXT);
         textSize(16);
         
-        s = "FATAL ERROR: ";
+        s = "";
+        if (exitNow)
+        {
+            s = "FATAL ERROR: ";
+        }
+          
         text(s, 10, 100, width-10, 80);  // Text wraps within text box
         if (info.length() > 0)
         {

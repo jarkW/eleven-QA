@@ -159,9 +159,28 @@ class JSONDiff
                 // Unexpected type of object in JSON
                 return false;
             }
-            Object newObj = extractedObject;  // set by extractObjectFromJSONObject      
-     
-            if (newObj instanceof JSONObject && origObj instanceof JSONObject)
+            Object newObj = extractedObject;  // set by extractObjectFromJSONObject  
+            
+
+            // Handle the null cases first to avoid null pointer errors
+            if ((newObj == null) && (origObj == null))
+            {
+                s = "JSONDIFF: Same values found for "  + itemTSID + ".json, at level " + level  + "/" + newList.get(i) + " new value is <null> was <null>";
+                //infoMsgList.append(s);
+            }
+            else if (newObj == null)
+            {
+               // Handle the null cases first to avoid exceptions
+               s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key i is null orig key j is non-null";
+               infoMsgList.append(s);
+            }
+            else if (origObj == null)
+            {
+               // Handle the null cases first to avoid exceptions
+               s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key i is non-null orig key j is null";
+               infoMsgList.append(s);
+            }      
+            else if (newObj instanceof JSONObject && origObj instanceof JSONObject)
             {
                 if (!compareJSONObjects((JSONObject)origObj, (JSONObject)newObj, level + "/" + newList.get(i)))
                 {
@@ -238,9 +257,25 @@ class JSONDiff
                 // unexpected object in array
                 return false;
             }
-            Object newObj = extractedObject; // set by extractObjectFromJSONarray                
-
-            if (newObj instanceof JSONArray && origObj instanceof JSONArray)
+            Object newObj = extractedObject; // set by extractObjectFromJSONarray  
+            
+            // Handle the null cases first to avoid null pointer errors
+            if ((newObj == null) && (origObj == null))
+            {
+                s = "JSONDIFF: Same values found for " + itemTSID + ".json, at level " + level + "/" + i + " new value is <null> was <null>";
+                //infoMsgList.append(s);
+            }
+            else if (newObj == null)
+            {
+               s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + i + "New index i is null orig index i is non-null";
+               infoMsgList.append(s);
+            }
+            else if (origObj == null)
+            {
+               s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + i + "New index i is non-null orig index i is -null";
+               infoMsgList.append(s);
+            } 
+            else if (newObj instanceof JSONArray && origObj instanceof JSONArray)
             {
                 if (!compareJSONArrays((JSONArray)origObj, (JSONArray)newObj, level + "/" + i))
                 {
@@ -299,6 +334,13 @@ class JSONDiff
         String s;
 
         extractedObject = null;
+        
+        // First check to see if this is a null object - i.e. has the value null
+        if (thisJSON.isNull(thisList.get(i)))
+        {
+            // Null value for key, so return null
+            return true;
+        }
         
         //Object newObj = thisJSON.get(thisList.get(i));
         try 
@@ -373,6 +415,13 @@ class JSONDiff
         String s;
         
         extractedObject = null;
+        
+        // First check to see if this is a null object - i.e. has the value null
+        if (thisJSON.isNull(i))
+        {
+            // Null value for key, so return null object
+            return true;
+        }
 
         //Object newObj = thisJSON.get(thisList.get(i));
         try 
@@ -435,14 +484,14 @@ class JSONDiff
     {
         if (infoMsgList.size() == 0)
         {
-            printToFile.printDebugLine(this, "JSONDIFF: No changes for item" + itemTSID, 1);
+            printToFile.printDebugLine(this, "JSONDIFF: No changes for item " + itemTSID, 1);
             //printToFile.printOutputLine("JSONDIFF: No changes for item" + itemTSID);
             return;
         }
         // Changes found for street - print them all out
         for (int i = 0; i < infoMsgList.size(); i++)
         {
-            printToFile.printDebugLine(this, "JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i), 1);
+            printToFile.printDebugLine(this, "JSONDIFF: Changes for item " + itemTSID + ":" + infoMsgList.get(i), 1);
             //printToFile.printOutputLine("JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i));
         }
         

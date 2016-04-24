@@ -57,8 +57,8 @@ class ConfigInfo {
         catch(Exception e)
         {
             println(e);
-            println("Failed to load config.json file");
-            displayMgr.showErrMsg("Failed to load config.json file", true);
+            println("Failed to load config.json file - check file is correctly formatted by pasting contents into http://jsonlint.com/");
+            displayMgr.showErrMsg("Failed to load config.json file - check file is correctly formatted by pasting contents into http://jsonlint.com/", true);
             return false;
         }
         
