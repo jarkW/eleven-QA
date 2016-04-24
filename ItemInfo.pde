@@ -876,6 +876,16 @@ class ItemInfo
             //printToFile.printOutputLine(s);
             printToFile.printDebugLine(this, s, 2);   
             // Write the JSON file out to temporary place before checking that the new file length = old one plus calculated diff
+            
+            //saveJSONObject doesn't close the file which causes problems when we later try to move this file to UploadedJSONs once uploaded
+            // So using this work around.
+            
+            if (!writeJSONObjectToFile(itemJSON, workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + itemTSID + ".json"))
+            {
+                // Error writing file logged in the called function
+                return false;
+            }
+            /*
             try
             {
                 saveJSONObject(itemJSON, workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + itemTSID + ".json");
@@ -887,6 +897,7 @@ class ItemInfo
                 printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + workingDir + File.separatorChar + "NewJSONs");
                 return false;
             }
+            */
                             
             // Double check the new file is reasonable - has to be done by eye by looking at output from a diff comparison tool
             JSONDiff jsonDiff = new JSONDiff(itemTSID, workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json", 
@@ -928,6 +939,48 @@ class ItemInfo
         
         return true;
     }
+    
+    boolean writeJSONObjectToFile(JSONObject json, String filePath)
+    {
+        // This replaces the saveJSONObject function call which doesn't appear to properly close the file
+        // although this was allegedly fixed in https://github.com/processing/processing/issues/3705
+        
+        PrintWriter writer = PApplet.createWriter(saveFile(filePath));
+        
+        try
+        {
+            json.write(writer);
+        }
+        catch(IllegalStateException e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "Error writing (Illegal state Exception) " + itemTSID + ".json file to " + filePath, 3);
+            printToFile.printOutputLine("ERROR WRITING (Illegal state Exception) " + itemTSID + ".json file to " + filePath);
+            return false;
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "Error writing " + itemTSID + ".json file to " + filePath, 3);
+            printToFile.printOutputLine("ERROR WRITING " + itemTSID + ".json file to " + filePath);
+            return false;
+        }
+        
+        
+        try
+        {
+            writer.close();
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "Error closing " + itemTSID + ".json file to " + filePath, 3);
+            printToFile.printOutputLine("ERROR CLOSING " + itemTSID + ".json file to " + filePath);
+            return false;
+        }
+        
+        return true;
+    }    
        
     public boolean searchSnapForImage()
     { 
@@ -1227,6 +1280,6 @@ class ItemInfo
     public boolean readOkFlag()
     {
         return okFlag;
-    }     
+    } 
 
 }

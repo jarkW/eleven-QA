@@ -34,6 +34,8 @@ import sftp.*;
  *
  */
   
+ // Groddle Heights - LCR16VUKOQL18DU - not find egg trees - check this out 
+  
  // To do - handle closure of screen better - if got items handled individually, does closing the x mean the sftp stops? If so, then 
  // don't need to add anything in. But if not, then see https://forum.processing.org/one/topic/run-code-on-exit.html (ericsoco SHUTDOWN HOOK)
  // which gets run however you exit the program.
@@ -565,7 +567,7 @@ public void draw()
                         failNow = true;
                         return;
                     }
-                    displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + currentItemTSID + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                    //displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + currentItemTSID + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
                     nextAction = WRITE_ITEM_JSON;
                 }
             }
@@ -613,7 +615,7 @@ public void draw()
                     failNow = true;
                     return;
                 }
-                displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + currentItemTSID + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
+                //displayMgr.showInfoMsg("NEEDS CHANGING - PRINT IN LOWER LEVEL???Uploading item JSON file " + currentItemTSID + ".json for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             }           
             break;
           
@@ -671,8 +673,8 @@ void doExitCleanUp()
         File[] contents = myDir.listFiles();
         if (contents != null && contents.length > 0) 
         {
-            printToFile.printOutputLine("\n WARNING: Following changed item file(s) have NOT been copied/uploaded - will need to be manually added to persdata\n");
-            printToFile.printDebugLine(this, "\n WARNING: Following changed item file(s) have NOT been copied/uploaded - will need to be manually added to persdata\n", 3);
+            printToFile.printOutputLine("\n WARNING: Following changed item file(s) NOT been copied/uploaded correctly - may need to be manually added to persdata\n");
+            printToFile.printDebugLine(this, "\n WARNING: Following changed item file(s) have NOT been copied/uploaded correctly - may need to be manually added to persdata\n", 3);
             for (int i=0; i< contents.length; i++)
             {
                 printToFile.printOutputLine("\t" + dirName + File.separatorChar + contents[i].getName());

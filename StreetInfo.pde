@@ -224,19 +224,27 @@ class StreetInfo
     boolean uploadStreetItemData()
     {
         String itemTSID = itemInfo.get(itemBeingProcessed).readItemTSID();
-        boolean retOK = true;
+        boolean uploadOK = true;
+        boolean moveOK = true;
+        boolean nothingChanged = false;
         
-        printToFile.printDebugLine(this, "Read item TSID " + itemTSID + " from street L file" + streetTSID, 2);  
+        printToFile.printDebugLine(this, "Read item TSID " + itemTSID + " from street L file" + streetTSID + ": changed JSON file = " + itemInfo.get(itemBeingProcessed).readSaveChangedJSONfile() + " skip = " + itemInfo.get(itemBeingProcessed).readSkipThisItem(), 2);  
         
         // Only upload changed items
         if (itemInfo.get(itemBeingProcessed).readSaveChangedJSONfile() && !itemInfo.get(itemBeingProcessed).readSkipThisItem())
         {
-    
-            if (!putJSONFile(itemTSID))
+            // Useful error messages are logged by these 2 functions
+            uploadOK = putJSONFile(itemTSID);
+            
+            if (uploadOK)
             {
-                // Failure occured - will have been logged to output/debug file by putJSONFile
-               retOK = false;
+                moveOK = moveJSONFile(itemTSID);
             }
+        }
+        else
+        {
+            // Item being skipped or is unchanged/missing           
+            nothingChanged = true; 
         }
         
         // move on to next item
@@ -247,17 +255,23 @@ class StreetInfo
             streetWritingItemsFinished = true;
         }
         
-        if (!retOK)
+        // Report error to users but continue
+        if (!uploadOK)
         {
-            // report problem to user - but continue
-            displayMgr.showErrMsg("Problems " + uploadString.toLowerCase() + " " + itemTSID + ".json to persdata/moving JSON from NewJSONs to UploadedJSONs directory. Check " + workingDir + File.separatorChar + "debug_info.txt for more information", false);
+            displayMgr.showErrMsg("Problems " + uploadString.toLowerCase() + " " + itemTSID + ".json to persdata. Check " + workingDir + File.separatorChar + "debug_info.txt for more information", false);
+            return false;
         }
-        else
+        else if (!moveOK)
+        {
+            //displayMgr.showErrMsg("Problems moving " + itemTSID + ".json from NewJSONs to UploadedJSONs directory (actual " + uploadString.toLowerCase().replace("ing","") + " was successful). Check " + workingDir + File.separatorChar + "debug_info.txt for more information", false);
+            return false;
+        }
+        else if (!nothingChanged)
         {
             displayMgr.showInfoMsg(uploadString + " " + itemTSID + ".json to " + configInfo.readPersdataPath());
         }
-                  
-        return retOK;
+        
+        return true;
     }
     
     boolean readStreetGeoInfo()
@@ -945,7 +959,6 @@ class StreetInfo
     {       
         String JSONFileName = TSID + ".json";
         String sourcePath = workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + JSONFileName; 
-        String destPath = workingDir + File.separatorChar + "UploadedJSONs" + File.separatorChar + JSONFileName;
         
         File sFile = new File(sourcePath);
         if (!sFile.exists())
@@ -982,8 +995,19 @@ class StreetInfo
             printToFile.printOutputLine("Success uploading " + TSID + ".json file to " + configInfo.readPersdataPath());
         }
         
-        // Only reach here if file uploaded OK - so move from     
-        // newJSONs to uploadedJSONs directory
+        // Only reach here if file uploaded OK 
+        return true;
+    } 
+    
+    boolean moveJSONFile(String TSID)
+    {       
+        String JSONFileName = TSID + ".json";
+        String sourcePath = workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + JSONFileName; 
+        String destPath = workingDir + File.separatorChar + "UploadedJSONs" + File.separatorChar + JSONFileName;
+        
+      
+        
+        // move file from newJSONs to uploadedJSONs directory
         
         if (!copyFile(sourcePath, destPath))
         {
@@ -999,7 +1023,32 @@ class StreetInfo
             printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - " + sourcePath + " does not exist");
             return false;
         }
+        boolean test = true;
+        try
+        {
+            test = file.delete();
+        }
+        catch(SecurityException e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "SE Failed to delete " + sourcePath, 3);
+            return false;
+        }
+        catch(Exception e)
+        {
+            println(e);
+            printToFile.printDebugLine(this, "Exc Failed to delete " + sourcePath, 3);
+            return false;
+        }
+        if (!test)
+        {
+            // problem deleting the original
+            printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath + " - unable to delete " + sourcePath, 3);
+            //printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - unable to delete " + sourcePath);
+            return false;
+        }
         
+        /*
         if (!file.delete())
         {
             // problem deleting the original
@@ -1007,7 +1056,7 @@ class StreetInfo
             printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - unable to delete " + sourcePath);
             return false;
         }
-
+*/
         /*
         // The rename below sometimes fails - so
         
