@@ -418,9 +418,9 @@ class StreetInfo
 
         if (snapFilenames == null || snapFilenames.length == 0)
         {
-            printToFile.printDebugLine(this, "SKIPPING STREET - No street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
-            printToFile.printOutputLine("\nSKIPPING - No street image files found for " + streetName + "(" + streetTSID + ")\n");
-            displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No street snaps found");
+            printToFile.printDebugLine(this, "SKIPPING STREET - No valid street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
+            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ")\n");
+            displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No valid street snaps found");
             invalidStreet = true;
             return false;
         }
@@ -541,6 +541,20 @@ class StreetInfo
             invalidStreet = true;
             return true; // continue
         }
+        
+        // Confirm that this street TSID is not already something that has been QA'd already - i.e. is in persdata-qa.
+        // Otherwise we would risk overwriting quoins with mystery types if not present on the snaps. 
+        // For this kind of street should only allow change_xy_only option
+        if (!streetNotExistInPersdataQA(streetTSID) && !configInfo.readChangeXYOnly())
+        {
+            // This isn't treated as an error - but don't want to carry on with this street
+            printToFile.printDebugLine(this, "SKIPPING STREET because " + streetTSID + " already exists in persdata-qa; use change_xy_only option to change item x,y only", 3);
+            printToFile.printOutputLine("SKIPPING STREET because " + streetTSID + " already exists in persdata-qa; use change_xy_only option to change item x,y only");
+            displayMgr.setSkippedStreetsMsg("Skipping street: " + streetTSID  + " already exists in persdata-qa; use change_xy_only option to change item x,y only");
+            invalidStreet = true;
+            return true; // continue
+        }        
+        
         if (!getJSONFile(streetTSID.replaceFirst("L", "G")))
         {
             // Unable to get the G* JSON file
@@ -605,6 +619,38 @@ class StreetInfo
         itemBeingProcessed = 0;
        
         return true;
+    }
+    
+    boolean streetNotExistInPersdataQA(String streetTSID)
+    {
+
+        if (configInfo.readUseVagrantFlag())
+        {
+            File myDir = new File(configInfo.readPersdataQAPath() + File.separatorChar + streetTSID);
+            if (!myDir.exists())
+            {
+                printToFile.printDebugLine(this, "Street TSID " + streetTSID + " does not exist in persdata-qa", 1);
+                return true;
+            }
+            else
+            {
+                printToFile.printDebugLine(this, "Street TSID " + streetTSID + " already exists in persdata-qa", 1);
+                return false;
+            }
+        }
+        else
+        {
+            if (!QAsftp.executeCommand("ls", configInfo.readPersdataQAPath() + "/" + streetTSID, "silent"))
+            {
+                printToFile.printDebugLine(this, "Street TSID " + streetTSID + " does not exist in persdata-qa", 1);
+                return true;
+            }
+            else
+            {
+                printToFile.printDebugLine(this, "Street TSID " + streetTSID + " already exists in persdata-qa", 1);
+                return false;
+            }
+        }
     }
     
     
@@ -1015,6 +1061,7 @@ class StreetInfo
             printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - failed to copy JSON file from NewJSONs to UploadedJSONs");
             return false;
         }
+
         // Now delete the source
         File file = new File(sourcePath);
         if (!file.exists())

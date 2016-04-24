@@ -49,20 +49,17 @@ import sftp.*;
  // Does it load up the single image for other non-quoin items with variant field?
  // Except wood trees - where still needs to test all tree images.
  // Also in JSON diff, ensure that only x,y have changed, error otherwise
+ // ALSO JUST TRIED IT OUT AND ALL THE QUOINS GOT RESET BACK TO MYSTERY ...
  
- // CHANGE STRUCTURE
- // Manage one street at a time. Download all the files for the street, process, and then upload all the changed files. 
- // Could have a flag in the item class for upload_me
- // DO the above first. Then break out so download/upload each file individually, returning to top level each time 
- // so can give a useful msg saying what is happening for each file. Also means if user quits, then any file transfer would stop.
- // Would just need an itemBeingProcessed field in the street structure.
+ // Have an option where only changes x,y in files (e.g. if on street where already started
+// QA. Or could do something where if street is in persdata-qa, only change the x,y? 
+// so that still does full changes on streets not yet QA'd? Could do reminder to 
+// person in output file to do /qasave on those streets? Might be better option - 
+// NO - IS BETTER FOR THE PERSON TO DECIDE, AS GIVING LIST OF TSIDS, THEY CAN
+// RUN TOOL TWICE FOR STREETS ALREADY/NOT DONE WITH OPTION SET DIFFERENTLY.
+ 
  
  // TO DO - need to upload all the L*/G*/I* files to OrigJSONs (or copy from vagrant dir) ... 
- // and as go through them,
- // delete the skipped I files at some point so don't accumulate in the directory
- // then don't need the place where save the Orig JSON files anymore. Do this as part of 
- // setup - if I/L* files missing, then mark street as skipped and delete all the I/L* files that
- // do have
  // As upload the newJSON files to persdata - move to uploadedJSONs. At end of program
  // if NewJSONs is empty ... successful end. Otherwise could list the JSONs on the screen 
  // or just do count of files in NewJSONs.
@@ -76,15 +73,6 @@ import sftp.*;
  // i.e. x,y, variant, and some added fields. 
  
  // TO DO update the quoin type settings for all the other regions. 
- 
- // TODO make sure user doesn't select a config.json.txt file - which Notepad might create. Need to check this in situation where PC set up to hide file suffixes for known types - can my program
- // still locate a config.json.txt in this case? Or might need an option or something?
- // HAVE STARTED TO IMPLEMENT THE CODE _ MIGHT JUST NEED DIFFERENT IF STATEMENT see if (selection.getAbsolutePath().indexOf("config.json") == -1)
- 
- // TO DO change config.json to just read in eleven dir - and then default fixtures/persdata from that (NB only do this once happy with sftp - as am relying on having a different persdata
- // path for testing purposes (so don't write anything that is brooken)
- 
- // TO DO - skip streets which exist in persdata-qa
  
  // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
@@ -105,13 +93,6 @@ import sftp.*;
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
  // Rather than failing after an hour. So would just check all the JSON files exist for each
  // of the streets.
-
-// Have an option where only changes x,y in files (e.g. if on street where already started
-// QA. Or could do something where if street is in persdata-qa, only change the x,y? 
-// so that still does full changes on streets not yet QA'd? Could do reminder to 
-// person in output file to do /qasave on those streets? Might be better option - 
-// NO - IS BETTER FOR THE PERSON TO DECIDE, AS GIVING LIST OF TSIDS, THEY CAN
-// RUN TOOL TWICE FOR STREETS ALREADY/NOT DONE WITH OPTION SET DIFFERENTLY.
 
 
 //  Need to read in street region - to know if black/white or AL (changes the quoin settings). 
@@ -360,7 +341,7 @@ public void draw()
                 {
                     // Server has been connected successfully - so can continue
                     printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
-                    // First validate the fixtures/persdata paths on the server
+                    // First validate the fixtures/persdata/persdata-qa paths on the server
                     if (!QAsftp.executeCommand("ls", configInfo.readFixturesPath(), "silent"))
                     {
                         println("Fixtures directory ", configInfo.readFixturesPath(), " does not exist on server");
@@ -372,6 +353,13 @@ public void draw()
                     {
                         println("Persdata directory ", configInfo.readPersdataPath(), " does not exist on server");
                         displayMgr.showErrMsg("Persdata directory " + configInfo.readPersdataPath() + " does not exist on server", true);
+                        failNow = true;
+                        return;
+                    }
+                    if (!QAsftp.executeCommand("ls", configInfo.readPersdataQAPath(), "silent"))
+                    {
+                        println("Persdata-qa directory ", configInfo.readPersdataQAPath(), " does not exist on server");
+                        displayMgr.showErrMsg("Persdata-qa directory " + configInfo.readPersdataQAPath() + " does not exist on server", true);
                         failNow = true;
                         return;
                     }
@@ -673,11 +661,11 @@ void doExitCleanUp()
         File[] contents = myDir.listFiles();
         if (contents != null && contents.length > 0) 
         {
-            printToFile.printOutputLine("\n WARNING: Following changed item file(s) NOT been copied/uploaded correctly - may need to be manually added to persdata\n");
+            //printToFile.printOutputLine("\n WARNING: Following changed item file(s) NOT been copied/uploaded correctly - may need to be manually added to persdata\n");
             printToFile.printDebugLine(this, "\n WARNING: Following changed item file(s) have NOT been copied/uploaded correctly - may need to be manually added to persdata\n", 3);
             for (int i=0; i< contents.length; i++)
             {
-                printToFile.printOutputLine("\t" + dirName + File.separatorChar + contents[i].getName());
+                //printToFile.printOutputLine("\t" + dirName + File.separatorChar + contents[i].getName());
                 printToFile.printDebugLine(this, "\t" + dirName + File.separatorChar + contents[i].getName(), 3);
             }
         }
@@ -854,9 +842,9 @@ void configJSONFileSelected(File selection)
       println("Identity   hashCode: " + System.identityHashCode(object));
    }
    
-   
-    public boolean copyFile(String sourcePath, String destPath)
+   public boolean copyFile(String sourcePath, String destPath)
     {
+        
         InputStream is = createInput(sourcePath);
         OutputStream os = createOutput(destPath);
         
@@ -899,7 +887,7 @@ void configJSONFileSelected(File selection)
                 return false;
             }
         }
-    
+        
         return true;
     }
     

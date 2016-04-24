@@ -945,7 +945,7 @@ class ItemInfo
         // This replaces the saveJSONObject function call which doesn't appear to properly close the file
         // although this was allegedly fixed in https://github.com/processing/processing/issues/3705
         
-        PrintWriter writer = PApplet.createWriter(saveFile(filePath));
+        PrintWriter writer = PApplet.createWriter(saveFile(filePath));        
         
         try
         {
@@ -978,7 +978,6 @@ class ItemInfo
             printToFile.printOutputLine("ERROR CLOSING " + itemTSID + ".json file to " + filePath);
             return false;
         }
-        
         return true;
     }    
        

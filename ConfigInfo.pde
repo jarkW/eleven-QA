@@ -6,6 +6,7 @@ class ConfigInfo {
     String elevenPath;
     String fixturesPath;
     String persdataPath;
+    String persdataQAPath;
     String streetSnapPath;
     boolean changeXYOnly;
     int quoinSearchRadius;
@@ -194,6 +195,20 @@ class ConfigInfo {
             }
         }
         
+        persdataQAPath = Utils.readJSONString(fileSystemInfo, "persdata_qa_path", false);
+        if (persdataQAPath.length() == 0)
+        {
+            // Use default path
+            if (useVagrant)
+            {
+                persdataQAPath = elevenPath + File.separatorChar + "eleven-throwaway-server" + File.separatorChar + "persdata-qa";
+            }
+            else
+            {
+                persdataQAPath = elevenPath + "/eleven-throwaway-server/persdata-qa";
+            }
+        }
+        
         // Check that the directories exist
         if (useVagrant)
         {
@@ -211,11 +226,18 @@ class ConfigInfo {
                 displayMgr.showErrMsg("Persdata directory " + persdataPath + " does not exist", true);
                 return false;
             }
+            myDir = new File(persdataQAPath);
+            if (!myDir.exists())
+            {
+                println("Persdata-qa directory ", persdataQAPath, " does not exist");
+                displayMgr.showErrMsg("Persdata-qa directory " + persdataQAPath + " does not exist", true);
+                return false;
+            }
             
         }
         else
         {
-            // Will validate the fixtures/persdata paths on server once session has been established
+            // Will validate the fixtures/persdata/persdata-qa paths on server once session has been established
         }
         
         
@@ -435,6 +457,11 @@ class ConfigInfo {
     public String readElevenPath()
     {
         return elevenPath;
+    }
+    
+    public String readPersdataQAPath()
+    {
+        return persdataQAPath;
     }
     
 }
