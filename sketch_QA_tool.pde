@@ -246,7 +246,7 @@ public void setup()
         failNow = true;
         return;
     }
-        
+                  
     // Find the directory that contains the config.json 
     workingDir = "";
     if (!validConfigJSONLocation())
@@ -268,9 +268,9 @@ public void draw()
     // Each time we enter the loop check for error/end flags
     if (failNow)
     {
-        // Give the user a chance to see any error message
-        // Needed principally for config.json errors which can happen before we've set up a debug.txt/output.txt file
-        // On the final application there is no print window, just the screen to show the user what is happening.
+        // Give the user a chance to see any saved error message which could not be displayed earlier
+        // In particular when user selected invalid config.json (e.g. with hidden .txt suffix)
+        displayMgr.showSavedErrMsg();       
         nextAction = WAITING_FOR_INPUT;
     }
     
@@ -285,7 +285,6 @@ public void draw()
         case USER_INPUT_CONFIG_FOLDER:
             // Need to get user to input valid location of config.json
             // Come here whilst wait for user to select the input
-            
             if (workingDir.length() > 0)
             {
                 nextAction = CONTINUE_SETUP;
@@ -302,6 +301,7 @@ public void draw()
                 failNow = true;
                 return;
             }
+
             // Set up config data
             configInfo = new ConfigInfo();
             if (!configInfo.readOkFlag())
@@ -330,7 +330,7 @@ public void draw()
                 failNow = true;
                 return;
             }
-    
+
             if (!setupWorkingDirectories())
             {
                 printToFile.printDebugLine(this, "Problems creating working directories", 3);
@@ -338,7 +338,7 @@ public void draw()
                 failNow = true;
                 return;
             }
-    
+
             // Set up connection to remote server if not using vagrant
             if (!configInfo.readUseVagrantFlag())
             {
@@ -813,7 +813,8 @@ void configJSONFileSelected(File selection)
 {
     if (selection == null) 
     {
-        println("Window was closed or the user hit cancel.");
+        println("Window was closed or the user hit cancel");
+        displayMgr.setSavedErrMsg("Window was closed or the user hit cancel");
         failNow = true;
         return;
     }      
@@ -822,10 +823,10 @@ void configJSONFileSelected(File selection)
         println("User selected " + selection.getAbsolutePath());
         
         //if (selection.getAbsolutePath().indexOf("config.json") == -1)
-        if (selection.getAbsolutePath().endsWith("config.json"))
+        if (!selection.getAbsolutePath().endsWith("config.json"))
         {
-            println("Please select a config.json file");
-            displayMgr.showErrMsg("Please select a config.json file", true);
+            println("Please select a config.json file (check does not have hidden .txt ending)");
+            displayMgr.setSavedErrMsg("Please select a config.json file (check does not have hidden .txt ending)");
             failNow = true;
             return;
         }
@@ -842,7 +843,7 @@ void configJSONFileSelected(File selection)
         {
             println(e);
             println("error detected saving config.json location to configLocation.txt in program directory");
-            displayMgr.showErrMsg("Error detected saving config.json location to configLocation.txt in program directory", true);
+            displayMgr.setSavedErrMsg("Error detected saving config.json location to configLocation.txt in program directory");
             failNow = true;
             return;
         }

@@ -13,6 +13,10 @@ class DisplayMgr
     String streetNameMsg;
     String itemNameMsg;
     
+    // Needed e.g. for when prompting for config.json file and user enters invalid value - usual showErrMsg does not work because call back function?
+    String savedErrMsg;
+    boolean savedErrMsgToDisplay;
+    
     // for testing - might need to use 'set' instead of 'image' - might use less memory
     // not implemented yet
     boolean USE_SET_FOR_DISPLAY = false;  
@@ -37,6 +41,8 @@ class DisplayMgr
         textSize(14);
         streetNameMsg = "";
         itemNameMsg = "";
+        savedErrMsg = "";
+        savedErrMsgToDisplay = false;
         failedStreets = new StringList();
         allFailedStreets = new StringList();
     }
@@ -58,7 +64,7 @@ class DisplayMgr
     {
         
         String s;
-        
+        println("Entering showErrMsg with string", info);
         clearDisplay();
         fill(RED_TEXT);
         textSize(16);
@@ -71,7 +77,12 @@ class DisplayMgr
         }
         if (exitNow)
         {
-            text("!!!!! EXITING WITH ERRORS !!!!! See " + workingDir + File.separatorChar + "debug_info.txt for more information", 10, 140, width-10, 80);
+            String s1 = "!!!!! EXITING WITH ERRORS !!!!!";
+            if (workingDir.length() > 0)
+            {
+                s1 = s1 + workingDir + File.separatorChar + "debug_info.txt for more information";
+            }
+            text(s1, 10, 140, width-10, 80);
             text("Press q or x or ESC to close window", 10, 160, width-10, 80);
         }
         printToFile.printDebugLine(this, "ERR MSG = FATAL ERROR: " + info + " exit now flag = " + exitNow, 3);
@@ -368,5 +379,19 @@ class DisplayMgr
             return false;
         }
         return true;
+    }
+    
+    public void setSavedErrMsg(String errMsg)
+    {
+        savedErrMsg = errMsg;
+        savedErrMsgToDisplay = true;
+    }
+    
+    public void showSavedErrMsg()
+    {
+        if (savedErrMsgToDisplay)
+        {
+            showErrMsg(savedErrMsg, true);
+        }
     }
 }

@@ -61,7 +61,7 @@ class ConfigInfo {
             displayMgr.showErrMsg("Failed to load config.json file", true);
             return false;
         }
-   
+        
         // Now read in the different fields
         useVagrant = Utils.readJSONBool(json, "use_vagrant_dirs", true);  
         if (!Utils.readOkFlag())
