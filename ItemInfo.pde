@@ -935,8 +935,8 @@ class ItemInfo
             }
             //printToFile.printOutputLine(s);
             printToFile.printDebugLine(this, s, 2);
-        }        
-        
+        } 
+                
         return true;
     }
     

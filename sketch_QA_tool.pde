@@ -57,18 +57,7 @@ import sftp.*;
 // person in output file to do /qasave on those streets? Might be better option - 
 // NO - IS BETTER FOR THE PERSON TO DECIDE, AS GIVING LIST OF TSIDS, THEY CAN
 // RUN TOOL TWICE FOR STREETS ALREADY/NOT DONE WITH OPTION SET DIFFERENTLY.
- 
- 
- // TO DO - need to upload all the L*/G*/I* files to OrigJSONs (or copy from vagrant dir) ... 
- // As upload the newJSON files to persdata - move to uploadedJSONs. At end of program
- // if NewJSONs is empty ... successful end. Otherwise could list the JSONs on the screen 
- // or just do count of files in NewJSONs.
- // Create/replace the errStrings array which is reported at the end? Or create new one for
- // failed JSONs so that it can be reported on new section of screen, just need display.setFailedJSON or something
- // Should also report failure to upload JSON files in the output directory
- // When using vagrant - need to check if fail trying to write files e.g. c:program files/temp or something - so catch that kind of error in all places
- //
- 
+  
  // Should I check in JSONDiff that the only fields changed are the expected ones???
  // i.e. x,y, variant, and some added fields. 
  
@@ -661,11 +650,11 @@ void doExitCleanUp()
         File[] contents = myDir.listFiles();
         if (contents != null && contents.length > 0) 
         {
-            //printToFile.printOutputLine("\n WARNING: Following changed item file(s) NOT been copied/uploaded correctly - may need to be manually added to persdata\n");
+            printToFile.printOutputLine("\n WARNING: Following changed item file(s) NOT been copied/uploaded correctly - may need to be manually added to persdata\n");
             printToFile.printDebugLine(this, "\n WARNING: Following changed item file(s) have NOT been copied/uploaded correctly - may need to be manually added to persdata\n", 3);
             for (int i=0; i< contents.length; i++)
             {
-                //printToFile.printOutputLine("\t" + dirName + File.separatorChar + contents[i].getName());
+                printToFile.printOutputLine("\t" + dirName + File.separatorChar + contents[i].getName());
                 printToFile.printDebugLine(this, "\t" + dirName + File.separatorChar + contents[i].getName(), 3);
             }
         }
@@ -841,6 +830,31 @@ void configJSONFileSelected(File selection)
          + (object != null ? object.hashCode() : "N/A"));
       println("Identity   hashCode: " + System.identityHashCode(object));
    }
+   
+  public JSONObject loadJSONObjectFromFile(String filename)
+  {    
+      // Alternative to official loadJSONObject() which does not close the file after reading the JSON object
+      // Which means subsequent file delete/remove fails
+      // Only needed when reading files in NewJSONs i.e. when do the JSONDiff functionality
+    File file = new File(filename);
+    BufferedReader reader = createReader(file);
+    JSONObject result = new JSONObject(reader);
+    try
+    {
+        reader.close();
+    }
+    catch (IOException e) 
+    {
+        e.printStackTrace();
+        println("I/O exception closing ");
+        printToFile.printDebugLine(this, "I/O exception closing " + filename, 3);
+        return null;
+    }
+    
+    return result;
+
+   }
+
    
    public boolean copyFile(String sourcePath, String destPath)
     {

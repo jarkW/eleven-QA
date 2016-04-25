@@ -65,7 +65,9 @@ class JSONDiff
         
         try
         {
-            newJSON = loadJSONObject(newFileName);
+            //newJSON = loadJSONObject(newFileName);
+            // The library loadJSONObject doesn't close the file ... so the subsequent move of this JSON file will fail
+            newJSON = loadJSONObjectFromFile(newFileName);
         }
         catch(Exception e)
         {
@@ -82,7 +84,9 @@ class JSONDiff
         }
         try
         {
-            origJSON = loadJSONObject(origFileName);
+            //origJSON = loadJSONObject(origFileName);
+            // The library loadJSONObject doesn't close the file ... so the subsequent move of this JSON file will fail
+            origJSON = loadJSONObjectFromFile(origFileName);
         }
         catch(Exception e)
         {

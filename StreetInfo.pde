@@ -263,7 +263,7 @@ class StreetInfo
         }
         else if (!moveOK)
         {
-            //displayMgr.showErrMsg("Problems moving " + itemTSID + ".json from NewJSONs to UploadedJSONs directory (actual " + uploadString.toLowerCase().replace("ing","") + " was successful). Check " + workingDir + File.separatorChar + "debug_info.txt for more information", false);
+            displayMgr.showErrMsg("Problems moving " + itemTSID + ".json from NewJSONs to UploadedJSONs directory (actual " + uploadString.toLowerCase().replace("ing","") + " was successful). Check " + workingDir + File.separatorChar + "debug_info.txt for more information", false);
             return false;
         }
         else if (!nothingChanged)
@@ -1050,63 +1050,16 @@ class StreetInfo
         String JSONFileName = TSID + ".json";
         String sourcePath = workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + JSONFileName; 
         String destPath = workingDir + File.separatorChar + "UploadedJSONs" + File.separatorChar + JSONFileName;
-        
-      
-        
-        // move file from newJSONs to uploadedJSONs directory
-        
-        if (!copyFile(sourcePath, destPath))
-        {
-            printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath + " - failed to copy JSON file from NewJSONs to UploadedJSONs", 3);
-            printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - failed to copy JSON file from NewJSONs to UploadedJSONs");
-            return false;
-        }
 
-        // Now delete the source
-        File file = new File(sourcePath);
-        if (!file.exists())
+        // move file from newJSONs to uploadedJSONs directory
+        File sFile = new File(sourcePath);
+        if (!sFile.exists())
         {
             printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath + " - " + sourcePath + " does not exist", 3);
             printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - " + sourcePath + " does not exist");
             return false;
         }
-        boolean test = true;
-        try
-        {
-            test = file.delete();
-        }
-        catch(SecurityException e)
-        {
-            println(e);
-            printToFile.printDebugLine(this, "SE Failed to delete " + sourcePath, 3);
-            return false;
-        }
-        catch(Exception e)
-        {
-            println(e);
-            printToFile.printDebugLine(this, "Exc Failed to delete " + sourcePath, 3);
-            return false;
-        }
-        if (!test)
-        {
-            // problem deleting the original
-            printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath + " - unable to delete " + sourcePath, 3);
-            //printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - unable to delete " + sourcePath);
-            return false;
-        }
-        
-        /*
-        if (!file.delete())
-        {
-            // problem deleting the original
-            printToFile.printDebugLine(this, "Unable to move JSON file from " + sourcePath + " to " + destPath + " - unable to delete " + sourcePath, 3);
-            printToFile.printOutputLine("Unable to move JSON file from " + sourcePath + " to " + destPath + " - unable to delete " + sourcePath);
-            return false;
-        }
-*/
-        /*
-        // The rename below sometimes fails - so
-        
+   
         File dFile = new File(destPath);
         if (!sFile.renameTo(dFile))
         {
@@ -1114,7 +1067,7 @@ class StreetInfo
             printToFile.printOutputLine("Warning - unable to move JSON file from " + sourcePath + " to " + destPath);
             return false;
         }
-        */
+
         printToFile.printDebugLine(this, "Moved JSON file " + JSONFileName + " from " + workingDir + File.separatorChar + "NewJSONs" + " to " + workingDir + File.separatorChar + "UploadedJSONs", 1);
         
         return true;
