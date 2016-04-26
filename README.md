@@ -1,4 +1,5 @@
 eleven-QA
+
 This tool has been designed to search an archive of player street snaps to work out the co-ordinates and variant of items on streets and to make those changes in JSON files. It forms part of the QA team effort working on the Eleven project (http://elevengiants.com/) to restore the game of Glitch.
 
 Getting Started
