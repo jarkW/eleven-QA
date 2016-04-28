@@ -29,6 +29,9 @@ class ItemInfo
       
     FragmentFind fragFind;
     
+    // Information about the x,y which relate to the lowest RGB averages, which may/may not be considered a match
+    ArrayList<MatchInfo> matchInfoList;
+    
     // Contains the item fragments used to search the snap
     ArrayList<PNGFile> itemImages;
     
@@ -51,12 +54,14 @@ class ItemInfo
         newItemY = MISSING_COORDS;
         newItemExtraInfo = "";        
         newItemClassName = "";
-        
+                
         skipThisItem = false;
         itemFound = false;
         saveChangedJSONfile = false;
         
         itemYValues = new IntList();
+        
+        matchInfoList = new ArrayList<MatchInfo>();
         
         initItemVars();
 
@@ -183,7 +188,18 @@ class ItemInfo
     } 
     
     boolean validItemToCheckFor()
-    {        
+    {   
+        /*
+        switch (itemTSID)
+        {
+            //case "IIF10MG5VTK1126":
+            case "IIF18F2UM4K1MEP":
+                //break;
+            default:
+                return false;
+        } */
+
+        
         // Returns true if this an item we expect to be scanning for on a snap
         if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
             (itemClassTSID.indexOf("trant_", 0) == 0) ||
@@ -1088,10 +1104,11 @@ class ItemInfo
             }
             itemFinished = true;
             
-            // Clear the flag ready for when we come around again
+            // Save the debug information for this street snap
+            MatchInfo matchInfo = fragFind.readMatchInfo();         
+            matchInfoList.add(matchInfo);
             
-
-             // If an item was found, then delay the image for a second before continuing - for debug onl
+            // If an item was found, then delay the image for a second before continuing - for debug onl
             if (doDelay && newItemX != MISSING_COORDS)
             {
                 delay(1000);
@@ -1280,5 +1297,40 @@ class ItemInfo
     {
         return okFlag;
     } 
+    
+    public MatchInfo readBestMatchInfo()
+    {
+        if (matchInfoList.size() < 1)
+        {
+            // This should never happen - no RGB info has been added
+            printToFile.printDebugLine(this, "MatchInfo array is empty - no data has been added for snap searches for item " + itemTSID, 3);
+            return null;
+        }
+        
+        printToFile.printDebugLine(this, "Item + " + itemTSID + " Size of debugRGBInfo is " + matchInfoList.size(), 1);
+        // Need to walk through the array and return the lowest value of RGB
+        MatchInfo info;
+        info = matchInfoList.get(0);
+        for (int i = 0; i < matchInfoList.size(); i++)
+        {
+            printToFile.printDebugLine(this, "Item + " + itemTSID + " Debug RGB info is " + matchInfoList.get(i).matchInfoString()+ "  lowestTotalRGB as float = " + matchInfoList.get(i).lowestTotalRGB, 1);
+            if (matchInfoList.get(i).lowestTotalRGB < info.lowestTotalRGB)
+            {
+                info = matchInfoList.get(i);
+            }
+            else if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("qurazy_marker")) && (matchInfoList.get(i).lowestTotalRGB == info.lowestTotalRGB))
+            {
+                // If the RGB values are the same, if this one has a lower y value (i.e. more positive), then copy across
+                if (matchInfoList.get(i).bestMatchY > info.bestMatchY)
+                {
+                    info = matchInfoList.get(i);
+                }
+            }
+        }
+        
+        printToFile.printDebugLine(this, "Item + " + itemTSID + " Best debug RGB info is " + info.matchInfoString(), 1);
+        return info;
+    }
+    
 
 }

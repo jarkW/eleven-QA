@@ -30,6 +30,9 @@ class FragmentFind
     // Saved item information we need here - easier to read
     ArrayList<PNGFile> itemImages;
     PNGFile streetSnapImage;  
+    
+    // Information saved from the search before it is nulled ready for the next search/image
+    MatchInfo matchInfo;
   
     // constructor
     public FragmentFind(ItemInfo itemInfo)
@@ -181,8 +184,12 @@ class FragmentFind
                 // So save this information before dropping down below to search with the next image available           
                 quoinMatches.add(new QuoinMatchData(spiralSearch.convertToJSONX(spiralSearch.readFoundStepX()),
                                  spiralSearch.convertToJSONY(spiralSearch.readFoundStepY()),
-                                 extractItemInfoFromItemImageFilename()));
-                debugInfo = spiralSearch.debugRGBInfo(); 
+                                 extractItemInfoFromItemImageFilename(),
+                                 spiralSearch.readMatchInfo()));                          
+
+                debugInfo = spiralSearch.debugRGBInfo();
+                matchInfo = spiralSearch.readMatchInfo(); 
+  
                 printToFile.printDebugLine(this, "searchForFragment - full quoin search found " + extractItemInfoFromItemImageFilename() + " found at x,y " + newItemX + "," + newItemY, 2);
             }
             else
@@ -195,7 +202,8 @@ class FragmentFind
             
                 // As matched item image is the current one, extract the extra information from the item image filename
                 newItemExtraInfo = extractItemInfoFromItemImageFilename();
-                debugInfo = spiralSearch.debugRGBInfo(); 
+                debugInfo = spiralSearch.debugRGBInfo();
+                matchInfo = spiralSearch.readMatchInfo(); 
                 searchDone = true;
                 printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY, 2);
             }
@@ -212,7 +220,7 @@ class FragmentFind
                 // and that info was used to select the single quoin image that needed to be used to search this street snap. Therefore if
                 // if was not found - and we enter this leg of code - then consider the search done for this item.
                 // Won't reach this leg of the code for any other items - as once an item is found, it never enters FragmentFind again - skipped on future street snaps.
-                
+                matchInfo = spiralSearch.readMatchInfo(); 
                 searchDone = true;
                 printToFile.printDebugLine(this, "searchForFragment - found 1 item, no more images to search", 2);
                 printToFile.printDebugLine(this, "searchForFragment - " + thisItemInfo.readItemClassTSID().equals("quoin") + " new X is " + thisItemInfo.readNewItemX() , 2);
@@ -230,16 +238,24 @@ class FragmentFind
                     // In the case of quoins - need to save the details of the image that was closest to the original co-ordinates
                     if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS)
                     {
+                        // Also copies across the associated debugRGB info
                         saveClosestQuoin();
                     }
-                    
+                    else
+                    {
+                        matchInfo = spiralSearch.readMatchInfo(); 
+                    }
+
+                               
                     searchDone = true;
                 }
                 else
                 {
                     // Carry out search using the new image
-                    debugInfo = spiralSearch.debugRGBInfo(); 
-                    //printToFile.printDebugLine(this, " For reference before start search with next image - " + debugInfo, 2);
+                    debugInfo = spiralSearch.debugRGBInfo();
+                    matchInfo = spiralSearch.readMatchInfo(); 
+                                    
+                    //printToFile.printDebugLine(this, " For reference before start search with next image - " + debugRGBMatchInfo, 2);
                     
                     printToFile.printDebugLine(this, "searchForFragment - with new image " + itemImages.get(itemImageBeingUsed).readPNGImageName() + " and street " + streetSnapImage.readPNGImageName(), 2);
                     spiralSearch = null; 
@@ -283,7 +299,7 @@ class FragmentFind
             {
                 printToFile.printDebugLine(this, " For reference - " + debugInfo, 2);
             }
-
+                           
         }
         return true;
     }
@@ -334,6 +350,7 @@ class FragmentFind
             newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
             newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
             newItemExtraInfo = "";
+            matchInfo = spiralSearch.readMatchInfo(); 
             printToFile.printDebugLine(this, "No quoin images matched", 2);
         }
         else
@@ -345,7 +362,8 @@ class FragmentFind
             newItemX = quoinMatches.get(i).itemX;
             newItemY = quoinMatches.get(i).itemY;
             newItemExtraInfo = quoinMatches.get(i).quoinType;
-
+            matchInfo = quoinMatches.get(i).matchInfo;
+            
             for (i = 1; i < quoinMatches.size(); i++)
             {
                 if (quoinMatches.get(i).distFromOrigXY < nearestQuoinDist)
@@ -356,6 +374,8 @@ class FragmentFind
                     newItemX = quoinMatches.get(i).itemX;
                     newItemY = quoinMatches.get(i).itemY;
                     newItemExtraInfo = quoinMatches.get(i).quoinType;
+                    
+                    matchInfo = quoinMatches.get(i).matchInfo;
                 }
                 else
                 {
@@ -397,19 +417,26 @@ class FragmentFind
         return okFlag;
     }
     
+    public MatchInfo readMatchInfo()
+    {
+        return matchInfo;
+    }
+    
     class QuoinMatchData
     {
         int itemX;
         int itemY;
         float distFromOrigXY;
         String quoinType;
+        MatchInfo matchInfo;
         
-        QuoinMatchData(int foundX, int foundY, String extraInfo)
+        QuoinMatchData(int foundX, int foundY, String extraInfo, MatchInfo RGBInfo)
         {
             itemX = foundX;
             itemY = foundY;
             quoinType = extraInfo;
             distFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(thisItemInfo.readOrigItemX(), thisItemInfo.readOrigItemY(), foundX, foundY); 
+            matchInfo = RGBInfo;
         }
     }
     

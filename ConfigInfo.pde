@@ -17,7 +17,6 @@ class ConfigInfo {
     int serverPort;
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
     
-    boolean debugSaveOrigAndNewJSONs;
     boolean debugShowBWFragments;
     
     StringList streetTSIDs = new StringList();
@@ -301,11 +300,6 @@ class ConfigInfo {
         }
         
         // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
-        debugSaveOrigAndNewJSONs = Utils.readJSONBool(json, "debug_save_all_JSONs_for_comparison", false);
-        if (!Utils.readOkFlag())
-        {
-            debugSaveOrigAndNewJSONs = false;
-        }
         writeJSONsToPersdata = Utils.readJSONBool(json, "debug_write_JSONs_To_Persdata", false);
         if (!Utils.readOkFlag())
         {
@@ -388,10 +382,6 @@ class ConfigInfo {
         return changeXYOnly;
     }
     
-    public boolean readDebugSaveOrigAndNewJSONs()
-    {
-        return debugSaveOrigAndNewJSONs;
-    }
     public boolean readWriteJSONsToPersdata()
     {
         return writeJSONsToPersdata;

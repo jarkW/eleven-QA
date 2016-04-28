@@ -10,7 +10,9 @@ import sftp.*;
  *
  * The street/item files are read from persdata or fixtures (second choice). If a street
  * file does not exist then an error is reported, but the tool moves on to the next TSID
- * in the list.
+ * in the list. Similarly, if the street is in persdata-qa (has been QA'd) then the street
+ * is skipped (unless the xy_only option has been selected, thereby saving the quoin types
+ * of quoins not found in the snaps).
  *
  * For some items such as quoins, dirt piles and other QA configurable items, the correct
  * version of the item is determined by comparing all versions of the item with the
@@ -318,6 +320,7 @@ public void draw()
                 nextAction = LOAD_FRAGMENT_OFFSETS;
     
                 // Display start up msg
+                displayMgr.clearDisplay();
                 displayMgr.showInfoMsg("Copying street/item JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             }
             break;
@@ -413,6 +416,7 @@ public void draw()
             
             // Ready to start with first street
             streetBeingProcessed = 0;
+            displayMgr.clearDisplay();
             displayMgr.showInfoMsg(downloadString + " street JSON files for street " + configInfo.readStreetTSID(streetBeingProcessed) + " ... please wait");
             nextAction = INIT_STREET;
             break;
@@ -706,19 +710,19 @@ boolean setupWorkingDirectories()
 {
     // Checks that we have working directories for the JSONs - create them if they don't exist
     // If they exist - then empty them if not keeping the files becase debug option set 
-    if (!Utils.setupDir(workingDir + File.separatorChar +"NewJSONs", configInfo.readDebugSaveOrigAndNewJSONs()))
+    if (!Utils.setupDir(workingDir + File.separatorChar +"NewJSONs", false))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
         return false;
     }
     
-    if (!Utils.setupDir(workingDir + File.separatorChar + "OrigJSONs", configInfo.readDebugSaveOrigAndNewJSONs()))
+    if (!Utils.setupDir(workingDir + File.separatorChar + "OrigJSONs", false))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
         return false;
     }
     
-    if (!Utils.setupDir(workingDir + File.separatorChar +"UploadedJSONs", configInfo.readDebugSaveOrigAndNewJSONs()))
+    if (!Utils.setupDir(workingDir + File.separatorChar +"UploadedJSONs", false))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
         return false;
@@ -923,7 +927,37 @@ void configJSONFileSelected(File selection)
         }
 
     }));
-
+   
 }
+    class MatchInfo
+    {
+        // Contains the information caculated by SpiralSearch for the 'best' fragment match
+        // 
+        float lowestTotalRGB;
+        
+        // New values - average RGB per pixel, rather than per whole fragment compare
+        float bestMatchAvgRGB;
+        float bestMatchAvgTotalRGB; 
+        int bestMatchX;
+        int bestMatchY;
+        
+        public MatchInfo(float lowestRGB, float avgRGB, float totalAvgRGB, int x, int y)
+        {
+            lowestTotalRGB = lowestRGB;
+            bestMatchAvgRGB = avgRGB;
+            bestMatchAvgTotalRGB = totalAvgRGB;
+            bestMatchX = x;
+            bestMatchY = y;
+        }
+        
+        public String matchInfoString()
+        {
+            String s = "lowest RGB = " + int (lowestTotalRGB) + 
+                       " (avg RGB = " + int (bestMatchAvgRGB) + 
+                       "/" + int (bestMatchAvgTotalRGB) + ")" +
+                       " at x,y " + bestMatchX + "," + bestMatchY;
+            return s;
+        }
+    }
 
     

@@ -180,7 +180,9 @@ class PrintToFile {
     
     public void printSummaryHeader()
     {
-        String s = "\nResults for " + streetInfo.readStreetName() + " (" + streetInfo.readStreetTSID() + ")";
+        String s = "============================================================================================";
+        printOutputLine(s);
+        s = "\nResults for " + streetInfo.readStreetName() + " (" + streetInfo.readStreetTSID() + ")";
         printOutputLine(s);
         
         if (!configInfo.readUseVagrantFlag())
@@ -229,6 +231,8 @@ class PrintToFile {
         int quoinFavor = 0;
         int quoinXP = 0;
         int quoinMystery = 0;
+        
+        MatchInfo bestMatchInfo;
                 
         for (int i = 0; i < itemResults.size(); i++)
         {
@@ -238,7 +242,7 @@ class PrintToFile {
                 // Used to clearly show if JSON has been updated
                 s = "** ";
             }
-
+            
             switch (itemResults.get(i).readResult())
             {
                 case SummaryChanges.SKIPPED:
@@ -353,6 +357,21 @@ class PrintToFile {
                 s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemX() + "," +  itemResults.get(i).itemInfo.readOrigItemY() + ")"; 
             }
             
+           
+            // For tesing purposes - look at all RGB info
+            /*
+            if (itemResults.get(i).readResult() == SummaryChanges.MISSING)
+            {
+                if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin") || itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
+                s = s + " TRY " + itemResults.get(i).itemInfo.readDebugRGBX() + "," + itemResults.get(i).itemInfo.readDebugRGBY();
+            }
+            */
+            if (itemResults.get(i).readResult() != SummaryChanges.SKIPPED)
+            {
+                bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
+                s = s + " " + bestMatchInfo.matchInfoString();
+            }
+                              
             printOutputLine(s);
 
             if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
@@ -405,7 +424,7 @@ class PrintToFile {
             " Total=" + (quoinXP + quoinEnergy + quoinMood + quoinCurrants + quoinFavor + quoinTime + quoinMystery);
 
         printOutputLine(s);
-        printOutputLine("\n\n");
+        printOutputLine("\n");
         return true;
     }
     

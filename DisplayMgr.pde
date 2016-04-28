@@ -241,7 +241,7 @@ class DisplayMgr
         }
         
         image(streetImage, 50, height - 50 - int(scaledStreetHeight), scaledStreetWidth, scaledStreetHeight);
-        showInfoMsg("Using " + streetImageName);
+        showInfoMsg("Using " + streetImageName + " (" + streetInfo.readCurrentStreetSnapString() + ")");
     }
         
     public void showStreetFragmentImage(PImage streetImage, int itemBoxWidth, int itemBoxHeight, int centreX, int centreY)

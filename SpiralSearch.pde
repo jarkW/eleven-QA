@@ -49,6 +49,9 @@ class SpiralSearch
     float lowestTotalRGBDiff;
     int lowestTotalRGBDiffStepX;
     int lowestTotalRGBDiffStepY;
+    
+    float avgTotalRGBDiffPerPixel;
+    float lowestAvgRGBDiffPerPixel;
         
     // final found difference in x,y
     int foundStepX;
@@ -146,6 +149,8 @@ class SpiralSearch
         // Initialise values for keeping record of 'best' fit of QA fragments with archive
         sumTotalRGBDiff = 0;
         lowestTotalRGBDiff = 0;
+        avgTotalRGBDiffPerPixel = 0;
+        lowestAvgRGBDiffPerPixel = 0;
         // snap co-ords for lowest rgb 
         lowestTotalRGBDiffStepX = 0;
         lowestTotalRGBDiffStepY = 0;
@@ -198,9 +203,12 @@ class SpiralSearch
         {
             foundStepX = lowestTotalRGBDiffStepX;
             foundStepY = lowestTotalRGBDiffStepY;
+            avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height);
             printToFile.printDebugLine(this, "Good enough match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
             " at x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) +
             " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
+            " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
+            " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
             " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
             " RGBDiffCount = " + RGBDiffCount +
             " spiralCount = " + spiralCount, 2);  
@@ -216,12 +224,15 @@ class SpiralSearch
         else
         {
             // Consider item not found
+            avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height);
             printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) +
             " at x,y " + convertToJSONX(lowestTotalRGBDiffStepX) + "," + convertToJSONY(lowestTotalRGBDiffStepY) +
             " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
+            " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
+            " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
             " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
             " RGBDiffCount = " + RGBDiffCount +
-            " spiralCount = " + spiralCount, 1);  
+            " spiralCount = " + spiralCount, 2);  
             if (saveImages)
             {
                 // This doesn't really work as we don't know which of the images had this lowest RGB for example. Might need instead to have a separate class
@@ -368,7 +379,8 @@ class SpiralSearch
         {
             lowestTotalRGBDiff = totalRGBDiff;
             lowestTotalRGBDiffStepX = stepX;
-            lowestTotalRGBDiffStepY = stepY;            
+            lowestTotalRGBDiffStepY = stepY; 
+            lowestAvgRGBDiffPerPixel = 0;
             return true;
         }
         // leave this check out - only return true if perfect match, otherwise search the entire snap and take the lowest value
@@ -383,6 +395,7 @@ class SpiralSearch
             {
                 // Save this one always - so overwrite initilised value
                 lowestTotalRGBDiff = totalRGBDiff;
+                lowestAvgRGBDiffPerPixel = totalRGBDiff/float(thisItemImage.height * thisItemImage.width);
                 lowestTotalRGBDiffStepX = stepX;
                 lowestTotalRGBDiffStepY = stepY;
             }
@@ -390,6 +403,7 @@ class SpiralSearch
             {
                 // save this if the lowest one so far
                 lowestTotalRGBDiff = totalRGBDiff;
+                lowestAvgRGBDiffPerPixel = totalRGBDiff/float(thisItemImage.height * thisItemImage.width);
                 lowestTotalRGBDiffStepX = stepX;
                 lowestTotalRGBDiffStepY = stepY;
             }        
@@ -479,15 +493,40 @@ class SpiralSearch
     // Used for debugging only
     public String debugRGBInfo()
     {
-
+            
+        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height);    
         String s = "lowest RGB was " + lowestTotalRGBDiff + 
                     " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
+                    " avg lowest RGB diff/pixel = " + int (lowestAvgRGBDiffPerPixel) +
+                    " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
                     " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
                     " RGBDiffCount = " + RGBDiffCount +
                     " at x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) +
                     " spiralCount = " + spiralCount;
 
         return s;
+    }
+    
+    public MatchInfo readMatchInfo()
+    {       
+        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height); 
+        int x;
+        int y;
+        // If not found item, then return the x,y associated with the lowest RGBDiff
+        if (foundStepX == MISSING_COORDS)
+        {
+            x = convertToJSONX(lowestTotalRGBDiffStepX);
+            y = convertToJSONY(lowestTotalRGBDiffStepY);
+        }
+        else
+        {
+            x = convertToJSONX(foundStepX);
+            y = convertToJSONY(foundStepY);
+        }
+        
+        MatchInfo RGBInfo = new MatchInfo(lowestTotalRGBDiff, lowestAvgRGBDiffPerPixel, avgTotalRGBDiffPerPixel, x, y);
+        
+        return RGBInfo;
     }
     
     public int readFoundStepX()
@@ -504,4 +543,25 @@ class SpiralSearch
     {
         return okFlag;
     }
+    
+    public int readLowestTotalRGBDiffStepX()
+    {
+        return convertToJSONX(lowestTotalRGBDiffStepX);
+    }
+    
+    public int readLowestTotalRGBDiffStepY()
+    {
+        return convertToJSONX(lowestTotalRGBDiffStepY);
+    }
+    
+    public int readLowestAvgRGBDiffPerPixel()
+    {
+        return int(lowestAvgRGBDiffPerPixel);
+    }
+    
+    public int readAvgTotalRGBDiffPerPixel()
+    {
+        return int(avgTotalRGBDiffPerPixel);
+    }
+
 }

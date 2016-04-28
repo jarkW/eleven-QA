@@ -1107,6 +1107,12 @@ class StreetInfo
         }
         return streetSnaps.get(streetSnapBeingUsed);
     }
+    
+    public String readCurrentStreetSnapString()
+    {
+        String s = Integer.toString(streetSnapBeingUsed + 1) + " of " + streetSnaps.size();
+        return s;
+    }
           
     public boolean loadStreetImage(int n)
     {
