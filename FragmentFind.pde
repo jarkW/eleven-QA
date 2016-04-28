@@ -190,6 +190,7 @@ class FragmentFind
                 debugInfo = spiralSearch.debugRGBInfo();
                 matchInfo = spiralSearch.readMatchInfo(); 
   
+                printToFile.printDebugLine(this, "searchForFragment - JARK " + matchInfo.bestMatchX + "," + matchInfo.bestMatchY + "(" + matchInfo.bestMatchAvgRGB + "/" + matchInfo.bestMatchAvgTotalRGB + ")", 3);
                 printToFile.printDebugLine(this, "searchForFragment - full quoin search found " + extractItemInfoFromItemImageFilename() + " found at x,y " + newItemX + "," + newItemY, 2);
             }
             else
@@ -295,9 +296,11 @@ class FragmentFind
             // Dump out debug info to give me some idea of whether I've gotten the searchbox the right size or not
             printToFile.printDebugLine(this, " Returning from FragmentFound item  found = " + itemFound + " " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemExtraInfo + 
                                         "> old x,y = " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " new x,y " + newItemX + "," + newItemY, 2);
+            printToFile.printDebugLine(this, " and also RGB info is " + matchInfo.bestMatchAvgRGB + "/" + matchInfo.bestMatchAvgTotalRGB + " try " + matchInfo.bestMatchX + "," + matchInfo.bestMatchY, 2);
             if (debugInfo.length() > 0)
             {
                 printToFile.printDebugLine(this, " For reference - " + debugInfo, 2);
+                printToFile.printDebugLine(this, " For RGB reference - " + matchInfo.matchInfoString(), 2);
             }
                            
         }
@@ -437,6 +440,7 @@ class FragmentFind
             quoinType = extraInfo;
             distFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(thisItemInfo.readOrigItemX(), thisItemInfo.readOrigItemY(), foundX, foundY); 
             matchInfo = RGBInfo;
+            printToFile.printDebugLine(this, "Saving quoin data for " + extraInfo + " with avg RGB " + matchInfo.bestMatchAvgRGB + " at x,y " + matchInfo.bestMatchX + "," + matchInfo.bestMatchY, 3);
         }
     }
     
