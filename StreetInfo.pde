@@ -18,6 +18,7 @@ class StreetInfo
     
     // list of street snaps and associated images
     ArrayList<PNGFile> streetSnaps;
+    StringList skippedStreetSnapNames;
     int streetSnapBeingUsed;
     
     // List of item results - so can sort e.g. on skipped items
@@ -67,6 +68,7 @@ class StreetInfo
         itemInfo = new ArrayList<ItemInfo>();
         streetSnaps = new ArrayList<PNGFile>();
         itemResults = new ArrayList<SummaryChanges>();
+        skippedStreetSnapNames = new StringList();
         changedItemJSONs = new StringList();
         numberTimesResultsSortedSoFar = 0;
          
@@ -418,9 +420,9 @@ class StreetInfo
 
         if (snapFilenames == null || snapFilenames.length == 0)
         {
-            printToFile.printDebugLine(this, "SKIPPING STREET - No valid street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName, 3);
-            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ")\n");
-            displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No valid street snaps found");
+            printToFile.printDebugLine(this, "SKIPPING STREET - No valid street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName + " in directory " + configInfo.readStreetSnapPath(), 3);
+            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ")" + " in directory " + configInfo.readStreetSnapPath() + "\n");
+            displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No valid street snaps found in directory " + configInfo.readStreetSnapPath());
             invalidStreet = true;
             return false;
         }
@@ -503,6 +505,8 @@ class StreetInfo
             {
                 printToFile.printDebugLine(this, "Skipping street snap " + streetSnaps.get(j).readPNGImageName() + " because resolution is smaller than " + 
                 geoWidth + "x" + geoHeight + "pixels", 3);
+                // save this name so can report to user at end
+                skippedStreetSnapNames.append(streetSnaps.get(j).readPNGImageName());
                 streetSnaps.remove(j);
             }
             else 
@@ -1097,6 +1101,29 @@ class StreetInfo
     public String readStreetTSID()
     {
         return streetTSID;
+    }
+    
+    public int readSkippedStreetSnapCount()
+    {
+        return skippedStreetSnapNames.size();
+    }
+    
+    public String readSkippedStreetSnapName(int i)
+    {
+        if (i < skippedStreetSnapNames.size())
+        {
+            return skippedStreetSnapNames.get(i);
+        }
+        else
+        {
+            return null;
+        }
+        
+    }
+    
+    public int readValidStreetSnapCount()
+    {
+        return streetSnaps.size();
     }
     
     public PNGFile readCurrentStreetSnap()

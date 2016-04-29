@@ -15,7 +15,8 @@ To create a valid config.json  file do the following:
 	street_snap_path - set to path containing all the archive street snaps for these streets
 	output_file - set to path/name of file which contain a summary of all the changes made by this tool. 
 	non_quoin_search_radius - defaulted to 50 pixels. Making the number smaller will speed up the searches, but may miss items which are almost in the right place
-	quoin_search_radius - Set this to less than 50 (e.g. 20) - useful for clustered groups of quoins so have a better chance of working out which quoin goes where.
+	quoin_search_radius - Set this to less than 50 (e.g. 20) - useful for clustered groups of quoins so have a better chance of working out which quoin goes where
+	percent_match_criteria - % match for an item to be considered 'found' (as QQs stretch/contract they will need (value - 15)% to count as a match)
 	change_xy_only - the tool will only change the x,y values in the item files (useful if street has already been QA'd)
 	3) Copy and paste everything inside/including braces to new file. There must NOT be a trailing comma
 		after the final section.
@@ -43,5 +44,6 @@ To create a valid config.json  file do the following:
   "output_file": "C:\\Glitch\\QA2\\region.txt",
   "non_quoin_search_radius": 50,
   "quoin_search_radius": 20,
+  "percent_match_criteria": 90,
   "change_xy_only": false
 } 

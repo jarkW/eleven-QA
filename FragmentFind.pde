@@ -181,16 +181,15 @@ class FragmentFind
             if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS)
             {
                 // have yet to scan through all images to find the best/closest image 
-                // So save this information before dropping down below to search with the next image available           
+                // So save this information before dropping down below to search with the next image available  
+                matchInfo = spiralSearch.readSearchMatchInfo(); 
+
                 quoinMatches.add(new QuoinMatchData(spiralSearch.convertToJSONX(spiralSearch.readFoundStepX()),
                                  spiralSearch.convertToJSONY(spiralSearch.readFoundStepY()),
                                  extractItemInfoFromItemImageFilename(),
-                                 spiralSearch.readMatchInfo()));                          
+                                 matchInfo));                          
 
                 debugInfo = spiralSearch.debugRGBInfo();
-                matchInfo = spiralSearch.readMatchInfo(); 
-  
-                printToFile.printDebugLine(this, "searchForFragment - JARK " + matchInfo.bestMatchX + "," + matchInfo.bestMatchY + "(" + matchInfo.bestMatchAvgRGB + "/" + matchInfo.bestMatchAvgTotalRGB + ")", 3);
                 printToFile.printDebugLine(this, "searchForFragment - full quoin search found " + extractItemInfoFromItemImageFilename() + " found at x,y " + newItemX + "," + newItemY, 2);
             }
             else
@@ -204,7 +203,7 @@ class FragmentFind
                 // As matched item image is the current one, extract the extra information from the item image filename
                 newItemExtraInfo = extractItemInfoFromItemImageFilename();
                 debugInfo = spiralSearch.debugRGBInfo();
-                matchInfo = spiralSearch.readMatchInfo(); 
+                matchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
                 printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY, 2);
             }
@@ -221,7 +220,7 @@ class FragmentFind
                 // and that info was used to select the single quoin image that needed to be used to search this street snap. Therefore if
                 // if was not found - and we enter this leg of code - then consider the search done for this item.
                 // Won't reach this leg of the code for any other items - as once an item is found, it never enters FragmentFind again - skipped on future street snaps.
-                matchInfo = spiralSearch.readMatchInfo(); 
+                matchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
                 printToFile.printDebugLine(this, "searchForFragment - found 1 item, no more images to search", 2);
                 printToFile.printDebugLine(this, "searchForFragment - " + thisItemInfo.readItemClassTSID().equals("quoin") + " new X is " + thisItemInfo.readNewItemX() , 2);
@@ -244,7 +243,7 @@ class FragmentFind
                     }
                     else
                     {
-                        matchInfo = spiralSearch.readMatchInfo(); 
+                        matchInfo = spiralSearch.readSearchMatchInfo();
                     }
 
                                
@@ -254,7 +253,7 @@ class FragmentFind
                 {
                     // Carry out search using the new image
                     debugInfo = spiralSearch.debugRGBInfo();
-                    matchInfo = spiralSearch.readMatchInfo(); 
+                    matchInfo = spiralSearch.readSearchMatchInfo(); 
                                     
                     //printToFile.printDebugLine(this, " For reference before start search with next image - " + debugRGBMatchInfo, 2);
                     
@@ -300,7 +299,7 @@ class FragmentFind
             if (debugInfo.length() > 0)
             {
                 printToFile.printDebugLine(this, " For reference - " + debugInfo, 2);
-                printToFile.printDebugLine(this, " For RGB reference - " + matchInfo.matchInfoString(), 2);
+                printToFile.printDebugLine(this, " For RGB reference - " + matchInfo.matchDebugInfoString(), 2);
             }
                            
         }
@@ -353,7 +352,7 @@ class FragmentFind
             newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
             newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
             newItemExtraInfo = "";
-            matchInfo = spiralSearch.readMatchInfo(); 
+            matchInfo = spiralSearch.readSearchMatchInfo(); 
             printToFile.printDebugLine(this, "No quoin images matched", 2);
         }
         else

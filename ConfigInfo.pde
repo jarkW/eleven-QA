@@ -11,6 +11,7 @@ class ConfigInfo {
     boolean changeXYOnly;
     int quoinSearchRadius;
     int nonQuoinSearchRadius;
+    int percentMatchCriteria;
     String serverName;
     String serverUsername;
     String serverPassword;
@@ -299,6 +300,15 @@ class ConfigInfo {
             return false;
         }
         
+        percentMatchCriteria = Utils.readJSONInt(json, "percent_match_criteria", true);
+        if (!Utils.readOkFlag())
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read percent_match_criteria in config.json file");
+            displayMgr.showErrMsg("Failed to read percent_match_criteria in config.json file", true);
+            return false;
+        }
+        
         // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
         writeJSONsToPersdata = Utils.readJSONBool(json, "debug_write_JSONs_To_Persdata", false);
         if (!Utils.readOkFlag())
@@ -452,6 +462,11 @@ class ConfigInfo {
     public String readPersdataQAPath()
     {
         return persdataQAPath;
+    }
+    
+    public int readPercentMatchCriteria()
+    {
+        return percentMatchCriteria;
     }
     
 }

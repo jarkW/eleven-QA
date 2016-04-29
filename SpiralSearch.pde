@@ -46,12 +46,14 @@ class SpiralSearch
 
     // Variables for keeping track of lowest rgb differences
     float sumTotalRGBDiff;
-    float lowestTotalRGBDiff;
-    int lowestTotalRGBDiffStepX;
-    int lowestTotalRGBDiffStepY;
-    
     float avgTotalRGBDiffPerPixel;
     float lowestAvgRGBDiffPerPixel;
+
+    // Saving the x,y associated with the lowest average RGB difference found so far
+    int lowestAvgRGBDiffStepX;
+    int lowestAvgRGBDiffStepY;
+    
+
         
     // final found difference in x,y
     int foundStepX;
@@ -61,15 +63,13 @@ class SpiralSearch
     
     boolean okFlag;
 
-    // The smaller this value, the more exacting the match test
-    // but then it takes much longer to run. 
-    // Too big - risk false positives
-    // NB QQ change shape as bounces, so need to be more generous
-    final static float GOOD_ENOUGH_TOTAL_RGB = 5000; 
-    //final float GOOD_ENOUGH_TOTAL_RGB = 1000;
+    // NB QQ change shape as bounces, so need to be more generous when considering
+    // what constutitutes a match. 
+    final static int QQ_MATCH_ADJUSTMENT = 15; 
+    
+    // What the value of lowest average RGB diff divided by total average RGB diff is in order to count as  found
+    float maxRGBDiffVariation;
 
-    //final float GOOD_ENOUGH_QQ_TOTAL_RGB = 3 * GOOD_ENOUGH_TOTAL_RGB;
-    final float GOOD_ENOUGH_QQ_TOTAL_RGB = 5 * GOOD_ENOUGH_TOTAL_RGB;
 
     public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int itemX, int itemY, int offsetX, int offsetY, int widthBox, int heightBox, int searchRadius, int searchAdjustment)
     {
@@ -148,12 +148,24 @@ class SpiralSearch
 
         // Initialise values for keeping record of 'best' fit of QA fragments with archive
         sumTotalRGBDiff = 0;
-        lowestTotalRGBDiff = 0;
         avgTotalRGBDiffPerPixel = 0;
         lowestAvgRGBDiffPerPixel = 0;
         // snap co-ords for lowest rgb 
-        lowestTotalRGBDiffStepX = 0;
-        lowestTotalRGBDiffStepY = 0;
+        lowestAvgRGBDiffStepX = 0;
+        lowestAvgRGBDiffStepY = 0;
+        
+        // Set up the limit that the ratio between lowest average RGB diff divided by total average RGB diff is in order to count as a match
+        if (thisItemClassTSID.equals("marker_qurazy"))
+        {
+            // Need to increase the level which counts as a match
+            maxRGBDiffVariation = float(100 - configInfo.readPercentMatchCriteria() + QQ_MATCH_ADJUSTMENT)/100;            
+        }
+        else
+        {
+            // So if user wants 100%, then, this is set to 0
+            // If user wants 90%, then this is set to 10/100 
+            maxRGBDiffVariation = float (100 - configInfo.readPercentMatchCriteria())/100;
+        }
 
         noMoreValidFragments = false; 
         
@@ -172,10 +184,9 @@ class SpiralSearch
             if (checkFragmentsMatch())
             {
                 // This only returns true for a perfect match - for everything else do a full search and then just take the smallest RGBDiff as the result
-                //printToFile.printDebugLine(this, "Perfect Match found at  stepX = " + stepX + " stepY = " + stepY + " with sumTotalRGBDiff = " + int(sumTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
                 foundStepX = stepX;
                 foundStepY = stepY;
-                printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) + " with lowestTotalRGBDiff = " + int(lowestTotalRGBDiff) + " spiralCount = " + spiralCount, 2);
+                printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) + " spiralCount = " + spiralCount, 2);
                            
                 if (usingBlackWhiteComparison)
                 {
@@ -196,27 +207,39 @@ class SpiralSearch
             }
         }
         
-        // Reached end of matching QA fragment against archive snap - need to see if the lowest RGB diff is good enough to be a match
-        // Just do simple compare to boundary level - treat QQ differently to other items           
-        if ((thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < GOOD_ENOUGH_QQ_TOTAL_RGB)) || 
-            (!thisItemClassTSID.equals("marker_qurazy") && (lowestTotalRGBDiff < GOOD_ENOUGH_TOTAL_RGB)))
+        // Reached end of matching QA fragment against archive snap - need to see if the lowest RGB diff is good enough to be a match 
+        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height);
+        float ratioRGBDiff;
+        
+        // Need to avoid dividing by 0, or a very small number.
+        if (avgTotalRGBDiffPerPixel < 0.01)
         {
-            foundStepX = lowestTotalRGBDiffStepX;
-            foundStepY = lowestTotalRGBDiffStepY;
-            avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height);
-            printToFile.printDebugLine(this, "Good enough match found for lowest RGB Diff = " + int(lowestTotalRGBDiff) +
+            // Treat as 0, i.e. the first match was perfect, so the average total is the same as the average for the fragment
+            ratioRGBDiff = 0;
+        }
+        else
+        {
+            ratioRGBDiff = lowestAvgRGBDiffPerPixel/avgTotalRGBDiffPerPixel;
+        }
+
+        // See if the ratio of the best average RGB difference for a fragment, to the total average RGB differance over all searches is less than the cutoff limit
+        // which has already been readjusted if dealing with a QQ rather than any other object.
+        DecimalFormat df = new DecimalFormat("#.##"); 
+        String formattedRatio = df.format(ratioRGBDiff); 
+        if (ratioRGBDiff < maxRGBDiffVariation)
+        {
+            foundStepX = lowestAvgRGBDiffStepX;
+            foundStepY = lowestAvgRGBDiffStepY;
+            printToFile.printDebugLine(this, "Good enough match found " +
             " at x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) +
-            " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) +
             " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
-            " sum_total_rgb_diff=" + int(sumTotalRGBDiff) +
-            " RGBDiffCount = " + RGBDiffCount +
-            " spiralCount = " + spiralCount, 2);  
+            " ratio lowest:total avg RGB diff = " + formattedRatio, 2); 
                
             // Recreate the appropriate street fragment for this good enough search result
             testStreetFragment = thisStreetImage.get(foundStepX, foundStepY, thisItemImage.width, thisItemImage.height);
             testStreetFragment = convertImage(testStreetFragment);
-            info = "good enough fit (RGBDiff = " + int(lowestTotalRGBDiff) + ") at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
+            info = "good enough fit (avgRGBDiff = " + formattedRatio + ") at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
             displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
 
             return true;
@@ -224,22 +247,20 @@ class SpiralSearch
         else
         {
             // Consider item not found
-            avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height);
-            printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, lowest RGB Diff = " + int(lowestTotalRGBDiff) +
-            " at x,y " + convertToJSONX(lowestTotalRGBDiffStepX) + "," + convertToJSONY(lowestTotalRGBDiffStepY) +
-            " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
+            printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, " +
             " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
-            " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
-            " RGBDiffCount = " + RGBDiffCount +
-            " spiralCount = " + spiralCount, 2);  
+            " ratio lowest:total avg RGB diff = " + formattedRatio +
+            " for x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY), 2); 
+            
+            
             if (saveImages)
             {
                 // This doesn't really work as we don't know which of the images had this lowest RGB for example. Might need instead to have a separate class
                 // for dumping out images - or pass the item info field as well??? 
-                testStreetFragment = thisStreetImage.get(lowestTotalRGBDiffStepX, lowestTotalRGBDiffStepY, thisItemImage.width, thisItemImage.height);
+                testStreetFragment = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
                 testStreetFragment = convertImage(testStreetFragment);
-                testStreetFragment.save(sketchPath() + "/BW" + convertToJSONX(lowestTotalRGBDiffStepX) + "_" + convertToJSONY(lowestTotalRGBDiffStepY)+ "_" + thisItemClassTSID + "_" + numSavedImages + ".png");
+                testStreetFragment.save(sketchPath() + "/BW" + convertToJSONX(lowestAvgRGBDiffStepX) + "_" + convertToJSONY(lowestAvgRGBDiffStepY)+ "_" + thisItemClassTSID + "_" + numSavedImages + ".png");
                 testItemFragment.save(sketchPath() + "/BW" + thisItemClassTSID + "_" + numSavedImages + ".png");
                 numSavedImages++;
             }
@@ -306,7 +327,6 @@ class SpiralSearch
     {
     
         float totalRGBDiff = 0;
-        float RGBDiff = 0;
         int locItem;
         int locStreet;
         float rStreet;
@@ -353,7 +373,6 @@ class SpiralSearch
                 gItem = green(testItemFragment.pixels[locItem]);
                 bItem = blue(testItemFragment.pixels[locItem]);
                   
-                RGBDiff = abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
                 totalRGBDiff += abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
             
                 if (debugRGB)
@@ -374,39 +393,36 @@ class SpiralSearch
             s = "totalRGBDiff for stepX,stepY " + str(stepX - startX) + "," +  str(stepY - startY) + ": " + int(totalRGBDiff);
             printToFile.printDebugLine(this, s, 1);
         }
-            
-        if (totalRGBDiff == 0)
+        
+        float avgRGBFragmentDiff = totalRGBDiff/float(thisItemImage.height * thisItemImage.width);
+        
+        if (avgRGBFragmentDiff < 0.01)
         {
-            lowestTotalRGBDiff = totalRGBDiff;
-            lowestTotalRGBDiffStepX = stepX;
-            lowestTotalRGBDiffStepY = stepY; 
+            // i.e. is effectively 0
+            lowestAvgRGBDiffStepX = stepX;
+            lowestAvgRGBDiffStepY = stepY; 
             lowestAvgRGBDiffPerPixel = 0;
             return true;
         }
-        // leave this check out - only return true if perfect match, otherwise search the entire snap and take the lowest value
-        //else if (totalRGBDiff < GOOD_ENOUGH_TOTAL_RGB)
-        //{
-            //sumTotalRGBDiff += totalRGBDiff;
-           //return true;
-        //}
+        // only return true if perfect match, otherwise search the entire snap and take the lowest value
+
         else
         {
             if ((stepX == startX) && (stepY == startY))
             {
                 // Save this one always - so overwrite initilised value
-                lowestTotalRGBDiff = totalRGBDiff;
-                lowestAvgRGBDiffPerPixel = totalRGBDiff/float(thisItemImage.height * thisItemImage.width);
-                lowestTotalRGBDiffStepX = stepX;
-                lowestTotalRGBDiffStepY = stepY;
+                lowestAvgRGBDiffPerPixel = avgRGBFragmentDiff;
+                lowestAvgRGBDiffStepX = stepX;
+                lowestAvgRGBDiffStepY = stepY;
             }
-            else if (totalRGBDiff < lowestTotalRGBDiff)
+            else if (avgRGBFragmentDiff < lowestAvgRGBDiffPerPixel)
             {
                 // save this if the lowest one so far
-                lowestTotalRGBDiff = totalRGBDiff;
-                lowestAvgRGBDiffPerPixel = totalRGBDiff/float(thisItemImage.height * thisItemImage.width);
-                lowestTotalRGBDiffStepX = stepX;
-                lowestTotalRGBDiffStepY = stepY;
-            }        
+                lowestAvgRGBDiffPerPixel = avgRGBFragmentDiff;
+                lowestAvgRGBDiffStepX = stepX;
+                lowestAvgRGBDiffStepY = stepY;
+            }     
+            // Needed when we eventually calculate the average RGB per pixel over all searches
             sumTotalRGBDiff += totalRGBDiff;
             return false;
         }
@@ -492,22 +508,34 @@ class SpiralSearch
 
     // Used for debugging only
     public String debugRGBInfo()
-    {
-            
-        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height);    
-        String s = "lowest RGB was " + lowestTotalRGBDiff + 
-                    " avg RGB diff = " + int(sumTotalRGBDiff/RGBDiffCount) + 
-                    " avg lowest RGB diff/pixel = " + int (lowestAvgRGBDiffPerPixel) +
-                    " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
-                    " sumTotalRGBDiff=" + int(sumTotalRGBDiff) +
-                    " RGBDiffCount = " + RGBDiffCount +
-                    " at x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) +
-                    " spiralCount = " + spiralCount;
+    {  
+        float ratioRGBDiff;
+        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height); 
+        
+        // Need to avoid dividing by 0, or a very small number.
+        if (avgTotalRGBDiffPerPixel < 0.01)
+        {
+            // Treat as 0, i.e. the first match was perfect, so the average total is the same as the average for the fragment
+            ratioRGBDiff = 0;
+        }
+        else
+        {
+            ratioRGBDiff = lowestAvgRGBDiffPerPixel/avgTotalRGBDiffPerPixel;
+        }
+
+        // See if the ratio of the best average RGB difference for a fragment, to the total average RGB differance over all searches is less than the cutoff limit
+        // which has already been readjusted if dealing with a QQ rather than any other object.
+        DecimalFormat df = new DecimalFormat("#.##"); 
+        String formattedRatio = df.format(ratioRGBDiff);  
+        String s = " avg lowest RGB diff/pixel/avg RGB total diff/pixel = " + int (lowestAvgRGBDiffPerPixel) +
+                    " /" + int (avgTotalRGBDiffPerPixel) +
+                    " = " + formattedRatio +
+                    " at x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
 
         return s;
     }
     
-    public MatchInfo readMatchInfo()
+    public MatchInfo readSearchMatchInfo()
     {       
         avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height); 
         int x;
@@ -515,8 +543,8 @@ class SpiralSearch
         // If not found item, then return the x,y associated with the lowest RGBDiff
         if (foundStepX == MISSING_COORDS)
         {
-            x = convertToJSONX(lowestTotalRGBDiffStepX);
-            y = convertToJSONY(lowestTotalRGBDiffStepY);
+            x = convertToJSONX(lowestAvgRGBDiffStepX);
+            y = convertToJSONY(lowestAvgRGBDiffStepY);
         }
         else
         {
@@ -524,7 +552,7 @@ class SpiralSearch
             y = convertToJSONY(foundStepY);
         }
         
-        MatchInfo RGBInfo = new MatchInfo(lowestTotalRGBDiff, lowestAvgRGBDiffPerPixel, avgTotalRGBDiffPerPixel, x, y);
+        MatchInfo RGBInfo = new MatchInfo(lowestAvgRGBDiffPerPixel, avgTotalRGBDiffPerPixel, x, y);
         
         return RGBInfo;
     }
@@ -542,26 +570,6 @@ class SpiralSearch
     public boolean readOkFlag()
     {
         return okFlag;
-    }
-    
-    public int readLowestTotalRGBDiffStepX()
-    {
-        return convertToJSONX(lowestTotalRGBDiffStepX);
-    }
-    
-    public int readLowestTotalRGBDiffStepY()
-    {
-        return convertToJSONX(lowestTotalRGBDiffStepY);
-    }
-    
-    public int readLowestAvgRGBDiffPerPixel()
-    {
-        return int(lowestAvgRGBDiffPerPixel);
-    }
-    
-    public int readAvgTotalRGBDiffPerPixel()
-    {
-        return int(avgTotalRGBDiffPerPixel);
     }
 
 }

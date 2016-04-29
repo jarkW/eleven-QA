@@ -1313,12 +1313,12 @@ class ItemInfo
         info = matchInfoList.get(0);
         for (int i = 0; i < matchInfoList.size(); i++)
         {
-            printToFile.printDebugLine(this, "Item + " + itemTSID + " Debug RGB info is " + matchInfoList.get(i).matchInfoString()+ "  lowestTotalRGB as float = " + matchInfoList.get(i).lowestTotalRGB, 1);
-            if (matchInfoList.get(i).lowestTotalRGB < info.lowestTotalRGB)
+            printToFile.printDebugLine(this, "Item + " + itemTSID + " Debug RGB info is " + matchInfoList.get(i).matchDebugInfoString(), 1);
+            if (matchInfoList.get(i).bestMatchAvgRGB < info.bestMatchAvgRGB)
             {
                 info = matchInfoList.get(i);
             }
-            else if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("qurazy_marker")) && (matchInfoList.get(i).lowestTotalRGB == info.lowestTotalRGB))
+            else if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("qurazy_marker")) && (matchInfoList.get(i).bestMatchAvgRGB == info.bestMatchAvgRGB))
             {
                 // If the RGB values are the same, if this one has a lower y value (i.e. more positive), then copy across
                 if (matchInfoList.get(i).bestMatchY > info.bestMatchY)
@@ -1328,7 +1328,7 @@ class ItemInfo
             }
         }
         
-        printToFile.printDebugLine(this, "Item + " + itemTSID + " Best debug RGB info is " + info.matchInfoString(), 1);
+        printToFile.printDebugLine(this, "Item + " + itemTSID + " Best debug RGB info is " + info.matchDebugInfoString(), 1);
         return info;
     }
     

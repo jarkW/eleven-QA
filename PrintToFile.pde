@@ -184,7 +184,7 @@ class PrintToFile {
         printOutputLine(s);
         s = "\nResults for " + streetInfo.readStreetName() + " (" + streetInfo.readStreetTSID() + ")";
         printOutputLine(s);
-        
+               
         if (!configInfo.readUseVagrantFlag())
         {
             printOutputLine("Reading/writing files from server " + configInfo.readServerName() + " (** indicate changed JSON files)");
@@ -211,6 +211,17 @@ class PrintToFile {
         {
             printOutputLine("DEBUG Converting images to black/white for compare");
         }
+        // print out information about skipped street snaps
+        if (streetInfo.readSkippedStreetSnapCount() > 0)
+        {
+            for (int i = 0; i < streetInfo.readSkippedStreetSnapCount(); i++)
+            {
+                s = "Skipped street snap (wrong size): " + streetInfo.readSkippedStreetSnapName(i);
+                printOutputLine(s);
+            }
+        }
+        s = "Searched " + streetInfo.readValidStreetSnapCount() + " valid street snaps of correct size " + streetInfo.readGeoWidth() + "x" + streetInfo.readGeoHeight() + " pixels";
+        printOutputLine(s);
     }
     
     public boolean printSummaryData(ArrayList<SummaryChanges> itemResults)
@@ -356,20 +367,29 @@ class PrintToFile {
             {
                 s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemX() + "," +  itemResults.get(i).itemInfo.readOrigItemY() + ")"; 
             }
-            
-           
-            // For tesing purposes - look at all RGB info
-            /*
-            if (itemResults.get(i).readResult() == SummaryChanges.MISSING)
+
+            // Now add some information about the efficiency of the match
+            bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
+            switch (itemResults.get(i).readResult())
             {
-                if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin") || itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
-                s = s + " TRY " + itemResults.get(i).itemInfo.readDebugRGBX() + "," + itemResults.get(i).itemInfo.readDebugRGBY();
-            }
-            */
-            if (itemResults.get(i).readResult() != SummaryChanges.SKIPPED)
-            {
-                bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
-                s = s + " " + bestMatchInfo.matchInfoString();
+
+
+                case SummaryChanges.COORDS_ONLY:
+                case SummaryChanges.VARIANT_ONLY:
+                case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
+                case SummaryChanges.UNCHANGED:
+                    // Just print out the match information - as the new co-ordinates have already been given
+                    s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                    break;
+                
+                case SummaryChanges.MISSING:
+                    // Give the match data and the x,y this pertains to.
+                    s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString() +")";
+                    break;
+                    
+                case SummaryChanges.SKIPPED:
+                    // Print nothing
+                    break;
             }
                               
             printOutputLine(s);

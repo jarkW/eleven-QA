@@ -1,4 +1,5 @@
 import sftp.*;
+import java.text.DecimalFormat;
 
 /*
  * Reads in a list of street TSIDs from a config.json file, and then using the item
@@ -930,34 +931,65 @@ void configJSONFileSelected(File selection)
    
 }
     class MatchInfo
-    {
-        // Contains the information caculated by SpiralSearch for the 'best' fragment match
-        // 
-        float lowestTotalRGB;
-        
+    {    
         // New values - average RGB per pixel, rather than per whole fragment compare
         float bestMatchAvgRGB;
         float bestMatchAvgTotalRGB; 
         int bestMatchX;
         int bestMatchY;
+        float percentageMatch;
         
-        public MatchInfo(float lowestRGB, float avgRGB, float totalAvgRGB, int x, int y)
-        {
-            lowestTotalRGB = lowestRGB;
+        public MatchInfo(float avgRGB, float totalAvgRGB, int x, int y)
+        {           
             bestMatchAvgRGB = avgRGB;
             bestMatchAvgTotalRGB = totalAvgRGB;
             bestMatchX = x;
             bestMatchY = y;
+            
+            // Need to avoid dividing by 0, or a very small number.
+            if (bestMatchAvgTotalRGB < 0.01)
+            {
+                // Treat as 0, i.e. the first match was perfect, so the average total is the same as the average for the fragment
+                percentageMatch = 100;
+            }
+            else
+            {
+                percentageMatch = 100 - ((bestMatchAvgRGB/bestMatchAvgTotalRGB) * 100);
+            }
         }
         
-        public String matchInfoString()
+        public String matchDebugInfoString()
         {
-            String s = "lowest RGB = " + int (lowestTotalRGB) + 
-                       " (avg RGB = " + int (bestMatchAvgRGB) + 
-                       "/" + int (bestMatchAvgTotalRGB) + ")" +
+            // Used for debug info only
+            // Have %Match as 2 decimal places
+            DecimalFormat df = new DecimalFormat("#.##"); 
+            String formattedPercentage = df.format(percentageMatch); 
+
+            String s = "avg RGB = " + int (bestMatchAvgRGB) + 
+                       "/" + int (bestMatchAvgTotalRGB) + 
+                       " = " + formattedPercentage + "%" +
                        " at x,y " + bestMatchX + "," + bestMatchY;
             return s;
         }
+        
+        public String matchPercentString()
+        {
+            // Have %Match as 2 decimal places
+            DecimalFormat df = new DecimalFormat("#.##"); 
+            String formattedPercentage = df.format(percentageMatch); 
+
+            String s = formattedPercentage + "%";
+            return s;
+        }
+        
+        public String matchXYString()
+        {
+            // Have %Match as 2 decimal places
+
+            String s = bestMatchX + "," + bestMatchY;
+            return s;
+        }
+
     }
 
     
