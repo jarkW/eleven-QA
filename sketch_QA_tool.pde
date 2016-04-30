@@ -1,7 +1,6 @@
 import sftp.*;
 import java.text.DecimalFormat;
 
-
 /*
  * Reads in a list of street TSIDs from a config.json file, and then using the item
  * information/co-ordinates, searches street snaps with small item fragment images
@@ -99,26 +98,7 @@ import java.text.DecimalFormat;
 // NB TEST WHAT HAPPENS IF TRY TO FIND DUST trap of type B on a street - does it reset it to A and give msg???
 
 // STILL MISSING:
-//Mortar Barnacle:mortar_barnacle (instanceProps.blister 1-6), no dir
-//Peat Bog:peat_1 no dir
-//Peat Bog:peat_2 no dir
-//Peat Bog:peat_3 no dir
-//Jellisac Growth:jellisac (instanceProps.blister 1-4), no dir
-//Ice Nubbin:ice_knob (instanceProps.knob 1-4), no dir
-//Dirt Pile:dirt_pile (instanceProps.variant = dirt1 or dirt2), no dir
-//Patch:patch no dir
-//Dark Patch:patch_dark no dir
-//Dust Trap:dust_trap (instanceProps.trap_class = A, B, C, D) no dir 
-//Knocker:sloth_knocker no dir
-//Sloth:npc_sloth (branch) instanceProps.dir = right/left (which also then sets dir=right/left
-//Party ATM:party_atm - no dir
-//Race Ticket Dispenser:race_ticket_dispenser no dir
-//Wall Button:wall_button - dir = left/right (use def value first)
-//Shrines - npc_shrine_firebog_*
-// Shrines - npc_shrine_uralia_*
-// shrines - npc_shrine_ix_
 
-// And also
 // wood_tree_enchanted : Wood Tree - x, y and "instanceProps": "variant": 1-4, (treat like paper tree as not planted by players
 // street_spirit_zutto (because fixed on ground?) (x,y only)
 // garden_new (might be too difficult and anyhow will always have different plants in? So left for now (and come in different sizes/variants)
@@ -176,7 +156,8 @@ boolean failNow = false;    // abnormal ending/error
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-int debugLevel = 1;
+// This will be reset when the config.json is read
+int debugLevel = 3;
 boolean debugToConsole = true;
 boolean doDelay = false;
 boolean usingBlackWhiteComparison = true; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images

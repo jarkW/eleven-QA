@@ -309,6 +309,15 @@ class ConfigInfo {
             return false;
         }
         
+        debugLevel = Utils.readJSONInt(json, "tracing_level", true);
+        if (!Utils.readOkFlag())
+        {
+            println(Utils.readErrMsg());
+            println("Failed to read tracing_level in config.json file");
+            displayMgr.showErrMsg("Failed to read tracing_level in config.json file", true);
+            return false;
+        }
+        
         // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
         writeJSONsToPersdata = Utils.readJSONBool(json, "debug_write_JSONs_To_Persdata", false);
         if (!Utils.readOkFlag())

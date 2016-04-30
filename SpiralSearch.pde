@@ -105,8 +105,8 @@ class SpiralSearch
         // Set the search width to whatever was specified in the config.json file
         // For some items e.g. sloths, will manually extend the search radius as the branches have been
         // very poorly configured so far
-        widthSearchBox = widthBox + searchRadius + searchAdjustment;
-        heightSearchBox = heightBox + searchRadius+ searchAdjustment;
+        widthSearchBox = widthBox + (2*searchRadius) + searchAdjustment;
+        heightSearchBox = heightBox + (2*searchRadius) + searchAdjustment;
         
          // convert the searchbox to be even numbers
          // deal with odd sizes of box - by adding 1 before do divide so box
