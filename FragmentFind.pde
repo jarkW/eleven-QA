@@ -150,6 +150,12 @@ class FragmentFind
             itemImages.get(itemImageBeingUsed).readFragOffsetX(),
             itemImages.get(itemImageBeingUsed).readFragOffsetY(),
             searchBoxWidth, searchBoxHeight, searchRadius, adjustment);
+            
+        // dump list of images being used
+        for (int i = 0; i < itemImages.size(); i++)
+        {
+            printToFile.printDebugLine(this, "image loaded " + thisItemInfo.readItemClassTSID() + " = " + itemImages.get(i).readPNGImageName(), 1);
+        }
 
         if (!spiralSearch.readOkFlag()) 
         {

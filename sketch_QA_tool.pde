@@ -80,6 +80,7 @@ import java.text.DecimalFormat;
  // restore? cm.filter
  // Basically I think the code just creates a matrix which is then applied to each pixel (in my case the item fragment)
  // in turn.
+ // If do this - could reimplemnt the zutto street spirits which are coloured (and as they bounce, give them the extra 15% error margin)
     
 
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
@@ -92,17 +93,8 @@ import java.text.DecimalFormat;
 //
 //NEED TO CHECK USING ALL FUNCTION CALLS - I.E. READ/SET ONES
 
-// NB Need to credit all people's code I use e.g. sftp (?) when submit to github
-// 
-
 // NB TEST WHAT HAPPENS IF TRY TO FIND DUST trap of type B on a street - does it reset it to A and give msg???
 
-// STILL MISSING:
-
-// wood_tree_enchanted : Wood Tree - x, y and "instanceProps": "variant": 1-4, (treat like paper tree as not planted by players
-// street_spirit_zutto (because fixed on ground?) (x,y only)
-// garden_new (might be too difficult and anyhow will always have different plants in? So left for now (and come in different sizes/variants)
-// npc_gardening_vendor (x,y only)
 
 // Directory where config.json is, and all saved JSON files - both original/new
 String workingDir;

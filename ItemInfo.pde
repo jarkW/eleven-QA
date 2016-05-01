@@ -231,8 +231,10 @@ class ItemInfo
             case "subway_gate":
             case "subway_map":
             case "bag_notice_board":
+            case "wood_tree_enchanted":
+            case "npc_gardening_vendor":            
                 return true;
-                
+           
             case "quoin":
                 // Do not want to search for temporary qurazy quoin as we use the marker_qurazy instead
                 if (origItemExtraInfo.equals("qurazy"))
@@ -254,7 +256,7 @@ class ItemInfo
         // Using the item class_tsid, get the pointer to the images for this item
         // Depending on the item might need to tweak the order of items - TO DO???? 
         
-        if ((itemClassTSID.indexOf("trant", 0) == 0) || (itemClassTSID.indexOf("wood", 0) == 0))
+        if ((itemClassTSID.indexOf("trant", 0) == 0) || (itemClassTSID.equals("wood_tree")))
         {
             itemImages = allItemImages.getItemImages("trees");
         }
@@ -319,6 +321,8 @@ class ItemInfo
             case "jellisac":
             case "ice_knob":
             case "dust_trap":
+            case "wood_tree_enchanted":
+
                 // Read in the instanceProps array - failure is always an error
                 instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
                 if (!Utils.readOkFlag())
@@ -342,7 +346,7 @@ class ItemInfo
                     // Now continue with getting the type field from the json file
                     itemExtraInfoKey = "type";
                 }
-                else if ((itemClassTSID.equals("wood_tree")) || (itemClassTSID.equals("npc_mailbox")) || (itemClassTSID.equals("dirt_pile")))
+                else if ((itemClassTSID.equals("wood_tree")) || (itemClassTSID.equals("npc_mailbox")) || (itemClassTSID.equals("dirt_pile")) || (itemClassTSID.equals("wood_tree_enchanted")))
                 {
                     itemExtraInfoKey = "variant";
                 }
@@ -512,6 +516,7 @@ class ItemInfo
             case "jellisac":
             case "ice_knob":
             case "dust_trap":
+            case "wood_tree_enchanted":
                 // Read in the instanceProps array - failure is always an error
                 instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
                 if (!Utils.readOkFlag())
@@ -612,6 +617,8 @@ class ItemInfo
             case "wall_button":
             case "subway_map":
             case "bag_notice_board":
+            case "npc_gardening_vendor":
+                       
                 // Don't have any additional information such as 'dir' - so return
                 return true;
                  
@@ -994,6 +1001,8 @@ class ItemInfo
             printToFile.printOutputLine("ERROR CLOSING " + itemTSID + ".json file to " + filePath);
             return false;
         }
+        
+        // If reach here, the write succeeded
         return true;
     }    
        

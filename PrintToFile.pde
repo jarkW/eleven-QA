@@ -187,20 +187,20 @@ class PrintToFile {
                
         if (!configInfo.readUseVagrantFlag())
         {
-            printOutputLine("Reading/writing files from server " + configInfo.readServerName() + " (** indicate changed JSON files)");
+            printOutputLine("Reading/writing files from server " + configInfo.readServerName() + " (** indicates changed JSON file)");
         }
         else
         {
-            printOutputLine("Reading/writing files using vagrant file system (** indicate changed JSON files)");
+            printOutputLine("Reading/writing files using vagrant file system (** indicates changed JSON file)");
         }
                 
         if (configInfo.readWriteJSONsToPersdata())
         {
-            printOutputLine("DEBUG Writing JSON files to persdata");
+            printOutputLine("Writing JSON files to persdata (see list of changed files below)");
         }
         else
         {
-            printOutputLine("DEBUG No JSON files being written to persdata");
+            printOutputLine("WARNING No JSON files being written to persdata");
         }
         
         if (!usingBlackWhiteComparison)
@@ -250,7 +250,7 @@ class PrintToFile {
             s = "";
             if (itemResults.get(i).itemInfo.readSaveChangedJSONfile())
             {
-                // Used to clearly show if JSON has been updated
+                // Used to clearly show if JSON has been changed
                 s = "** ";
             }
             

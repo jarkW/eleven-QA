@@ -672,15 +672,9 @@
     "info": "1"
   },
   {
-    "class_tsid": "street_spirit_zutto",
-    "offset_x": -17,
-    "offset_y": -84,
-    "info": ""
-  },
-  {
     "class_tsid": "npc_gardening_vendor",
-    "offset_x": -18,
-    "offset_y": -99,
+    "offset_x": -15,
+    "offset_y": -62,
     "info": ""
   },
   {

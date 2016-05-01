@@ -270,6 +270,25 @@ class ItemImages
         {
             return false;
         }
+        
+        // Now create an entry for enchanted wood tree
+        itemImages.add(new PNGFile("wood_tree_enchanted_1.png", false)); 
+        itemImages.add(new PNGFile("wood_tree_enchanted_2.png", false)); 
+        itemImages.add(new PNGFile("wood_tree_enchanted_3.png", false)); 
+        itemImages.add(new PNGFile("wood_tree_enchanted_4.png", false)); 
+        // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
+        if (!addToHashMapAndLoadImages("wood_tree_enchanted"))
+        {
+            return false;
+        }
+        
+        // Now create an entry for gardening vendor - as fixed to the ground
+        itemImages.add(new PNGFile("npc_gardening_vendor.png", false)); 
+        // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
+        if (!addToHashMapAndLoadImages("npc_gardening_vendor"))
+        {
+            return false;
+        }
 
         printToFile.printDebugLine(this, "Loaded " + imageCount + "images in hashmap", 1);
         return true;
