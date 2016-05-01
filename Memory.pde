@@ -14,6 +14,6 @@ public class Memory {
                                     "  Free Memory: " + instance.freeMemory() / mb +
                                     "  Used Memory: " + (instance.totalMemory() - instance.freeMemory()) / mb +
                                     //"  Used Memory: " + (instance.totalMemory() - instance.freeMemory()) +
-                                    "   Max Memory: " + instance.maxMemory() / mb + (instance.totalMemory() - instance.freeMemory()) / mb, 3);
+                                    "   Max Memory: " + instance.maxMemory() / mb + (instance.totalMemory() - instance.freeMemory()) / mb, 1);
     }
 }

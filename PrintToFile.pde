@@ -66,7 +66,46 @@ class PrintToFile {
         }
 
         
-        initOutputFileDone = true;        
+        initOutputFileDone = true;
+        
+        // Write header information - which just dumps out the settings in the config.json file   
+        if (!configInfo.readUseVagrantFlag())
+        {
+            printOutputLine("Reading/writing files from server " + configInfo.readServerName() + " (** indicates changed JSON file)");
+        }
+        else
+        {
+            printOutputLine("Reading/writing files using vagrant file system (** indicates changed JSON file)");
+        }
+                
+        if (configInfo.readWriteJSONsToPersdata())
+        {
+            printOutputLine("Writing JSON files to persdata (see list of changed files below)");
+        }
+        else
+        {
+            printOutputLine("WARNING No JSON files being written to persdata");
+        }
+        
+        if (!configInfo.readChangeXYOnly())
+        {
+            printOutputLine("Changing x,y and variants of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
+        }
+        else
+        {
+            printOutputLine("WARNING Changing x,y ONLY of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
+        }
+        
+        if (!usingBlackWhiteComparison)
+        {
+            printOutputLine("DEBUG Using Geo data to change image files");
+        }
+        else
+        {
+            printOutputLine("DEBUG Converting images to black/white for compare");
+        }
+
+    
         return true;
     } 
     
@@ -185,32 +224,6 @@ class PrintToFile {
         s = "\nResults for " + streetInfo.readStreetName() + " (" + streetInfo.readStreetTSID() + ")";
         printOutputLine(s);
                
-        if (!configInfo.readUseVagrantFlag())
-        {
-            printOutputLine("Reading/writing files from server " + configInfo.readServerName() + " (** indicates changed JSON file)");
-        }
-        else
-        {
-            printOutputLine("Reading/writing files using vagrant file system (** indicates changed JSON file)");
-        }
-                
-        if (configInfo.readWriteJSONsToPersdata())
-        {
-            printOutputLine("Writing JSON files to persdata (see list of changed files below)");
-        }
-        else
-        {
-            printOutputLine("WARNING No JSON files being written to persdata");
-        }
-        
-        if (!usingBlackWhiteComparison)
-        {
-            printOutputLine("DEBUG Using Geo data to change image files");
-        }
-        else
-        {
-            printOutputLine("DEBUG Converting images to black/white for compare");
-        }
         // print out information about skipped street snaps
         if (streetInfo.readSkippedStreetSnapCount() > 0)
         {
@@ -369,29 +382,26 @@ class PrintToFile {
             }
 
             // Now add some information about the efficiency of the match
-            bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
-            switch (itemResults.get(i).readResult())
+            if (itemResults.get(i).readResult() != SummaryChanges.SKIPPED)
             {
-
-
-                case SummaryChanges.COORDS_ONLY:
-                case SummaryChanges.VARIANT_ONLY:
-                case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
-                case SummaryChanges.UNCHANGED:
-                    // Just print out the match information - as the new co-ordinates have already been given
-                    s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
-                    break;
+                bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
+                switch (itemResults.get(i).readResult())
+                {
+                    case SummaryChanges.COORDS_ONLY:
+                    case SummaryChanges.VARIANT_ONLY:
+                    case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
+                    case SummaryChanges.UNCHANGED:
+                        // Just print out the match information - as the new co-ordinates have already been given
+                        s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                        break;
                 
-                case SummaryChanges.MISSING:
-                    // Give the match data and the x,y this pertains to.
-                    s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString() +")";
-                    break;
-                    
-                case SummaryChanges.SKIPPED:
-                    // Print nothing
-                    break;
+                    case SummaryChanges.MISSING:
+                        // Give the match data and the x,y this pertains to.
+                        s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString() +")";
+                        break;
+                }
             }
-                              
+            
             printOutputLine(s);
 
             if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))

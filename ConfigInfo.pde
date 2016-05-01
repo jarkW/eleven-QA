@@ -9,8 +9,7 @@ class ConfigInfo {
     String persdataQAPath;
     String streetSnapPath;
     boolean changeXYOnly;
-    int quoinSearchRadius;
-    int nonQuoinSearchRadius;
+    int searchRadius;
     int percentMatchCriteria;
     String serverName;
     String serverUsername;
@@ -239,8 +238,7 @@ class ConfigInfo {
         {
             // Will validate the fixtures/persdata/persdata-qa paths on server once session has been established
         }
-        
-        
+
         streetSnapPath = Utils.readJSONString(json, "street_snap_path", true);
         if (!Utils.readOkFlag() || streetSnapPath.length() == 0)
         {
@@ -272,59 +270,61 @@ class ConfigInfo {
             displayMgr.showErrMsg("Output file (output_file) needs to be a .txt file", true);
             return false;
         } 
-                
-        changeXYOnly = Utils.readJSONBool(json, "change_xy_only", true);
+        
+        writeJSONsToPersdata = Utils.readJSONBool(json, "write_JSONs_To_persdata", true);
         if (!Utils.readOkFlag())
         {
-            println(Utils.readErrMsg());
-            println("Failed to read change_xy_only in config.json file");
-            displayMgr.showErrMsg("Failed to read change_xy_only in config.json file", true);
+            println("Failed to read write_JSONs_To_persdata in config.json file");
+            displayMgr.showErrMsg("Failed to read write_JSONs_To_persdata in config.json file", true);
             return false;
         }
         
-        nonQuoinSearchRadius = Utils.readJSONInt(json, "non_quoin_search_radius", true);
+        
+        
+        // The following options are OPTIONAL - so don't need to be in the JSON file
+        changeXYOnly = Utils.readJSONBool(json, "change_xy_only", false);
         if (!Utils.readOkFlag())
         {
-            println(Utils.readErrMsg());
-            println("Failed to read non_quoin_search_radius in config.json file");
-            displayMgr.showErrMsg("Failed to read non_quoin_search_radius in config.json file", true);
+            changeXYOnly = false;
+        }
+        
+        searchRadius = Utils.readJSONInt(json, "search_radius", false);
+        if (!Utils.readOkFlag())
+        {
+            searchRadius = 25;
+        }
+        else if (searchRadius < 1)
+        {
+            println("Please enter a search_radius which is larger than 0 in config.json file");
+            displayMgr.showErrMsg("Please enter a search_radius which is larger than 0 in config.json file", true);
             return false;
         }
         
-        quoinSearchRadius = Utils.readJSONInt(json, "quoin_search_radius", true);
+        percentMatchCriteria = Utils.readJSONInt(json, "percent_match_criteria", false);
         if (!Utils.readOkFlag())
         {
-            println(Utils.readErrMsg());
-            println("Failed to read quoin_search_radius in config.json file");
-            displayMgr.showErrMsg("Failed to read quoin_search_radius in config.json file", true);
+            percentMatchCriteria = 90;
+        }
+        else if ((percentMatchCriteria < 1) || (percentMatchCriteria > 100))
+        {
+            println("Please enter a valid value for percent_match_criteria which is between 1-100 in config.json file");
+            displayMgr.showErrMsg("Please enter a valid value for percent_match_criteria which is between 1-100 in config.json file", true);
             return false;
         }
         
-        percentMatchCriteria = Utils.readJSONInt(json, "percent_match_criteria", true);
+        debugLevel = Utils.readJSONInt(json, "tracing_level", false);
         if (!Utils.readOkFlag())
         {
-            println(Utils.readErrMsg());
-            println("Failed to read percent_match_criteria in config.json file");
-            displayMgr.showErrMsg("Failed to read percent_match_criteria in config.json file", true);
-            return false;
+            debugLevel = 3;
         }
-        
-        debugLevel = Utils.readJSONInt(json, "tracing_level", true);
-        if (!Utils.readOkFlag())
+        else if ((debugLevel < 0) || (debugLevel > 3))
         {
-            println(Utils.readErrMsg());
-            println("Failed to read tracing_level in config.json file");
-            displayMgr.showErrMsg("Failed to read tracing_level in config.json file", true);
+            println("Please enter a valid value for tracing_level which is between 0-3 (0 is off, 1 gives much information, 3 reports errors only) in config.json file");
+            displayMgr.showErrMsg("Please enter a valid value for tracing_level which is between 0-3 (0 is off, 1 gives much information, 3 reports errors only) in config.json file", true);
             return false;
         }
         
         // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
-        writeJSONsToPersdata = Utils.readJSONBool(json, "debug_write_JSONs_To_Persdata", false);
-        if (!Utils.readOkFlag())
-        {
-            // By default want to write files to persdata
-            writeJSONsToPersdata = true;
-        }
         debugShowBWFragments = Utils.readJSONBool(json, "debug_show_BW_fragments", false);
         if (!Utils.readOkFlag())
         {
@@ -429,14 +429,9 @@ class ConfigInfo {
         return outputFile;
     } 
     
-    public int readNonQuoinSearchRadius()
+    public int readSearchRadius()
     {
-        return nonQuoinSearchRadius;
-    }
-    
-    public int readQuoinSearchRadius()
-    {
-        return quoinSearchRadius;
+        return searchRadius;
     }
     
     public String readServerName()
