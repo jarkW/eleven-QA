@@ -963,6 +963,23 @@ void configJSONFileSelected(File selection)
             String s = bestMatchX + "," + bestMatchY;
             return s;
         }
+        
+        public int furthestCoOrdDistance(int origX, int origY)
+        {
+            // Return the biggest co-ordinate shift between original/found x,y
+            // so can see if the pixel radius is being set far too high for the 
+            // accuracy of how items have been placed. 
+            int diffX = abs(origX - bestMatchX);
+            int diffY = abs(origY - bestMatchY);
+            if (diffX >= diffY)
+            {
+                return diffX;
+            }
+            else
+            {
+                return diffY;
+            }
+        }
 
     }
 

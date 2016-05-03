@@ -388,8 +388,13 @@ class PrintToFile {
                 switch (itemResults.get(i).readResult())
                 {
                     case SummaryChanges.COORDS_ONLY:
-                    case SummaryChanges.VARIANT_ONLY:
                     case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
+                        // Just print out the match information - as the new co-ordinates have already been given
+                        s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                        s = s + " (furthest x,y diff is " + bestMatchInfo.furthestCoOrdDistance(itemResults.get(i).itemInfo.readOrigItemX(), itemResults.get(i).itemInfo.readOrigItemY()) + ")";
+                        break;
+                        
+                    case SummaryChanges.VARIANT_ONLY:
                     case SummaryChanges.UNCHANGED:
                         // Just print out the match information - as the new co-ordinates have already been given
                         s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
