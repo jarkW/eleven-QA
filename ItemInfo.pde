@@ -643,6 +643,30 @@ class ItemInfo
             printToFile.printDebugLine(this, "Error defaulting fields in quoin instanceProps structure", 3);
             return false;
         }
+        
+        // In the case of Rainbow Run, possible chance that quoin type has been reset - if a mood quoin is found, it is considered valid, but set to currants
+        // to match video evidence (and quoin.js has been changed to do this also). For all other quoin types, the quoin is reset to mystery quoin (should never happen).
+        // Need to flag up a warning message to the user
+        switch (streetInfo.readStreetTSID())
+        {
+            case "LM4105MGKMSLT":
+            case "LIF9NRCLF273JBA":
+                String warningMsg = quoinInstanceProps.readWarningInfo();
+                if (warningMsg.length() > 0)
+                {
+                    // Save the warning message so that it is printed out for the user
+                    streetInfo.setQuoinDefaultingWarningMsg(itemTSID + " " + warningMsg);
+                    
+                    // The type field has been reset, so pick up the changed value before carrying on
+                    // Otherwise class name and quoin type will be out of sync
+                    newItemExtraInfo = quoinInstanceProps.readQuoinType();
+                }
+                break;
+                
+            default:
+                break;
+        }
+
         newItemClassName = quoinInstanceProps.readClassName();
                  
         if (newItemClassName.equals(origItemClassName))
@@ -650,7 +674,7 @@ class ItemInfo
             // Nothing to save so return without setting flag
             return true;
         }
-        
+ 
         // Now save the fields in instanceProps
         if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
         {
@@ -702,6 +726,10 @@ class ItemInfo
                  return false;
             }
         }
+        
+        // Save any special message to the user about special quoin defaults having been set
+        streetInfo.setQuoinDefaultingInfo(quoinInstanceProps.readSpecialDefaultingInfo());
+        
         // Show changes made to instanceProps that need to be changed
         saveChangedJSONfile = true;
         return true;
@@ -1268,14 +1296,21 @@ class ItemInfo
     
     public boolean differentVariantFound()
     {
-        if (origItemExtraInfo.equals(newItemExtraInfo))
+        // For quoins, also need to check for differences in class name to make sure
+        // the difference is reported correctly to user
+        boolean differentVariant = false;
+        
+        if (itemClassTSID.equals("quoin") && !origItemClassName.equals(newItemClassName))
         {
-            return false;
+            differentVariant = true;
         }
-        else
+        
+        if (!origItemExtraInfo.equals(newItemExtraInfo))
         {
-            return true;
+            differentVariant = true;
         }
+        
+        return differentVariant;
     }
     
     public String readOrigItemClassName()

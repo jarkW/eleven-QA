@@ -38,16 +38,7 @@ import java.text.DecimalFormat;
  */
   
  // Groddle Heights - LCR16VUKOQL18DU - not find egg trees - check this out 
-  
- // To do - handle closure of screen better - if got items handled individually, does closing the x mean the sftp stops? If so, then 
- // don't need to add anything in. But if not, then see https://forum.processing.org/one/topic/run-code-on-exit.html (ericsoco SHUTDOWN HOOK)
- // which gets run however you exit the program.
- // NB the key handler is asyn so always detected - so if ESC pressed, then could set a flag in the top level - and then in sftp
- // check that flag before doing anything - and if set, run the sftp exit command. Could also set this flag when exit/x pressed
- /// But seems more difficult to detect the x button being pressed 
- // NB Have added hook - but will only work if return to top level after got each item/L file etc. So hopefully when change structure this
- // will be fixed for free. 
- 
+   
  // BUG? xy variant only
  // Does it load up the single image for other non-quoin items with variant field?
  // Except wood trees - where still needs to test all tree images.
@@ -64,8 +55,6 @@ import java.text.DecimalFormat;
  // Should I check in JSONDiff that the only fields changed are the expected ones???
  // i.e. x,y, variant, and some added fields. 
  
- // TO DO update the quoin type settings for all the other regions. 
- 
  // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
  // POSSIBLE FUTURE BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
@@ -80,16 +69,12 @@ import java.text.DecimalFormat;
  // restore? cm.filter
  // Basically I think the code just creates a matrix which is then applied to each pixel (in my case the item fragment)
  // in turn.
- // If do this - could reimplemnt the zutto street spirits which are coloured (and as they bounce, give them the extra 15% error margin)
-    
+ // If do this - could reimplemnt the zutto street spirits which are coloured (and as they bounce, give them the extra 15% error margin)   
 
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
  // Rather than failing after an hour. So would just check all the JSON files exist for each
  // of the streets.
 
-
-//  Need to read in street region - to know if black/white or AL (changes the quoin settings). 
-// And other different quoin regions (party?)
 //
 //NEED TO CHECK USING ALL FUNCTION CALLS - I.E. READ/SET ONES
 

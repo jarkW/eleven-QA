@@ -43,6 +43,10 @@ class StreetInfo
     int geoBrightness;
     int geoHeight;
     int geoWidth;
+    
+    // Info about special quoin settings e.g. because party space or Ancestral Lands
+    String quoinDefaultingInfo; 
+    String quoinDefaultingWarningMsg;
        
     // constructor/initialise fields
     public StreetInfo(String tsid)
@@ -79,6 +83,9 @@ class StreetInfo
         geoBrightness = 0;
         geoHeight = 0;
         geoWidth = 0;
+        
+        quoinDefaultingInfo = "";
+        quoinDefaultingWarningMsg = "";
     }
     
     boolean readStreetData()
@@ -1240,5 +1247,41 @@ class StreetInfo
             }
         }
     }
+    
+    public String readQuoinDefaultingInfo()
+    {
+        return quoinDefaultingInfo;
+    }
+    
+    public void setQuoinDefaultingInfo(String info)
+    {
+        // Only need to save a message once, for the first non-standard quoin on the street
+        if ((quoinDefaultingInfo.length() == 0) && (info.length() > 0))
+        {
+            quoinDefaultingInfo = info;
+        }
+    }
+    
+    public String readQuoinDefaultingWarningMsg()
+    {
+        return quoinDefaultingWarningMsg;
+    }
+    
+    public void setQuoinDefaultingWarningMsg(String info)
+    {
+        // Concatenate any warning messages that have been logged by the quoin defaulting functions - should only happen for Rainbow Run so v. rare/unlikely
+        if (info.length() > 0)
+        {
+            if (quoinDefaultingWarningMsg.length() > 0)
+            {
+                quoinDefaultingWarningMsg = quoinDefaultingWarningMsg + "\n" + info;
+            }
+            else
+            {
+                quoinDefaultingWarningMsg = info;
+            }
+        }
+    }
+    
         
 }

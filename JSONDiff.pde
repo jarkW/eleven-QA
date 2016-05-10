@@ -486,8 +486,9 @@ class JSONDiff
        
     public void displayInfoMsg()
     {
-        if (infoMsgList.size() == 0)
+        if (infoMsgList.size() <= 2)
         {
+            // Allow for the starting/finishing messages which are always present
             printToFile.printDebugLine(this, "JSONDIFF: No changes for item " + itemTSID, 1);
             //printToFile.printOutputLine("JSONDIFF: No changes for item" + itemTSID);
             return;

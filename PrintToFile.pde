@@ -235,6 +235,20 @@ class PrintToFile {
         }
         s = "Searched " + streetInfo.readValidStreetSnapCount() + " valid street snaps of correct size " + streetInfo.readGeoWidth() + "x" + streetInfo.readGeoHeight() + " pixels";
         printOutputLine(s);
+        
+        // Print information about any special quoin defaulting which might have happened e.g. because Ancestral Lands
+        // For the default case nothing is printed
+        s = streetInfo.readQuoinDefaultingInfo();
+        if (s.length() > 0)
+        {
+            printOutputLine(s);
+        }
+        // This warning message is only ever written for problems with Rainbow Run where quoins are reset
+        s = streetInfo.readQuoinDefaultingWarningMsg();
+        if (s.length() > 0)
+        {
+            printOutputLine(s);
+        }
     }
     
     public boolean printSummaryData(ArrayList<SummaryChanges> itemResults)
@@ -391,7 +405,7 @@ class PrintToFile {
                     case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
                         // Just print out the match information - as the new co-ordinates have already been given
                         s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
-                        s = s + " (furthest x,y diff is " + bestMatchInfo.furthestCoOrdDistance(itemResults.get(i).itemInfo.readOrigItemX(), itemResults.get(i).itemInfo.readOrigItemY()) + ")";
+                        s = s + " (" + bestMatchInfo.furthestCoOrdDistance(itemResults.get(i).itemInfo.readOrigItemX(), itemResults.get(i).itemInfo.readOrigItemY()) + "px from original x,y)";
                         break;
                         
                     case SummaryChanges.VARIANT_ONLY:
