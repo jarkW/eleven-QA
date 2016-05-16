@@ -557,6 +557,25 @@ class SpiralSearch
         return RGBInfo;
     }
     
+    public float readPercentageMatchInfo()
+    {
+        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height); 
+        float percentageMatch;
+          
+        // Need to avoid dividing by 0, or a very small number.
+        if (avgTotalRGBDiffPerPixel < 0.01)
+        {
+            // Treat as 0, i.e. the first match was perfect, so the average total is the same as the average for the fragment
+            percentageMatch = 100;
+        }
+        else
+        {
+            percentageMatch = 100 - ((lowestAvgRGBDiffPerPixel/avgTotalRGBDiffPerPixel) * 100);
+        }
+        
+        return percentageMatch;
+    }
+    
     public int readFoundStepX()
     {
         return foundStepX;

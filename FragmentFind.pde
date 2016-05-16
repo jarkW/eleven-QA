@@ -32,7 +32,8 @@ class FragmentFind
     PNGFile streetSnapImage;  
     
     // Information saved from the search before it is nulled ready for the next search/image
-    MatchInfo matchInfo;
+    // Keeps a running version of the 'best' match in
+    MatchInfo bestMatchInfo;
   
     // constructor
     public FragmentFind(ItemInfo itemInfo)
@@ -50,6 +51,8 @@ class FragmentFind
         itemFound = false;
         
         thisItemInfo = itemInfo;
+        
+        bestMatchInfo = null;
         
         // Copy arrays we need from the item object - to keep the code simpler onl      
         itemImages = itemInfo.readItemImages();
@@ -179,16 +182,17 @@ class FragmentFind
         boolean searchSuccess = spiralSearch.searchForItem();
         if (searchSuccess)
         {
+            // NB This can be because a perfect match has been found, or a good-enough that fits within the % match required criteria
             if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS)
             {
-                // have yet to scan through all images to find the best/closest image 
+                // have yet to scan through all images to find the best/closest quoin image 
                 // So save this information before dropping down below to search with the next image available  
-                matchInfo = spiralSearch.readSearchMatchInfo(); 
+                bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
 
                 quoinMatches.add(new QuoinMatchData(spiralSearch.convertToJSONX(spiralSearch.readFoundStepX()),
                                  spiralSearch.convertToJSONY(spiralSearch.readFoundStepY()),
                                  extractItemInfoFromItemImageFilename(),
-                                 matchInfo));                          
+                                 bestMatchInfo));                          
 
                 debugInfo = spiralSearch.debugRGBInfo();
                 printToFile.printDebugLine(this, "searchForFragment - full quoin search found " + extractItemInfoFromItemImageFilename() + " found at x,y " + newItemX + "," + newItemY, 2);
@@ -197,14 +201,19 @@ class FragmentFind
             {
                 // Valid found item so save the new x,y and other information
                 itemFound = true;
-                // Match has been found - might be perfect or good enough - so save the information            
+                // Match has been found - might be perfect or good enough - so save the information    
+                // For all non-quoin items it is assumed that once a match has been found, x,y are valid because these items do not move
+                // Trees are a bit more complicated - if the JSON file is a trant_* tree then we only need a valid x,y which we can get from
+                // any match between fragment/snap. However for wood trees, also want the variant type if at all possible from the snap.
+                // As a cludge for now, make sure extractItemInfoFromItemImageFilename() returns the same variant type if a non-wood tree match
+                // has been found.
                 newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
                 newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
             
                 // As matched item image is the current one, extract the extra information from the item image filename
                 newItemExtraInfo = extractItemInfoFromItemImageFilename();
                 debugInfo = spiralSearch.debugRGBInfo();
-                matchInfo = spiralSearch.readSearchMatchInfo(); 
+                bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
                 printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY, 2);
             }
@@ -221,7 +230,7 @@ class FragmentFind
                 // and that info was used to select the single quoin image that needed to be used to search this street snap. Therefore if
                 // if was not found - and we enter this leg of code - then consider the search done for this item.
                 // Won't reach this leg of the code for any other items - as once an item is found, it never enters FragmentFind again - skipped on future street snaps.
-                matchInfo = spiralSearch.readSearchMatchInfo(); 
+                bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
                 printToFile.printDebugLine(this, "searchForFragment - found 1 item, no more images to search", 2);
                 printToFile.printDebugLine(this, "searchForFragment - " + thisItemInfo.readItemClassTSID().equals("quoin") + " new X is " + thisItemInfo.readNewItemX() , 2);
@@ -244,18 +253,42 @@ class FragmentFind
                     }
                     else
                     {
-                        matchInfo = spiralSearch.readSearchMatchInfo();
-                    }
-
-                               
+                        // NB Need to save the 'best' fit found - needed for trees where search multiple very different images, so don't
+                        // just want to see the search info for a wood tree if the 2nd fruit tree search was close to the specified accuracy requested.
+                        // Otherwise the output report implies a terrible match, when actually seeing the result of the last tree image, which could
+                        // well be hopeless.
+                        if (bestMatchInfo == null)
+                        {
+                            // Returned from first search, so OK to overwrite with the information for this search
+                            bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                        }
+                        else if (bestMatchInfo.readPercentageMatch() < spiralSearch.readPercentageMatchInfo())
+                        {
+                            // Last search returned a better percentage match - so save this information 
+                            bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                        }
+                        // else - ignore the results of the last search as it was worse than the best we have so far
+                    }                             
                     searchDone = true;
                 }
                 else
                 {
                     // Carry out search using the new image
+                    
+                    // Before starting new search, save information from the previous search
+                    // Again, only save the bestMatchInfo if it is better than that obtained in previous searches
                     debugInfo = spiralSearch.debugRGBInfo();
-                    matchInfo = spiralSearch.readSearchMatchInfo(); 
-                                    
+                    if (bestMatchInfo == null)
+                    {
+                        // Returned from first search, so OK to overwrite with the information for this search
+                        bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                    }
+                    else if (bestMatchInfo.readPercentageMatch() < spiralSearch.readPercentageMatchInfo())
+                    {
+                        // Last search returned a better percentage match - so save this information 
+                        bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                    }
+                    // else - ignore the results of the last search as it was worse than the best we have so far
                     //printToFile.printDebugLine(this, " For reference before start search with next image - " + debugRGBMatchInfo, 2);
                     
                     printToFile.printDebugLine(this, "searchForFragment - with new image " + itemImages.get(itemImageBeingUsed).readPNGImageName() + " and street " + streetSnapImage.readPNGImageName(), 2);
@@ -292,11 +325,11 @@ class FragmentFind
             // Dump out debug info to give me some idea of whether I've gotten the searchbox the right size or not
             printToFile.printDebugLine(this, " Returning from FragmentFound item  found = " + itemFound + " " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemExtraInfo + 
                                         "> old x,y = " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " new x,y " + newItemX + "," + newItemY, 2);
-            printToFile.printDebugLine(this, " and also RGB info is " + matchInfo.bestMatchAvgRGB + "/" + matchInfo.bestMatchAvgTotalRGB + " try " + matchInfo.bestMatchX + "," + matchInfo.bestMatchY, 2);
+            printToFile.printDebugLine(this, " and also RGB info is " + bestMatchInfo.bestMatchAvgRGB + "/" + bestMatchInfo.bestMatchAvgTotalRGB + " try " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 2);
             if (debugInfo.length() > 0)
             {
                 printToFile.printDebugLine(this, " For reference - " + debugInfo, 2);
-                printToFile.printDebugLine(this, " For RGB reference - " + matchInfo.matchDebugInfoString(), 2);
+                printToFile.printDebugLine(this, " For RGB reference - " + bestMatchInfo.matchDebugInfoString(), 2);
             }
                            
         }
@@ -312,30 +345,40 @@ class FragmentFind
         String imageName = itemImages.get(itemImageBeingUsed).readPNGImageName();
         String name = imageName.replace(".png", "");
         
-        
         // Some items never have a variant field e.g. rock_metal_1, QQ, so image name = class TSID
-        if (thisItemInfo.itemClassTSID.equals(name))
+        if (thisItemInfo.readItemClassTSID().equals(name))
         {
             return "";
         }
-        else if (thisItemInfo.itemClassTSID.indexOf("trant_") == 0)
+        else if (thisItemInfo.readItemClassTSID().indexOf("trant_") == 0)
         {
             // Quite often might have a bean tree on our QA street, but the snap has a fruit tree. Therefore the itemClassTSID (bean)
-            // won't match the tree found on the snap. Unlike quoins, we are not changing tree JSONs to match snaps, therefore
-            // quite feasible that the itemClassTSID won't match the snap name. So just return a clean empty extraInfo field.
+            // in the JSON file doesn't reflect the found fruit tree on the snap. 
+            // Unlike quoins, we are not changing tree JSONs to match snaps, therefore quite feasible that the itemClassTSID won't match the snap name. 
+            // So just return a clean empty extraInfo field if not wanted.    
             return "";
         }
+        else if (thisItemInfo.readItemClassTSID().equals("wood_tree"))
+        {            
+            // Note that if the JSON file is set up to be a wood tree, then we do want to know what variant was found which constituted a match
+            // - what happens if we have a wood tree as the JSON file, but the snap finds a match for a fruit tree. This gives us the x,y
+            // but not the variant of the wood tree ... so as a workaround for now, return the existing extraInfo field (which will be "" for trant_*
+            // and variant for wood trees. 
+            // Default the return value to the existing wood tree variant. Then if the name of the image is a non-wood tree, won't matter as will
+            // return this original rather than new value
+            extraInfo = thisItemInfo.readOrigItemExtraInfo();
+            printToFile.printDebugLine(this, " default wood tree variant to original value of " + extraInfo, 1);
+        }
         
-        // Remove the classTSID and .png part               
-        //if (imageName.length() > (thisItemInfo.itemClassTSID.length() + 4))
-        if (name.length() > (thisItemInfo.itemClassTSID.length() + 1))
+        // Remove the classTSID              
+        if (name.length() > (thisItemInfo.readItemClassTSID().length() + 1))
         {
             // Means there is an _info field to extract - so strip off the classTSID_ part and .png
             //extraInfo = imageName.substring((thisItemInfo.itemClassTSID.length() + 1), imageName.length() - 4);
             // Means there is an _info field to extract - so strip off the classTSID_ part and _
             extraInfo = name.replace(thisItemInfo.readItemClassTSID() + "_", "");
         }
-        printToFile.printDebugLine(this, " image name "  + imageName + " for item class tsid " + thisItemInfo.itemClassTSID + " returns variant + " + extraInfo, 1);
+        printToFile.printDebugLine(this, " image name "  + imageName + " for item class tsid " + thisItemInfo.readItemClassTSID() + " returns variant + " + extraInfo, 1);
         return extraInfo;
     }
     
@@ -349,7 +392,7 @@ class FragmentFind
             newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
             newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
             newItemExtraInfo = "";
-            matchInfo = spiralSearch.readSearchMatchInfo(); 
+            bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
             printToFile.printDebugLine(this, "No quoin images matched", 2);
         }
         else
@@ -361,7 +404,7 @@ class FragmentFind
             newItemX = quoinMatches.get(i).itemX;
             newItemY = quoinMatches.get(i).itemY;
             newItemExtraInfo = quoinMatches.get(i).quoinType;
-            matchInfo = quoinMatches.get(i).matchInfo;
+            bestMatchInfo = quoinMatches.get(i).bestMatchInfo;
             
             for (i = 1; i < quoinMatches.size(); i++)
             {
@@ -374,7 +417,7 @@ class FragmentFind
                     newItemY = quoinMatches.get(i).itemY;
                     newItemExtraInfo = quoinMatches.get(i).quoinType;
                     
-                    matchInfo = quoinMatches.get(i).matchInfo;
+                    bestMatchInfo = quoinMatches.get(i).bestMatchInfo;
                 }
                 else
                 {
@@ -416,9 +459,9 @@ class FragmentFind
         return okFlag;
     }
     
-    public MatchInfo readMatchInfo()
+    public MatchInfo readBestMatchInfo()
     {
-        return matchInfo;
+        return bestMatchInfo;
     }
     
     class QuoinMatchData
@@ -427,7 +470,7 @@ class FragmentFind
         int itemY;
         float distFromOrigXY;
         String quoinType;
-        MatchInfo matchInfo;
+        MatchInfo bestMatchInfo;
         
         QuoinMatchData(int foundX, int foundY, String extraInfo, MatchInfo RGBInfo)
         {
@@ -435,8 +478,8 @@ class FragmentFind
             itemY = foundY;
             quoinType = extraInfo;
             distFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(thisItemInfo.readOrigItemX(), thisItemInfo.readOrigItemY(), foundX, foundY); 
-            matchInfo = RGBInfo;
-            printToFile.printDebugLine(this, "Saving quoin data for " + extraInfo + " with avg RGB " + matchInfo.bestMatchAvgRGB + " at x,y " + matchInfo.bestMatchX + "," + matchInfo.bestMatchY, 3);
+            bestMatchInfo = RGBInfo;
+            printToFile.printDebugLine(this, "Saving quoin data for " + extraInfo + " with avg RGB " + bestMatchInfo.bestMatchAvgRGB + " at x,y " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 3);
         }
     }
     

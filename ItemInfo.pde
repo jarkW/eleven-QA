@@ -30,7 +30,7 @@ class ItemInfo
     FragmentFind fragFind;
     
     // Information about the x,y which relate to the lowest RGB averages, which may/may not be considered a match
-    ArrayList<MatchInfo> matchInfoList;
+    ArrayList<MatchInfo> bestMatchInfoList;
     
     // Contains the item fragments used to search the snap
     ArrayList<PNGFile> itemImages;
@@ -61,7 +61,7 @@ class ItemInfo
         
         itemYValues = new IntList();
         
-        matchInfoList = new ArrayList<MatchInfo>();
+        bestMatchInfoList = new ArrayList<MatchInfo>();
         
         initItemVars();
 
@@ -1142,8 +1142,8 @@ class ItemInfo
             itemFinished = true;
             
             // Save the debug information for this street snap
-            MatchInfo matchInfo = fragFind.readMatchInfo();         
-            matchInfoList.add(matchInfo);
+            MatchInfo bestMatchInfo = fragFind.readBestMatchInfo();         
+            bestMatchInfoList.add(bestMatchInfo);
             
             // If an item was found, then delay the image for a second before continuing - for debug onl
             if (doDelay && newItemX != MISSING_COORDS)
@@ -1344,30 +1344,30 @@ class ItemInfo
     
     public MatchInfo readBestMatchInfo()
     {
-        if (matchInfoList.size() < 1)
+        if (bestMatchInfoList.size() < 1)
         {
             // This should never happen - no RGB info has been added
             printToFile.printDebugLine(this, "MatchInfo array is empty - no data has been added for snap searches for item " + itemTSID, 3);
             return null;
         }
         
-        printToFile.printDebugLine(this, "Item + " + itemTSID + " Size of debugRGBInfo is " + matchInfoList.size(), 1);
+        printToFile.printDebugLine(this, "Item + " + itemTSID + " Size of debugRGBInfo is " + bestMatchInfoList.size(), 1);
         // Need to walk through the array and return the lowest value of RGB
         MatchInfo info;
-        info = matchInfoList.get(0);
-        for (int i = 0; i < matchInfoList.size(); i++)
+        info = bestMatchInfoList.get(0);
+        for (int i = 0; i < bestMatchInfoList.size(); i++)
         {
-            printToFile.printDebugLine(this, "Item + " + itemTSID + " Debug RGB info is " + matchInfoList.get(i).matchDebugInfoString(), 1);
-            if (matchInfoList.get(i).bestMatchAvgRGB < info.bestMatchAvgRGB)
+            printToFile.printDebugLine(this, "Item + " + itemTSID + " Debug RGB info is " + bestMatchInfoList.get(i).matchDebugInfoString(), 1);
+            if (bestMatchInfoList.get(i).bestMatchAvgRGB < info.bestMatchAvgRGB)
             {
-                info = matchInfoList.get(i);
+                info = bestMatchInfoList.get(i);
             }
-            else if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("qurazy_marker")) && (matchInfoList.get(i).bestMatchAvgRGB == info.bestMatchAvgRGB))
+            else if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("qurazy_marker")) && (bestMatchInfoList.get(i).bestMatchAvgRGB == info.bestMatchAvgRGB))
             {
                 // If the RGB values are the same, if this one has a lower y value (i.e. more positive), then copy across
-                if (matchInfoList.get(i).bestMatchY > info.bestMatchY)
+                if (bestMatchInfoList.get(i).bestMatchY > info.bestMatchY)
                 {
-                    info = matchInfoList.get(i);
+                    info = bestMatchInfoList.get(i);
                 }
             }
         }

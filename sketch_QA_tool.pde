@@ -37,13 +37,24 @@ import java.text.DecimalFormat;
  *
  */
   
- // Groddle Heights - LCR16VUKOQL18DU - not find egg trees - check this out 
+ // Groddle Heights - LCR16VUKOQL18DU - not find egg trees - check this out - finds the 2nd/3rd 
+ 
+ // Possible bug - currently when search for trees, stop at first image/snap match - gives the x,y. Which is great for JSON files for trant_*.
+ // However if we are dealing with a wood_tree, then might find the x,y for a fruit tree on a snap - and then not bother searching for wood_trees
+ // on subsequent snaps. Not sure if this is worth fixing or not as it is somewhat complex. Would need to keep hold of the 
+ // trant match found on the off-chance that a better wood tree match is found.
+ // Could reorder the trant images so start with wood trees - but this only fixes the problem for the first snap used (and slows down tool). If a fruit image/snap match
+ // is found then the tool won't bother going on to snap 2 which happens to have a wood tree on. In many respects, given how trees change so often
+ // it is only the x,y which is really important, so probably not worth worrying about. 
+ // User could always re-run the tool with just the wood tree snap available, forcing it to be found. 
    
  // BUG? xy variant only
  // Does it load up the single image for other non-quoin items with variant field?
  // Except wood trees - where still needs to test all tree images.
  // Also in JSON diff, ensure that only x,y have changed, error otherwise
  // ALSO JUST TRIED IT OUT AND ALL THE QUOINS GOT RESET BACK TO MYSTERY ...
+ // CHeck line if (thisItemInfo.readItemClassTSID().equals("quoin") && ((configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != MISSING_COORDS))) in fragfind
+ // as I think it needs these extra brackets
  
  // Have an option where only changes x,y in files (e.g. if on street where already started
 // QA. Or could do something where if street is in persdata-qa, only change the x,y? 
@@ -77,8 +88,6 @@ import java.text.DecimalFormat;
 
 //
 //NEED TO CHECK USING ALL FUNCTION CALLS - I.E. READ/SET ONES
-
-// NB TEST WHAT HAPPENS IF TRY TO FIND DUST trap of type B on a street - does it reset it to A and give msg???
 
 
 // Directory where config.json is, and all saved JSON files - both original/new
@@ -965,7 +974,11 @@ void configJSONFileSelected(File selection)
                 return diffY;
             }
         }
-
+        
+        public float readPercentageMatch()
+        {
+            return percentageMatch;
+        }
     }
 
     
