@@ -321,6 +321,7 @@ static class Utils
     {
         return errMsg;
     }
+    
     static public boolean setupDir(String dirName, boolean keepFileContents)
     {
         File myDir = new File(dirName);
@@ -349,9 +350,68 @@ static class Utils
                 {
                     for (int i=0; i< contents.length; i++)
                     {
-                        contents[i].delete();
+                        try
+                        {
+                            if (!contents[i].delete())
+                            {
+                                errMsg = "Failed to delete file in " + dirName + " folder";
+                                return false;
+                            }
+                        }
+                        catch (SecurityException e)
+                        {
+                            println(e);
+                            errMsg = "Security Exception - Failed to delete file in " + dirName + " folder";
+                            return false;
+                        }
                     }
                 }
+            }
+        }
+        return true;
+    }
+    
+    static public boolean deleteDir(String dirName)
+    {
+        File myDir = new File(dirName);
+        if (myDir.exists())
+        {
+            File[] contents = myDir.listFiles();
+            if (contents != null) 
+            {
+                for (int i=0; i< contents.length; i++)
+                {
+                    try
+                    {
+                        if (!contents[i].delete())
+                        {
+                            errMsg = "Failed to delete file in " + dirName + " folder";
+                            return false;
+                        }
+                    }
+                    catch (SecurityException e)
+                    {
+                        println(e);
+                        errMsg = "Security Exception - Failed to delete file in " + dirName + " folder";
+                        return false;
+                    }
+                }
+            }
+
+            // Can now delete the directory itself
+            try
+            {
+                if (!myDir.delete())
+                {
+                    errMsg = "Failed to delete " + dirName + " folder";
+                    return false;
+                }
+            }
+            catch (SecurityException e)
+            {
+                println(e);
+                errMsg = "Security Exception - Failed to delete " + dirName + " folder";
+                return false;
             }
         }
         return true;

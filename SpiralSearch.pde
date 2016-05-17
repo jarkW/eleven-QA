@@ -17,6 +17,7 @@ class SpiralSearch
     PImage thisStreetImage;
     PImage testStreetFragment;
     PImage testItemFragment;
+    
     int startX;
     int startY;
     String thisItemClassTSID;
@@ -26,13 +27,7 @@ class SpiralSearch
     int itemJSONY;
     int fragOffsetX;
     int fragOffsetY;
-    
-    // FOR DEBUG ONLY
-    // dumps out the images that are being compared as files - useful for when failing and not sure why.
-    // Used to dump out the best of the failure cases. 
-    boolean saveImages = false;
-    int numSavedImages = 0;
-    
+        
     // (dStepX, dStepY) is a vector - direction in which we move right now
     int dStepX;
     int dStepY;
@@ -62,6 +57,10 @@ class SpiralSearch
     boolean noMoreValidFragments;
     
     boolean okFlag;
+    
+    final static int RED_PIXEL_COLOUR = #FC0808;
+    
+    String diffImageName;
 
     // NB QQ change shape as bounces, so need to be more generous when considering
     // what constutitutes a match. 
@@ -71,7 +70,7 @@ class SpiralSearch
     float maxRGBDiffVariation;
 
 
-    public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int itemX, int itemY, int offsetX, int offsetY, int widthBox, int heightBox, int searchRadius, int searchAdjustment)
+    public SpiralSearch(PImage itemImage, PImage streetImage, String classTSID, int itemX, int itemY, int offsetX, int offsetY, int widthBox, int heightBox, int searchRadius, int searchAdjustment, String diffFname)
     {
         okFlag = true;
         
@@ -94,7 +93,9 @@ class SpiralSearch
         itemJSONX = itemX;
         itemJSONY = itemY;
         fragOffsetX = offsetX;
-        fragOffsetY = offsetY;        
+        fragOffsetY = offsetY;   
+        
+        diffImageName = diffFname;
         
         startX = itemX + thisStreetImage.width/2 + fragOffsetX;
         startY = itemY + thisStreetImage.height + fragOffsetY;
@@ -197,7 +198,6 @@ class SpiralSearch
                     info = "Perfect fit/colour at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
                 }
                 displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
-                
                 return true;
             }
             else 
@@ -252,19 +252,6 @@ class SpiralSearch
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
             " ratio lowest:total avg RGB diff = " + formattedRatio +
             " for x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY), 2); 
-            
-            
-            if (saveImages)
-            {
-                // This doesn't really work as we don't know which of the images had this lowest RGB for example. Might need instead to have a separate class
-                // for dumping out images - or pass the item info field as well??? 
-                testStreetFragment = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
-                testStreetFragment = convertImage(testStreetFragment);
-                testStreetFragment.save(sketchPath() + "/BW" + convertToJSONX(lowestAvgRGBDiffStepX) + "_" + convertToJSONY(lowestAvgRGBDiffStepY)+ "_" + thisItemClassTSID + "_" + numSavedImages + ".png");
-                testItemFragment.save(sketchPath() + "/BW" + thisItemClassTSID + "_" + numSavedImages + ".png");
-                numSavedImages++;
-            }
-            
             
             foundStepX = MISSING_COORDS;
             foundStepY = MISSING_COORDS;
@@ -480,6 +467,43 @@ class SpiralSearch
         return (fragment);
         
     }
+    
+    PImage diffImage(PImage bestStreetFragment)
+    {
+        // Need to diff and set pixels to be red where don't match.
+        int loc;
+        float rStreet;
+        float rItem;
+        
+        String s;
+        
+        PImage diffImage = testItemFragment;
+                
+        for (int pixelYPosition = 0; pixelYPosition < thisItemImage.height; pixelYPosition++) 
+        {
+            for (int pixelXPosition = 0; pixelXPosition < thisItemImage.width; pixelXPosition++) 
+            {                    
+                // For street snap
+                loc = pixelXPosition + (pixelYPosition * thisItemImage.width);
+                rStreet = red(bestStreetFragment.pixels[loc]);
+            
+                // for Item snap
+                rItem = red(testItemFragment.pixels[loc]);
+                                
+                if (rStreet != rItem)
+                {
+                    // If the two pixels are not both white or both black, then mark as red
+                    diffImage.pixels[loc] = RED_PIXEL_COLOUR;
+                }
+            }
+        }        
+        
+        // Update the pixel array for this fragment
+        diffImage.updatePixels();
+        //image(diffImage, 750, 100, 50, 50);
+
+        return diffImage;
+    }
        
     public int convertToJSONX(int pixelX)
     {
@@ -552,7 +576,26 @@ class SpiralSearch
             y = convertToJSONY(foundStepY);
         }
         
-        MatchInfo RGBInfo = new MatchInfo(lowestAvgRGBDiffPerPixel, avgTotalRGBDiffPerPixel, x, y);
+        PImage fragmentDiffImage = null;
+        if (!usingBlackWhiteComparison)
+        {
+            printToFile.printDebugLine(this, "Unable to generage image of black/red/white fragment - not using black/white comparison", 3);
+            printToFile.printOutputLine("Unable to generage image of black/red/white fragment - not using black/white comparison");
+        }
+        else
+        {
+            if (configInfo.readDebugDumpBWDiffImages())
+            {
+                // Recalculate the part of the street snap that represents the best fit to the item and convert to black and white
+                PImage bestStreetFragment = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
+                bestStreetFragment = convertImage(testStreetFragment);
+        
+                // Now carry out a diff of the item with this image
+                fragmentDiffImage = diffImage(bestStreetFragment);
+            }
+        }
+        
+        MatchInfo RGBInfo = new MatchInfo(lowestAvgRGBDiffPerPixel, avgTotalRGBDiffPerPixel, x, y, fragmentDiffImage, diffImageName);
         
         return RGBInfo;
     }

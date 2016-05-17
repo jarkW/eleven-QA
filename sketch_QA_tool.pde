@@ -697,6 +697,25 @@ boolean setupWorkingDirectories()
         return false;
     }
     
+    if (configInfo.readDebugDumpBWDiffImages())
+    {
+        if (!Utils.setupDir(workingDir + File.separatorChar +"BestMatchImages", false))
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            return false;
+        }
+    }
+    else
+    {
+        // remove the directory if present
+        if (!Utils.deleteDir(workingDir + File.separatorChar +"BestMatchImages"))
+        {
+            printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+            return false;
+        }
+        
+    }
+    
     return true; 
 }
 
@@ -906,13 +925,18 @@ void configJSONFileSelected(File selection)
         int bestMatchX;
         int bestMatchY;
         float percentageMatch;
+        // Used to dump out a diff - so can see mismatched pixels in read - save the image and the useful filename to save it as, if this is the best match at the end
+        PImage bestMatchDiffImage;
+        String bestMatchDiffImageName;
+  
         
-        public MatchInfo(float avgRGB, float totalAvgRGB, int x, int y)
+        public MatchInfo(float avgRGB, float totalAvgRGB, int x, int y, PImage diffImage, String diffImageName)
         {           
             bestMatchAvgRGB = avgRGB;
             bestMatchAvgTotalRGB = totalAvgRGB;
             bestMatchX = x;
             bestMatchY = y;
+            bestMatchDiffImage = null;
             
             // Need to avoid dividing by 0, or a very small number.
             if (bestMatchAvgTotalRGB < 0.01)
@@ -923,6 +947,17 @@ void configJSONFileSelected(File selection)
             else
             {
                 percentageMatch = 100 - ((bestMatchAvgRGB/bestMatchAvgTotalRGB) * 100);
+            }
+            
+            // Save the diff image passed to class - might be later saved
+            if (configInfo.readDebugDumpBWDiffImages())
+            {
+                bestMatchDiffImage = diffImage;
+                bestMatchDiffImageName = diffImageName + "__" + round(percentageMatch) + ".png";
+            }
+            else
+            {
+                bestMatchDiffImage = null;
             }
         }
         
@@ -979,6 +1014,27 @@ void configJSONFileSelected(File selection)
         {
             return percentageMatch;
         }
-    }
+        
+        public boolean saveBestDiffImageFile()
+        {
+            if (configInfo.readDebugDumpBWDiffImages())
+            {
+                if (bestMatchDiffImage == null)
+                {
+                    printToFile.printDebugLine(this, "Unexpected error - diff image is null", 3);
+                    return false;
+                }
+                String fname = workingDir + File.separatorChar +"BestMatchImages" + File.separatorChar + bestMatchDiffImageName;
+                printToFile.printDebugLine(this, "Saving diff image to " + fname, 1);
+                if (!bestMatchDiffImage.save(fname))
+                {
+                    printToFile.printDebugLine(this, "Unexpected error - failed to save diff image to " + fname, 3);
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+ }
 
     

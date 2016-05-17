@@ -147,7 +147,8 @@ class FragmentFind
             startItemY, 
             itemImages.get(itemImageBeingUsed).readFragOffsetX(),
             itemImages.get(itemImageBeingUsed).readFragOffsetY(),
-            searchBoxWidth, searchBoxHeight, searchRadius, adjustment);
+            searchBoxWidth, searchBoxHeight, searchRadius, adjustment,
+            thisItemInfo.readItemTSID() + "_" + itemImages.get(itemImageBeingUsed).readPNGImageName().replace(".png", "") + "__" + streetSnapImage.readPNGImageName().replace(".png", ""));
             
         // dump list of images being used
         for (int i = 0; i < itemImages.size(); i++)
@@ -167,6 +168,10 @@ class FragmentFind
     public boolean searchForFragment()
     {
         String debugInfo = "";
+        
+        // Used to save the best diff image and file name associated with this image - debug only
+        PImage diffImage;
+        String fname;
                 
         displayMgr.showItemImage(itemImages.get(itemImageBeingUsed).readPNGImage(), thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY());
         displayMgr.showStreetFragmentImage(streetSnapImage.readPNGImage(), 
@@ -188,7 +193,6 @@ class FragmentFind
                 // have yet to scan through all images to find the best/closest quoin image 
                 // So save this information before dropping down below to search with the next image available  
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
-
                 quoinMatches.add(new QuoinMatchData(spiralSearch.convertToJSONX(spiralSearch.readFoundStepX()),
                                  spiralSearch.convertToJSONY(spiralSearch.readFoundStepY()),
                                  extractItemInfoFromItemImageFilename(),
@@ -309,7 +313,8 @@ class FragmentFind
                         startItemY,
                         itemImages.get(itemImageBeingUsed).readFragOffsetX(),
                         itemImages.get(itemImageBeingUsed).readFragOffsetY(),
-                        searchBoxWidth, searchBoxHeight, searchRadius, adjustment);                    
+                        searchBoxWidth, searchBoxHeight, searchRadius, adjustment,
+                        thisItemInfo.readItemTSID() + "_" + itemImages.get(itemImageBeingUsed).readPNGImageName().replace(".png", "") + "__" + streetSnapImage.readPNGImageName().replace(".png", ""));                    
 
                     if (!spiralSearch.readOkFlag()) 
                     {

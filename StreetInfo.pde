@@ -787,10 +787,10 @@ class StreetInfo
                 }
  
                 // Now print out the summary array
-                // The second sorting of item results shouldn't throw up any duplicate x,y - if it happens they'll just be reported as warnings
+                // The second sorting of item results shouldn't throw up any duplicate x,y - if it happens they'll just be reported as warnings.
+                // Any actual errors are reported from within printSummaryData
                 if (! printToFile.printSummaryData(itemResults))
                 {
-                    displayMgr.showErrMsg("Unexpected items in results array with duplicate x,y values - should not happen", true);
                     failNow = true;
                     return false;
                 }

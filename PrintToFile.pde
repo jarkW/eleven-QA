@@ -399,6 +399,14 @@ class PrintToFile {
             if (itemResults.get(i).readResult() != SummaryChanges.SKIPPED)
             {
                 bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
+                if (!bestMatchInfo.saveBestDiffImageFile())
+                {
+                    // Error has been logged by the function - just return failure case
+                    displayMgr.showErrMsg("Unable to save the best match diff image ", true);
+                    failNow = true;
+                    return false;  
+                }
+
                 switch (itemResults.get(i).readResult())
                 {
                     case SummaryChanges.COORDS_ONLY:

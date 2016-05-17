@@ -18,6 +18,7 @@ class ConfigInfo {
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
     
     boolean debugShowBWFragments;
+    boolean debugDumpBWDiffImages;
     
     StringList streetTSIDs = new StringList();
     String outputFile;
@@ -324,6 +325,19 @@ class ConfigInfo {
             return false;
         }
         
+        debugDumpBWDiffImages = Utils.readJSONBool(json, "debug_dump_bw_diff_images", false);
+        if (!Utils.readOkFlag())
+        {
+            debugDumpBWDiffImages = false;
+        }
+        
+        if (!usingBlackWhiteComparison && debugDumpBWDiffImages)
+        {
+            println("usingBlackWhiteComparison is set to false, so debug_dump_bw_diff_images in config.json cannot be set to true");
+            displayMgr.showErrMsg("usingBlackWhiteComparison is set to false, so debug_dump_bw_diff_images in config.json cannot be set to true", true);
+            return false;
+        }
+        
         // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
         debugShowBWFragments = Utils.readJSONBool(json, "debug_show_BW_fragments", false);
         if (!Utils.readOkFlag())
@@ -471,6 +485,11 @@ class ConfigInfo {
     public int readPercentMatchCriteria()
     {
         return percentMatchCriteria;
+    }
+    
+    public boolean readDebugDumpBWDiffImages()
+    {
+        return debugDumpBWDiffImages;
     }
     
 }
