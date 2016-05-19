@@ -148,7 +148,9 @@ class FragmentFind
             itemImages.get(itemImageBeingUsed).readFragOffsetX(),
             itemImages.get(itemImageBeingUsed).readFragOffsetY(),
             searchBoxWidth, searchBoxHeight, searchRadius, adjustment,
-            thisItemInfo.readItemTSID() + "_" + itemImages.get(itemImageBeingUsed).readPNGImageName().replace(".png", "") + "__" + streetSnapImage.readPNGImageName().replace(".png", ""));
+            thisItemInfo.readItemTSID(), 
+            itemImages.get(itemImageBeingUsed).readPNGImageName().replace(".png", ""),
+            streetSnapImage.readPNGImageName().replace(".png", ""));     
             
         // dump list of images being used
         for (int i = 0; i < itemImages.size(); i++)
@@ -314,7 +316,9 @@ class FragmentFind
                         itemImages.get(itemImageBeingUsed).readFragOffsetX(),
                         itemImages.get(itemImageBeingUsed).readFragOffsetY(),
                         searchBoxWidth, searchBoxHeight, searchRadius, adjustment,
-                        thisItemInfo.readItemTSID() + "_" + itemImages.get(itemImageBeingUsed).readPNGImageName().replace(".png", "") + "__" + streetSnapImage.readPNGImageName().replace(".png", ""));                    
+                        thisItemInfo.readItemTSID(),
+                        itemImages.get(itemImageBeingUsed).readPNGImageName().replace(".png", ""),
+                        streetSnapImage.readPNGImageName().replace(".png", ""));                    
 
                     if (!spiralSearch.readOkFlag()) 
                     {

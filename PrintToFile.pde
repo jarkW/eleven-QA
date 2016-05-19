@@ -399,13 +399,16 @@ class PrintToFile {
             if (itemResults.get(i).readResult() != SummaryChanges.SKIPPED)
             {
                 bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
-                if (!bestMatchInfo.saveBestDiffImageFile())
+                if (!bestMatchInfo.saveBestDiffImageFiles())
                 {
                     // Error has been logged by the function - just return failure case
-                    displayMgr.showErrMsg("Unable to save the best match diff image ", true);
+                    displayMgr.showErrMsg("Unable to save best match images ", true);
                     failNow = true;
                     return false;  
                 }
+                
+                // Dump out RGB info to file
+                printToFile.printDebugLine(this, bestMatchInfo.dumpRGBInfo(), 1);
 
                 switch (itemResults.get(i).readResult())
                 {

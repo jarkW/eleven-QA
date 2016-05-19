@@ -37,7 +37,11 @@ import java.text.DecimalFormat;
  *
  */
   
- // Groddle Heights - LCR16VUKOQL18DU - not find egg trees - check this out - finds the 2nd/3rd 
+ // Groddle Heights - LCR16VUKOQL18DU - not find egg trees - check this out - finds the 2nd/3rd
+ 
+ // Bug??? When search for quoins on second street snap, am I just using the quoin image 
+ // from the successful first street snap (rather than checking for all quoin images again???)
+ 
  
  // Possible bug - currently when search for trees, stop at first image/snap match - gives the x,y. Which is great for JSON files for trant_*.
  // However if we are dealing with a wood_tree, then might find the x,y for a fruit tree on a snap - and then not bother searching for wood_trees
@@ -65,6 +69,7 @@ import java.text.DecimalFormat;
   
  // Should I check in JSONDiff that the only fields changed are the expected ones???
  // i.e. x,y, variant, and some added fields. 
+ // See extractItemInfoFromJson = could confirm valid type field for the item from within JSONDiff - level 3 report
  
  // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
@@ -697,7 +702,7 @@ boolean setupWorkingDirectories()
         return false;
     }
     
-    if (configInfo.readDebugDumpBWDiffImages())
+    if (configInfo.readDebugDumpDiffImages())
     {
         if (!Utils.setupDir(workingDir + File.separatorChar +"BestMatchImages", false))
         {
@@ -927,16 +932,30 @@ void configJSONFileSelected(File selection)
         float percentageMatch;
         // Used to dump out a diff - so can see mismatched pixels in read - save the image and the useful filename to save it as, if this is the best match at the end
         PImage bestMatchDiffImage;
+        PImage BWItemFragment;
+        PImage ColourItemFragment;
+        PImage BWStreetFragment;
+        PImage ColourStreetFragment;
         String bestMatchDiffImageName;
-  
+        String BWItemFragmentName;
+        String ColourItemFragmentName;
+        String BWStreetFragmentName;
+        String ColourStreetFragmentName;
+        int bestItemRGBMedian;
+        int bestStreetRGBMedian;
+        String itemTSID;
         
-        public MatchInfo(float avgRGB, float totalAvgRGB, int x, int y, PImage diffImage, String diffImageName)
+        public MatchInfo(float avgRGB, float totalAvgRGB, int x, int y, int itemRGBMedian, int streetRGBMedian,
+                         String TSID, String itemImageFname, String streetSnapFname, 
+                         PImage colourStreetFragImage, PImage BWStreetFragImage, PImage colourItemImage, PImage BWItemImage, PImage BWDiffImage)    
         {           
             bestMatchAvgRGB = avgRGB;
             bestMatchAvgTotalRGB = totalAvgRGB;
             bestMatchX = x;
             bestMatchY = y;
-            bestMatchDiffImage = null;
+            bestItemRGBMedian = itemRGBMedian;
+            bestStreetRGBMedian = streetRGBMedian;
+            itemTSID = TSID;
             
             // Need to avoid dividing by 0, or a very small number.
             if (bestMatchAvgTotalRGB < 0.01)
@@ -950,14 +969,30 @@ void configJSONFileSelected(File selection)
             }
             
             // Save the diff image passed to class - might be later saved
-            if (configInfo.readDebugDumpBWDiffImages())
+            if (configInfo.readDebugDumpDiffImages())
             {
-                bestMatchDiffImage = diffImage;
-                bestMatchDiffImageName = diffImageName + "__" + round(percentageMatch) + ".png";
+                bestMatchDiffImage = BWDiffImage;
+                bestMatchDiffImageName = TSID  + "_BWDiff_" + itemImageFname + "__" + streetSnapFname + round(percentageMatch) + ".png";
+                
+                BWItemFragment = BWItemImage;
+                BWItemFragmentName = TSID  + "_BW_" + itemImageFname + "__" + round(percentageMatch) + ".png";
+                
+                ColourItemFragment = colourItemImage;
+                ColourItemFragmentName = TSID  + "_Col_" + itemImageFname + "__" + round(percentageMatch) + ".png";
+                
+                BWStreetFragment = BWStreetFragImage;
+                BWStreetFragmentName = TSID  + "_BW_" + streetSnapFname + "__" + round(percentageMatch) + ".png";
+                
+                ColourStreetFragment = colourStreetFragImage;
+                ColourStreetFragmentName = TSID  + "_Col_" + streetSnapFname + "__" + round(percentageMatch) + ".png";              
             }
             else
             {
                 bestMatchDiffImage = null;
+                BWItemFragment = null;
+                ColourItemFragment = null;
+                BWStreetFragment = null;
+                ColourStreetFragment = null;
             }
         }
         
@@ -972,6 +1007,12 @@ void configJSONFileSelected(File selection)
                        "/" + int (bestMatchAvgTotalRGB) + 
                        " = " + formattedPercentage + "%" +
                        " at x,y " + bestMatchX + "," + bestMatchY;
+            return s;
+        }
+        
+        public String dumpRGBInfo()
+        {
+            String s = "RGB Median info: " + itemTSID  + " item =" + bestItemRGBMedian + ", street = " + bestStreetRGBMedian;
             return s;
         }
         
@@ -1015,24 +1056,53 @@ void configJSONFileSelected(File selection)
             return percentageMatch;
         }
         
-        public boolean saveBestDiffImageFile()
-        {
-            if (configInfo.readDebugDumpBWDiffImages())
+        public boolean saveBestDiffImageFiles()
+        {                
+            if (configInfo.readDebugDumpDiffImages())
             {
-                if (bestMatchDiffImage == null)
+                // Always dump out the black/white images
+                if (!saveImageFile(bestMatchDiffImage, bestMatchDiffImageName))
                 {
-                    printToFile.printDebugLine(this, "Unexpected error - diff image is null", 3);
                     return false;
                 }
-                String fname = workingDir + File.separatorChar +"BestMatchImages" + File.separatorChar + bestMatchDiffImageName;
-                printToFile.printDebugLine(this, "Saving diff image to " + fname, 1);
-                if (!bestMatchDiffImage.save(fname))
+                
+                // The following images may not have been saved in FragmentFind - e.g. if match was successful
+                if (!saveImageFile(BWItemFragment, BWItemFragmentName))
                 {
-                    printToFile.printDebugLine(this, "Unexpected error - failed to save diff image to " + fname, 3);
+                    return false;
+                }
+                if (!saveImageFile(ColourItemFragment, ColourItemFragmentName))
+                {
+                    return false;
+                }
+                if (!saveImageFile(BWStreetFragment, BWStreetFragmentName))
+                {
+                    return false;
+                }
+                if (!saveImageFile(ColourStreetFragment, ColourStreetFragmentName))
+                {
                     return false;
                 }
             }
             
+            return true;
+        }
+        
+        boolean saveImageFile(PImage fragment, String fragmentName)
+        {
+            if (fragment == null)
+            {
+                // Might have null image because did not need saving
+                return true;
+            }
+            
+            String fname = workingDir + File.separatorChar +"BestMatchImages" + File.separatorChar + fragmentName;
+            printToFile.printDebugLine(this, "Saving fragment image to " + fname, 1);
+            if (!fragment.save(fname))
+            {
+                printToFile.printDebugLine(this, "Unexpected error - failed to save image to " + fragmentName, 3);
+                return false;
+            }
             return true;
         }
  }

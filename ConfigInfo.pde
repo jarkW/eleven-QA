@@ -18,7 +18,7 @@ class ConfigInfo {
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
     
     boolean debugShowBWFragments;
-    boolean debugDumpBWDiffImages;
+    boolean debugDumpDiffImages;
     
     StringList streetTSIDs = new StringList();
     String outputFile;
@@ -272,11 +272,11 @@ class ConfigInfo {
             return false;
         } 
         
-        writeJSONsToPersdata = Utils.readJSONBool(json, "write_JSONs_To_persdata", true);
+        writeJSONsToPersdata = Utils.readJSONBool(json, "write_JSONs_to_persdata", true);
         if (!Utils.readOkFlag())
         {
-            println("Failed to read write_JSONs_To_persdata in config.json file");
-            displayMgr.showErrMsg("Failed to read write_JSONs_To_persdata in config.json file", true);
+            println("Failed to read write_JSONs_to_persdata in config.json file");
+            displayMgr.showErrMsg("Failed to read write_JSONs_to_persdata in config.json file", true);
             return false;
         }
         
@@ -325,13 +325,13 @@ class ConfigInfo {
             return false;
         }
         
-        debugDumpBWDiffImages = Utils.readJSONBool(json, "debug_dump_bw_diff_images", false);
+        debugDumpDiffImages = Utils.readJSONBool(json, "debug_dump_diff_images", false);
         if (!Utils.readOkFlag())
         {
-            debugDumpBWDiffImages = false;
+            debugDumpDiffImages = false;
         }
         
-        if (!usingBlackWhiteComparison && debugDumpBWDiffImages)
+        if (!usingBlackWhiteComparison && debugDumpDiffImages)
         {
             println("usingBlackWhiteComparison is set to false, so debug_dump_bw_diff_images in config.json cannot be set to true");
             displayMgr.showErrMsg("usingBlackWhiteComparison is set to false, so debug_dump_bw_diff_images in config.json cannot be set to true", true);
@@ -487,9 +487,9 @@ class ConfigInfo {
         return percentMatchCriteria;
     }
     
-    public boolean readDebugDumpBWDiffImages()
+    public boolean readDebugDumpDiffImages()
     {
-        return debugDumpBWDiffImages;
+        return debugDumpDiffImages;
     }
     
 }
