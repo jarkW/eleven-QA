@@ -360,7 +360,15 @@ class ConfigInfo {
             for (int i = 0; i < TSIDArray.size(); i++)
             {    
                 // extract the TSID
-                JSONObject tsidObject = TSIDArray.getJSONObject(i);                               
+                JSONObject tsidObject = Utils.readJSONObjectFromJSONArray(TSIDArray, i, true);
+                if (!Utils.readOkFlag())
+                {
+                    println(Utils.readErrMsg());
+                    println("Unable to read TSID entry from streets array in config.json");
+                    displayMgr.showErrMsg("Unable to read TSID entry from streets array in config.json", true);
+                    return false;
+                }
+                             
                 String tsid = Utils.readJSONString(tsidObject, "tsid", true);
                 if (!Utils.readOkFlag() || tsid.length() == 0)
                 {

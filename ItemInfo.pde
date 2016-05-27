@@ -75,7 +75,16 @@ class ItemInfo
         }
         else
         {
-            printToFile.printDebugLine(this, "ItemInfo constructor item tsid is " + itemTSID + "(" + item.getString("label") + ")", 2);
+            String itemLabel = Utils.readJSONString(item, "label", true);
+            if (!Utils.readOkFlag() || itemLabel.length() == 0)
+            {
+                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                okFlag = false;
+            }
+            else
+            {
+                printToFile.printDebugLine(this, "ItemInfo constructor item tsid is " + itemTSID + "(" + itemLabel + ")", 2);
+            }
         }
     }
     

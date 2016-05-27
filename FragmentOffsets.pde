@@ -41,7 +41,14 @@ class FragmentOffsets
         
         for (int i = 0; i < values.size(); i++) 
         {
-            fragment = values.getJSONObject(i);
+            fragment = Utils.readJSONObjectFromJSONArray(values, i, true);
+            if (!Utils.readOkFlag())
+            {
+                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                printToFile.printDebugLine(this, "Failed to read fragments array in samples.json file", 3);
+                return false;
+            }
+
             String tsid = Utils.readJSONString(fragment, "class_tsid", true);
             if (!Utils.readOkFlag() || tsid.length() == 0)
             {

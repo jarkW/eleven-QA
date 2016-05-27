@@ -197,6 +197,38 @@ static class Utils
 
         return readObj;
     }
+    
+    static public JSONObject readJSONObjectFromJSONArray(JSONArray jsonArray, int index, boolean reportError)
+    {
+        okFlag = true;
+        
+        if (index < 0 || index >= jsonArray.size())
+        {
+            okFlag = false;
+            errMsg = "Index " + index + " passed to read JSONArray is out of bounds - less than 0 or greater than " + str(jsonArray.size()-1);
+            return null;
+        }
+
+        // Don't always want to report an error - sometimes just checking to see if key needs
+        // to be added
+        JSONObject readObj;
+        try
+        {
+            readObj = jsonArray.getJSONObject(index); 
+        }
+        catch(Exception e)
+        {
+            if (reportError)
+            {
+                println(e);
+                errMsg = "Failed to read JSON object from json array with index " + index;
+            }
+            okFlag = false;
+            return null;
+        }
+
+        return readObj;
+    }
    
     static public JSONArray readJSONArray(JSONObject jsonFile, String key, boolean reportError)
     {
