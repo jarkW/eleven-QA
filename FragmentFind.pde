@@ -155,7 +155,7 @@ class FragmentFind
         // dump list of images being used
         for (int i = 0; i < itemImages.size(); i++)
         {
-            printToFile.printDebugLine(this, "image loaded " + thisItemInfo.readItemClassTSID() + " = " + itemImages.get(i).readPNGImageName(), 1);
+            //printToFile.printDebugLine(this, "image loaded " + thisItemInfo.readItemClassTSID() + " = " + itemImages.get(i).readPNGImageName(), 1);
         }
 
         if (!spiralSearch.readOkFlag()) 
@@ -170,10 +170,6 @@ class FragmentFind
     public boolean searchForFragment()
     {
         String debugInfo = "";
-        
-        // Used to save the best diff image and file name associated with this image - debug only
-        PImage diffImage;
-        String fname;
                 
         displayMgr.showItemImage(itemImages.get(itemImageBeingUsed).readPNGImage(), thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY());
         displayMgr.showStreetFragmentImage(streetSnapImage.readPNGImage(), 

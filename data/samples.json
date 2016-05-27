@@ -511,26 +511,26 @@
   },
   {
     "class_tsid": "jellisac",
-    "offset_x": -13,
-    "offset_y": -33,
+    "offset_x": -6,
+    "offset_y": -35,
     "info": "1"
   },
   {
     "class_tsid": "jellisac",
-    "offset_x": -11,
-    "offset_y": -37,
+    "offset_x": -14,
+    "offset_y": -27,
     "info": "2"
   },
   {
     "class_tsid": "jellisac",
-    "offset_x": -10,
-    "offset_y": -32,
+    "offset_x": -14,
+    "offset_y": -31,
     "info": "3"
   },
   {
     "class_tsid": "jellisac",
-    "offset_x": -11,
-    "offset_y": -29,
+    "offset_x": 1,
+    "offset_y": -31,
     "info": "4"
   },
   {
@@ -571,25 +571,25 @@
   },
   {
     "class_tsid": "ice_knob",
-    "offset_x": -12,
-    "offset_y": -36,
+    "offset_x": -3,
+    "offset_y": -30,
     "info": "1"
   },
   {
     "class_tsid": "ice_knob",
-    "offset_x": -19,
-    "offset_y": -39,
+    "offset_x": -15,
+    "offset_y": -29,
     "info": "2"
   },
   {
     "class_tsid": "ice_knob",
-    "offset_x": -14,
-    "offset_y": -26,
+    "offset_x": -11,
+    "offset_y": -20,
     "info": "3"
   },
   {
     "class_tsid": "ice_knob",
-    "offset_x": -18,
+    "offset_x": -7,
     "offset_y": -29,
     "info": "4"
   },
@@ -613,8 +613,8 @@
   },
   {
     "class_tsid": "patch",
-    "offset_x": -10,
-    "offset_y": -19,
+    "offset_x": -18,
+    "offset_y": -22,
     "info": ""
   },
   {

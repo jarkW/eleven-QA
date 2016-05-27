@@ -12,6 +12,7 @@ class JSONDiff
     // User has to request the information be printed
     StringList infoMsgList;
     String itemTSID;
+    String itemClassTSID;
     JSONObject origJSON;
     JSONObject newJSON;
     String origFileName;
@@ -19,10 +20,11 @@ class JSONDiff
     // Set by the function that works out what type of object we have - so that I can return a boolean to handle success/failure
     Object extractedObject;
 
-    public JSONDiff(String iTSID, String origJSONFileName, String newJSONFileName)
+    public JSONDiff(String iTSID, String iClassTSID, String origJSONFileName, String newJSONFileName)
     {
         infoMsgList = new StringList();
         itemTSID = iTSID;
+        itemClassTSID = iClassTSID;
         origJSON = null;
         newJSON = null;
         origFileName = origJSONFileName;
@@ -44,7 +46,7 @@ class JSONDiff
         
         if (!compareJSONObjects(origJSON, newJSON, ""))
         {
-            s = "JSONDIFF: ERROR found in comparison of new/old " + itemTSID + ".json";
+            s = "ERROR found in comparison of new/old " + itemTSID + ".json";
             infoMsgList.append(s);
             return false;
         }
@@ -59,7 +61,7 @@ class JSONDiff
         File file = new File(newFileName);
         if (!file.exists())
         {
-            printToFile.printDebugLine(this, "JSONDIFF: Temporary copy of new JSON file " + newFileName + " does not exist", 3);
+            printToFile.printDebugLine(this, "Temporary copy of new JSON file " + newFileName + " does not exist", 3);
             return false;
         }
         
@@ -108,7 +110,7 @@ class JSONDiff
         List<String> origList = new ArrayList(origVersion.keys());
         Collections.sort(origList);
     
-        s = "JSONDIFF: Keys in the JSON files " + origList.size() + " in original, " + newList.size() + " in new file";
+        s = "Keys in the JSON files " + origList.size() + " in original, " + newList.size() + " in new file";
         //infoMsgList.append(s);
 
         // Need to handle case where new JSON file may have additional keys in (I never delete them)
@@ -126,7 +128,7 @@ class JSONDiff
             // Search for matching keys in file - trying to find a match in origList for the new key
             while (!newList.get(i).equals(origList.get(j)) && (i < newList.size()))
             {
-                s = "JSONDIFF: New key in new JSON file is " + newList.get(i);
+                s = "New key in new JSON file is " + newList.get(i);
                 infoMsgList.append(s);
                 i++;
             }
@@ -138,16 +140,27 @@ class JSONDiff
                 if (j < origList.size())
                 {
                     // in middle of old file, should have found a match for i
-                    s = "JSONDIFF: New key (" +  origList.get(j) + ") in old file = error (as have deleted key from the new file)";
+                    s = "ERROR - New key (" +  origList.get(j) + ") in old file = error (as have deleted key from the new file)";
                     infoMsgList.append(s);
+                    printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
                     return false;
                 }
                 else if (i >= newList.size())
                 {
                     // New key at end of file - so can return true as nothing to compare at this point 
-                    s = "JSONDIFF: New key (" +  newList.get(j) + ") at end of new file";
-                    infoMsgList.append(s);
-                    return true;
+                    if (!checkValidKeyChange(newList.get(j)))
+                    {
+                        s = "ERROR - invalid new key (" +  newList.get(j) + ") at end of new file";
+                        infoMsgList.append(s);
+                        printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
+                        return false;
+                    }
+                    else
+                    {
+                        s = "Valid new key (" +  newList.get(j) + ") at end of new file";
+                        infoMsgList.append(s);
+                        return true;
+                    }
                 }
             }
 
@@ -155,12 +168,14 @@ class JSONDiff
             if (!extractObjectFromJSONObject(origVersion, origList, j))
             {
                 // Unexpected type of object in JSON
+                printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
                 return false;
             }
             Object origObj = extractedObject; // set by extractObjectFromJSONObject
             if (!extractObjectFromJSONObject(newVersion, newList, i))
             {
                 // Unexpected type of object in JSON
+                printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
                 return false;
             }
             Object newObj = extractedObject;  // set by extractObjectFromJSONObject  
@@ -169,47 +184,55 @@ class JSONDiff
             // Handle the null cases first to avoid null pointer errors
             if ((newObj == null) && (origObj == null))
             {
-                s = "JSONDIFF: Same values found for "  + itemTSID + ".json, at level " + level  + "/" + newList.get(i) + " new value is <null> was <null>";
+                s = "Same values found for "  + itemTSID + ".json, at level " + level  + "/" + newList.get(i) + " new value is <null> was <null>";
                 //infoMsgList.append(s);
             }
             else if (newObj == null)
             {
-               // Handle the null cases first to avoid exceptions
-               s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key i is null orig key j is non-null";
+               // Would expect the case where a field is null in the new JSON file to be a mistake, so treat as error
+               s = "ERROR found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key is null, orig key is non-null";
                infoMsgList.append(s);
+               printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
+               return false;
             }
             else if (origObj == null)
             {
-               // Handle the null cases first to avoid exceptions
-               s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key i is non-null orig key j is null";
+               // Not sure that this is an error - could this be the case when field not set, and we then set it correctly using the tool???
+               // If it is an error - then return false
+               s = "ERROR ??????? found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key is non-null, orig key is null";
                infoMsgList.append(s);
+               printToFile.printOutputLine("JSONDIFF: ERROR ??????? in newly created " + newFileName + " - see debug_info.txt for more info");
             }      
             else if (newObj instanceof JSONObject && origObj instanceof JSONObject)
             {
                 if (!compareJSONObjects((JSONObject)origObj, (JSONObject)newObj, level + "/" + newList.get(i)))
                 {
-                    s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key i is " + newList.get(i) +  " orig key j is " + origList.get(j);
+                    s = "ERROR????????? found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key i is " + newList.get(i) +  " orig key j is " + origList.get(j);
                     infoMsgList.append(s);
+                    printToFile.printOutputLine("JSONDIFF: ERROR ??????? in newly created " + newFileName + " - see debug_info.txt for more info");
                 }
             }
             else if (newObj instanceof JSONObject || origObj instanceof JSONObject)
             {
-                s = "JSONDIFF: Error - only one of new key and old key is a JSONObject" + "New key i is " + newList.get(i) +  " orig key j is " + origList.get(j);
+                s = "Error - only one of new key and old key is a JSONObject" + "New key i is " + newList.get(i) +  " orig key j is " + origList.get(j);
                 infoMsgList.append(s);
+                printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
                 return false;
             }
             else if (newObj instanceof JSONArray && origObj instanceof JSONArray)
             {
                 if (!compareJSONArrays((JSONArray)origObj, (JSONArray)newObj, level + "/" + newList.get(i)))
                 {
-                    s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key i is " + newList.get(i) +  " orig key j is " + origList.get(j);
+                    s = "ERROR???????? found in " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + "New key i is " + newList.get(i) +  " orig key j is " + origList.get(j);
                     infoMsgList.append(s);
+                    printToFile.printOutputLine("JSONDIFF: ERROR ??????? in newly created " + newFileName + " - see debug_info.txt for more info");
                 } 
             }
             else if (newObj instanceof JSONArray || origObj instanceof JSONArray)
             {
-                s = "JSONDIFF: Error - only one of new key and old key is a JSONArray" + "New key i is " + newList.get(i) +  " orig key j is " + origList.get(j);
+                s = "Error - only one of new key and old key is a JSONArray" + "New key i is " + newList.get(i) +  " orig key j is " + origList.get(j);
                 infoMsgList.append(s);
+                printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
                 return false;
             }
             else
@@ -218,12 +241,22 @@ class JSONDiff
                 if (!newObj.equals(origObj))
                 {
                     // Difference found in values for key
-                    s = "JSONDIFF: Different values found for " + level + "/" + newList.get(i) + " new value is <" + newObj + "> was <" + origObj + ">";
-                    infoMsgList.append(s);
+                    if (!checkValidKeyChange(newList.get(i)))
+                    {
+                        s = "ERROR - Different values found for invalid " + level + "/" + newList.get(i) + " new value is <" + newObj + "> was <" + origObj + ">";
+                        infoMsgList.append(s);
+                        printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
+                        return false;
+                    }
+                    else
+                    {
+                        s = "Different values found for valid " + level + "/" + newList.get(i) + " new value is <" + newObj + "> was <" + origObj + ">";
+                        infoMsgList.append(s);
+                    }
                 }
                 else
                 {
-                    s = "JSONDIFF: Same values found for " + level + "/" + newList.get(i) + " new value is <" + newObj + "> was <" + origObj + ">";
+                    s = "Same values found for " + level + "/" + newList.get(i) + " new value is <" + newObj + "> was <" + origObj + ">";
                     //infoMsgList.append(s);
                 }
             }
@@ -238,8 +271,9 @@ class JSONDiff
         // Will just go through the arrays, entry by entry.
         if (origVersion.size() != newVersion.size())
         {
-            s = "JSONDIFF: JSON arrays are not the same size - an element has been added/deleted";
+            s = "JSON arrays are not the same size - an element has been added/deleted";
             infoMsgList.append(s);
+            printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
             return false;
         }
     
@@ -253,12 +287,14 @@ class JSONDiff
             if (!extractObjectFromJSONArray(origVersion, i))
             {
                 // unexpected object in array
+                printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
                 return false;
             }
             Object origObj = extractedObject; // set by extractObjectFromJSONarray
             if (!extractObjectFromJSONArray(newVersion, i))
             {
                 // unexpected object in array
+                printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
                 return false;
             }
             Object newObj = extractedObject; // set by extractObjectFromJSONarray  
@@ -266,53 +302,62 @@ class JSONDiff
             // Handle the null cases first to avoid null pointer errors
             if ((newObj == null) && (origObj == null))
             {
-                s = "JSONDIFF: Same values found for " + itemTSID + ".json, at level " + level + "/" + i + " new value is <null> was <null>";
+                s = "Same values found for " + itemTSID + ".json, at level " + level + "/" + i + " new value is <null> was <null>";
                 //infoMsgList.append(s);
             }
             else if (newObj == null)
             {
-               s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + i + "New index i is null orig index i is non-null";
+                // Don't expect to null out fields that were already set in the JSON file
+               s = "ERROR found in " + itemTSID + ".json, at level " + level + "/" + i + "New index i is null orig index i is non-null";
+               printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
                infoMsgList.append(s);
+               return false;
             }
             else if (origObj == null)
             {
-               s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + i + "New index i is non-null orig index i is -null";
+               // This could be valid??? If the tool sets up a field which was originally null - return false if is an actual error
+               s = "ERROR????????? found in " + itemTSID + ".json, at level " + level + "/" + i + "New index i is non-null orig index i is -null";
                infoMsgList.append(s);
+               printToFile.printOutputLine("JSONDIFF??????: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
             } 
             else if (newObj instanceof JSONArray && origObj instanceof JSONArray)
             {
                 if (!compareJSONArrays((JSONArray)origObj, (JSONArray)newObj, level + "/" + i))
                 {
-                    s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" + i + " index i is " + i;
+                    s = "ERROR??????????? found in " + itemTSID + ".json, at level " + level + "/" + i + " index i is " + i;
                     infoMsgList.append(s);
+                    printToFile.printOutputLine("JSONDIFF: ERROR?????????? in newly created " + newFileName + " - see debug_info.txt for more info");
                 }
             }
             else if (newObj instanceof JSONArray || origObj instanceof JSONArray)
             {
-                s = "JSONDIFF: Error - only one of new object and old object is a JSONArray" + " index i is " + i;
+                s = "Error - only one of new object and old object is a JSONArray" + " index i is " + i;
                 infoMsgList.append(s);
+                printToFile.printOutputLine("JSONDIFF: ERROR in newly created " + newFileName + " - see debug_info.txt for more info");
                 return false;
             }
             else if (newObj instanceof JSONObject)
             {
                 if (!compareJSONObjects((JSONObject)origObj, (JSONObject)newObj, level + "/" + i))
                 {
-                    s = "JSONDIFF: ERROR found in " + itemTSID + ".json, at level " + level + "/" +i + " index i is " + i;
+                    s = "ERROR??????? found in " + itemTSID + ".json, at level " + level + "/" +i + " index i is " + i;
                     infoMsgList.append(s);
+                    printToFile.printOutputLine("JSONDIFF: ERROR???????? in newly created " + newFileName + " - see debug_info.txt for more info");
                 }
             }
             else
             {
-                // string/int/bool
+                // string/int/bool                
                 if (!newObj.equals(origObj))
                 {
                     // Difference found in values in array
-                    s = "JSONDIFF: Different values found for " + level + "/" + i + " new value is <" + newObj + "> was <" + origObj + ">";
+                    s = "Different values found for " + level + "/" + i + " new value is <" + newObj + "> was <" + origObj + ">";
                     infoMsgList.append(s);
+                    printToFile.printOutputLine("JARK JSON DIFF : change to JSONArray at " + level + "/" + i + " new value is <" + newObj + "> was <" + origObj + "> - check it out in " + newFileName);
                 }
                 else
                 {
-                    s = "JSONDIFF: Same values found for " + level + "/" + i + " new value is <" + newObj + "> was <" + origObj + ">";
+                    s = "Same values found for " + level + "/" + i + " new value is <" + newObj + "> was <" + origObj + ">";
                     //infoMsgList.append(s);
                 }
             }       
@@ -382,7 +427,7 @@ class JSONDiff
                         catch (Exception e4)
                         {
                             println(e4);
-                            s = "JSONDIFF: Unexpected field type for key " + thisList.get(i);
+                            s = "Unexpected field type for key " + thisList.get(i);
                             infoMsgList.append(s);
                             return false;
                         }
@@ -463,7 +508,7 @@ class JSONDiff
                         catch (Exception e4)
                         {
                             println(e4);
-                            s = "JSONDIFF: Unexpected field type for index " + i;
+                            s = "Unexpected field type for index " + i;
                             infoMsgList.append(s);
                             return false;
                         }
@@ -483,21 +528,140 @@ class JSONDiff
         return true;
     }
 
-       
-    public void displayInfoMsg()
+    boolean checkValidKeyChange(String keyName)
+    {
+        
+        // For each item - checks that any changed keys are as expected for the item type
+        // Changes to co-ords of items are always valid
+        if (keyName.equals("x") || keyName.equals("y"))
+        {
+            printToFile.printDebugLine(this, "Expected change to field " + keyName + " in JSON file ", 1);
+            return true;
+        }
+        
+        if (itemClassTSID.indexOf("npc_shrine_", 0) == 0)
+        {
+            if (!keyName.equals("dir"))
+            {
+                printToFile.printDebugLine(this, "ERROR - unexpected change to field " + keyName + " in shrine JSON file - should never be changed for this item class " + itemClassTSID, 3);
+                return false;
+            }
+            else
+            {
+                printToFile.printDebugLine(this, "Expected change to field " + keyName + " in shrine JSON file ", 1);
+                return true;
+            }
+        }
+        
+        boolean validKey = true;
+        
+        switch (itemClassTSID)
+        {
+            case "quoin": 
+                switch (keyName)
+                {
+                    case "type":
+                    case "class_name":
+                    case "respawn_time":
+                    case "is_random":
+                    case "benefit":
+                    case "benefit_floor":
+                    case "benefit_ceil":
+                    case "giant":
+                        // All valid key types
+                        break;
+                    default:
+                        validKey = false;
+                        break;
+                }
+                break;
+                 
+            case "wood_tree":
+            case "npc_mailbox":
+            case "dirt_pile":
+            case "wood_tree_enchanted":
+                if (!keyName.equals("variant"))
+                {
+                    validKey = false;
+                }
+                break;
+            
+            case "mortar_barnacle":
+            case "jellisac":       
+                if (!keyName.equals("blister"))
+                {
+                    validKey = false;
+                }
+                break;  
+                
+            case "ice_knob":
+                if (!keyName.equals("knob"))
+                {
+                    validKey = false;
+                }
+                break;
+                
+            case "dust_trap":
+                if (!keyName.equals("trap_class"))
+                {
+                    validKey = false;
+                }
+                break;  
+            
+            case "subway_gate":
+            case "npc_sloth":
+               if (!keyName.equals("dir"))
+                {
+                    validKey = false;
+                }
+                break;              
+            
+            case "visiting_stone":
+                if (!keyName.equals("dir") && !keyName.equals("state"))
+                {
+                    validKey = false;
+                }
+                break;
+                
+            default:
+                // Should never reach this leg of the code
+                validKey = false;
+                break;
+        }
+        
+        if (!validKey)
+        {
+            printToFile.printDebugLine(this, "ERROR - unexpected change to field " + keyName + " in " + newFileName + " - should never be changed for this item class " + itemClassTSID, 3);
+            return false;
+        }
+        else
+        {
+            //printToFile.printDebugLine(this, "Expected change to field " + keyName + " in " + newFileName + " for item class " + itemClassTSID, 1);
+            return true;
+        }        
+    }
+    
+    public void displayInfoMsg(boolean errDetected)
     {
         if (infoMsgList.size() <= 2)
         {
             // Allow for the starting/finishing messages which are always present
             printToFile.printDebugLine(this, "JSONDIFF: No changes for item " + itemTSID, 1);
-            //printToFile.printOutputLine("JSONDIFF: No changes for item" + itemTSID);
             return;
         }
         // Changes found for street - print them all out
         for (int i = 0; i < infoMsgList.size(); i++)
         {
-            printToFile.printDebugLine(this, "JSONDIFF: Changes for item " + itemTSID + ":" + infoMsgList.get(i), 1);
-            //printToFile.printOutputLine("JSONDIFF: Changes for item" + itemTSID + ":" + infoMsgList.get(i));
+            if (errDetected)
+            {
+                // Make sure user sees the information - so dump all JSONDIFF info to debug file
+                printToFile.printDebugLine(this, "JSONDIFF: Changes for item " + itemTSID + ":" + infoMsgList.get(i), 3);
+            }
+            else
+            {
+                // only seen if low level tracing requested and error-free
+                printToFile.printDebugLine(this, "JSONDIFF: Changes for item " + itemTSID + ":" + infoMsgList.get(i), 1);
+            }
         }
         
     }

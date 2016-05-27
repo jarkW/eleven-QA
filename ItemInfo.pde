@@ -951,17 +951,17 @@ class ItemInfo
             */
                             
             // Double check the new file is reasonable - has to be done by eye by looking at output from a diff comparison tool
-            JSONDiff jsonDiff = new JSONDiff(itemTSID, workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json", 
+            JSONDiff jsonDiff = new JSONDiff(itemTSID, itemClassTSID, workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + itemTSID + ".json", 
                                             workingDir + File.separatorChar + "NewJSONs" + File.separatorChar + itemTSID + ".json");
             if (!jsonDiff.compareJSONFiles())
             {
                 // Error during the diff process
                 // Display all the messages and then return
-                jsonDiff.displayInfoMsg();
+                jsonDiff.displayInfoMsg(true);
                 return false;
             }
-            // Displays message to user in both debug/output files
-            jsonDiff.displayInfoMsg();
+            // Displays message to user in both debug files
+            jsonDiff.displayInfoMsg(false);
                                 
          } // end if changes to save to JSON file
          else
