@@ -655,6 +655,17 @@ class StreetInfo
             okFlag = false;
             return false;
         }
+        
+        // If street does not contain any items then continue to next street
+        if (streetItems.size() <= 0)
+        {
+            // This isn't treated as an error - but don't want to carry on with this street as it doesn't contain anything that can be handled
+            printToFile.printDebugLine(this, "SKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool", 3);
+            printToFile.printOutputLine("SKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool");
+            displayMgr.setSkippedStreetsMsg("SKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool");
+            invalidStreet = true;
+            return true; // continue
+        }
 
         // Display message giving street name across top of screen
         displayMgr.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());

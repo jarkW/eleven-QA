@@ -426,8 +426,8 @@ public void draw()
             break;
             
         case SHOW_FAILED_STREET_MSG:
-           // pause things for 2 seconds - so user can see previous output about failed street - then move on to next one
-            delay(2000);
+           // pause things for 5 seconds - so user can see previous output about failed street - then move on to next one
+            delay(5000);
             displayMgr.clearDisplay();
             streetBeingProcessed++;
             if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())

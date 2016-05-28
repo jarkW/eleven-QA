@@ -349,28 +349,30 @@ class FragmentFind
         String extraInfo = "";
         String imageName = itemImages.get(itemImageBeingUsed).readPNGImageName();
         String name = imageName.replace(".png", "");
+        printToFile.printDebugLine(this, "What is this? " + thisItemInfo.readItemClassTSID() + " for image name " + name, 1);
         
         // Some items never have a variant field e.g. rock_metal_1, QQ, so image name = class TSID
         if (thisItemInfo.readItemClassTSID().equals(name))
         {
             return "";
         }
-        else if (thisItemInfo.readItemClassTSID().indexOf("trant_") == 0)
+        else if ((thisItemInfo.readItemClassTSID().indexOf("trant_") == 0) || (thisItemInfo.readItemClassTSID().indexOf("patch") == 0))
         {
             // Quite often might have a bean tree on our QA street, but the snap has a fruit tree. Therefore the itemClassTSID (bean)
             // in the JSON file doesn't reflect the found fruit tree on the snap. 
             // Unlike quoins, we are not changing tree JSONs to match snaps, therefore quite feasible that the itemClassTSID won't match the snap name. 
-            // So just return a clean empty extraInfo field if not wanted.    
+            // So just return a clean empty extraInfo field if not wanted.  
+            printToFile.printDebugLine(this, " tree or patch " + thisItemInfo.readItemClassTSID(), 1);
             return "";
         }
         else if (thisItemInfo.readItemClassTSID().equals("wood_tree"))
         {            
             // Note that if the JSON file is set up to be a wood tree, then we do want to know what variant was found which constituted a match
-            // - what happens if we have a wood tree as the JSON file, but the snap finds a match for a fruit tree. This gives us the x,y
+            // - what happens if we have a wood tree as the JSON file, but the snap finds a match for a fruit tree? This gives us the x,y
             // but not the variant of the wood tree ... so as a workaround for now, return the existing extraInfo field (which will be "" for trant_*
             // and variant for wood trees. 
             // Default the return value to the existing wood tree variant. Then if the name of the image is a non-wood tree, won't matter as will
-            // return this original rather than new value
+            // return this original rather than new value (or will be overwritten in next leg of code if exists)
             extraInfo = thisItemInfo.readOrigItemExtraInfo();
             printToFile.printDebugLine(this, " default wood tree variant to original value of " + extraInfo, 1);
         }

@@ -258,7 +258,7 @@ class ItemInfo
         // Using the item class_tsid, get the pointer to the images for this item
         // Depending on the item might need to tweak the order of items - TO DO???? 
         
-        if ((itemClassTSID.indexOf("trant", 0) == 0) || (itemClassTSID.equals("wood_tree")))
+        if ((itemClassTSID.indexOf("trant", 0) == 0) || (itemClassTSID.equals("wood_tree")) || (itemClassTSID.indexOf("patch", 0) == 0))
         {
             itemImages = allItemImages.getItemImages("trees");
         }

@@ -43,6 +43,7 @@ class ItemImages
             return false;
         }
 
+
         itemImages.add(new PNGFile("trant_bean.png", false));
         itemImages.add(new PNGFile("trant_fruit.png", false));
         itemImages.add(new PNGFile("trant_bubble.png", false));
@@ -53,6 +54,10 @@ class ItemImages
         itemImages.add(new PNGFile("wood_tree_2.png", false));  
         itemImages.add(new PNGFile("wood_tree_3.png", false));  
         itemImages.add(new PNGFile("wood_tree_4.png", false));  
+        // Also include dirt patches - as these might be what exists on snaps if trees had been killed
+        itemImages.add(new PNGFile("patch_dark.png", false)); 
+        itemImages.add(new PNGFile("patch.png", false)); 
+
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
         if (!addToHashMapAndLoadImages("trees"))
         {
@@ -172,6 +177,7 @@ class ItemImages
             return false;
         }
         
+        /*
         // Now create an entry for dark dirt patch
         itemImages.add(new PNGFile("patch_dark.png", false)); 
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
@@ -187,7 +193,7 @@ class ItemImages
         {
             return false;
         }
-        
+        */
         // Now create an entry for dirt pile
         itemImages.add(new PNGFile("dirt_pile_dirt1.png", false)); 
         itemImages.add(new PNGFile("dirt_pile_dirt2.png", false)); 
