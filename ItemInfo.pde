@@ -75,16 +75,9 @@ class ItemInfo
         }
         else
         {
-            String itemLabel = Utils.readJSONString(item, "label", true);
-            if (!Utils.readOkFlag() || itemLabel.length() == 0)
-            {
-                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                okFlag = false;
-            }
-            else
-            {
-                printToFile.printDebugLine(this, "ItemInfo constructor item tsid is " + itemTSID + "(" + itemLabel + ")", 2);
-            }
+            // Read in the label to supply additional info - but as sometimes is set to null, be able to handle this without failing
+            String itemLabel = Utils.readJSONString(item, "label", false);
+            printToFile.printDebugLine(this, "ItemInfo constructor item tsid is " + itemTSID + "(" + itemLabel + ")", 2);
         }
     }
     
