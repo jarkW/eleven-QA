@@ -6,6 +6,7 @@
         int bestMatchX;
         int bestMatchY;
         float percentageMatch;
+        String bestMatchItemImageName;
         // Used to dump out a diff - so can see mismatched pixels in read - save the image and the useful filename to save it as, if this is the best match at the end
         PImage bestMatchDiffImage;
         PImage BWItemFragment;
@@ -32,6 +33,7 @@
             bestItemRGBMedian = itemRGBMedian;
             bestStreetRGBMedian = streetRGBMedian;
             itemTSID = TSID;
+            bestMatchItemImageName = itemImageFname;
             
             // Need to avoid dividing by 0, or a very small number.
             if (bestMatchAvgTotalRGB < 0.01)
@@ -180,5 +182,17 @@
                 return false;
             }
             return true;
+        }
+        
+        public String bestMatchVariant(String classTSID)
+        {
+            String variant = "";
+            // If the saved best match image name has the same root as the class TSID, then the variant information can
+            // be extracted and given to the user - used when an item is not found and simply reporting the nearest match
+            if (bestMatchItemImageName.indexOf(classTSID) == 0)
+            {
+                variant = bestMatchItemImageName.replace(classTSID+"_", "");
+            }
+            return variant;
         }
  }

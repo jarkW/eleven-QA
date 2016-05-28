@@ -166,17 +166,9 @@ class SpiralSearch
         lowestAvgRGBDiffStepY = 0;
         
         // Set up the limit that the ratio between lowest average RGB diff divided by total average RGB diff is in order to count as a match
-        if (thisItemClassTSID.equals("marker_qurazy"))
-        {
-            // Need to increase the level which counts as a match
-            maxRGBDiffVariation = float(100 - configInfo.readPercentMatchCriteria() + QQ_MATCH_ADJUSTMENT)/100;            
-        }
-        else
-        {
-            // So if user wants 100%, then, this is set to 0
-            // If user wants 90%, then this is set to 10/100 
-            maxRGBDiffVariation = float (100 - configInfo.readPercentMatchCriteria())/100;
-        }
+        // Some items e.g. ice knobs and QQ need some slightly more generous criteria.
+        // If user wants 100% match, then this maxRGBDiffVariation value is set to 0 for normal items, for 90%, is set to 10/100
+        maxRGBDiffVariation = float(100 - adjustedPercentMatchCriteria())/100;
 
         noMoreValidFragments = false; 
         
@@ -494,7 +486,7 @@ class SpiralSearch
         float rStreet;
         float rItem;
         
-        PImage diffImage = testItemFragment;
+        PImage diffImage = createImage(testItemFragment.width, testItemFragment.height, RGB);
                 
         for (int pixelYPosition = 0; pixelYPosition < thisItemImage.height; pixelYPosition++) 
         {
@@ -512,6 +504,10 @@ class SpiralSearch
                     // If the two pixels are not both white or both black, then mark as red
                     diffImage.pixels[loc] = RED_PIXEL_COLOUR;
                 }
+                else
+                {
+                    diffImage.pixels[loc] = testItemFragment.pixels[loc];
+                }
             }
         }        
         
@@ -520,6 +516,32 @@ class SpiralSearch
         //image(diffImage, 750, 100, 50, 50);
 
         return diffImage;
+    }
+    
+    int adjustedPercentMatchCriteria()
+    {
+        float adjustedPercent;
+        
+        switch (thisItemClassTSID)
+        {
+            case "marker_qurazy":
+                // Effectively allows for an extra 15% of lee way
+                adjustedPercent = float(configInfo.readPercentMatchCriteria()) * 0.85; 
+                break;
+                
+            case "ice_knob":
+                // Ice knobs are semi-transparent and so the match is not good compared to sample fragment - depends on underlying colour
+                // So allow a bit more leeway for a match
+                adjustedPercent = float(configInfo.readPercentMatchCriteria()) * 0.90;
+                break;
+                
+            default:
+                adjustedPercent = float(configInfo.readPercentMatchCriteria());
+                break;
+        }
+        
+        printToFile.printDebugLine(this, "Adjusted percentage match criteria for " + thisItemClassTSID + " is " + adjustedPercent, 1);
+        return int(adjustedPercent);
     }
        
     public int convertToJSONX(int pixelX)

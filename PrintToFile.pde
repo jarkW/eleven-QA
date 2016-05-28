@@ -427,7 +427,13 @@ class PrintToFile {
                 
                     case SummaryChanges.MISSING:
                         // Give the match data and the x,y this pertains to.
-                        s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString() +")";
+                        String variant = bestMatchInfo.bestMatchVariant(itemResults.get(i).itemInfo.readItemClassTSID());
+                        s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString();
+                        if (variant.length() > 0)
+                        {
+                            s = s + ", variant " + variant;
+                        }
+                        s = s + ")";
                         break;
                 }
             }
