@@ -20,6 +20,7 @@ class FragmentFind
     int newItemX;
     int newItemY;
     String newItemExtraInfo;
+    String foundVariant;
     boolean itemFound;
     
     ArrayList<QuoinMatchData> quoinMatches;
@@ -48,6 +49,7 @@ class FragmentFind
         newItemX = MISSING_COORDS;
         newItemY = MISSING_COORDS;
         newItemExtraInfo = "";
+        foundVariant = "";
         itemFound = false;
         
         thisItemInfo = itemInfo;
@@ -191,9 +193,14 @@ class FragmentFind
                 // have yet to scan through all images to find the best/closest quoin image 
                 // So save this information before dropping down below to search with the next image available  
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
+                if (!extractItemInfoFromItemImageFilename())
+                {
+                    // Error found - logged by called function
+                    return false;
+                }
                 quoinMatches.add(new QuoinMatchData(spiralSearch.convertToJSONX(spiralSearch.readFoundStepX()),
                                  spiralSearch.convertToJSONY(spiralSearch.readFoundStepY()),
-                                 extractItemInfoFromItemImageFilename(),
+                                 foundVariant,
                                  bestMatchInfo));                          
 
                 debugInfo = spiralSearch.debugRGBInfo();
@@ -213,7 +220,12 @@ class FragmentFind
                 newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
             
                 // As matched item image is the current one, extract the extra information from the item image filename
-                newItemExtraInfo = extractItemInfoFromItemImageFilename();
+                if (!extractItemInfoFromItemImageFilename())
+                {
+                    // Error found - logged by called function
+                    return false;
+                }
+                newItemExtraInfo = foundVariant;
                 debugInfo = spiralSearch.debugRGBInfo();
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
@@ -341,7 +353,7 @@ class FragmentFind
         return true;
     }
     
-    String extractItemInfoFromItemImageFilename()
+    boolean extractItemInfoFromItemImageFilename()
     {
         // Extract the information which describes the quoin type or dir/variant fields for different items
         // Just need to strip out the item class_tsid from the front of the file name - if anything left, then
@@ -354,39 +366,60 @@ class FragmentFind
         // Some items never have a variant field e.g. rock_metal_1, QQ, so image name = class TSID
         if (thisItemInfo.readItemClassTSID().equals(name))
         {
-            return "";
+            foundVariant = "";
+            return true;
         }
         else if ((thisItemInfo.readItemClassTSID().indexOf("trant_") == 0) || (thisItemInfo.readItemClassTSID().indexOf("patch") == 0))
         {
             // Quite often might have a bean tree on our QA street, but the snap has a fruit tree. Therefore the itemClassTSID (bean)
             // in the JSON file doesn't reflect the found fruit tree on the snap. 
             // Unlike quoins, we are not changing tree JSONs to match snaps, therefore quite feasible that the itemClassTSID won't match the snap name. 
-            // So just return a clean empty extraInfo field if not wanted.  
+            // So just return a clean empty extraInfo field if not appropriate - i.e. because have non-wood tree/patch present.  
             printToFile.printDebugLine(this, " tree or patch " + thisItemInfo.readItemClassTSID(), 1);
-            return "";
+            foundVariant = "";
+            return true;
         }
         else if (thisItemInfo.readItemClassTSID().equals("wood_tree"))
         {            
-            // Note that if the JSON file is set up to be a wood tree, then we do want to know what variant was found which constituted a match
-            // - what happens if we have a wood tree as the JSON file, but the snap finds a match for a fruit tree? This gives us the x,y
-            // but not the variant of the wood tree ... so as a workaround for now, return the existing extraInfo field (which will be "" for trant_*
-            // and variant for wood trees. 
-            // Default the return value to the existing wood tree variant. Then if the name of the image is a non-wood tree, won't matter as will
-            // return this original rather than new value (or will be overwritten in next leg of code if exists)
-            extraInfo = thisItemInfo.readOrigItemExtraInfo();
-            printToFile.printDebugLine(this, " default wood tree variant to original value of " + extraInfo, 1);
+            // Note that if the JSON file is set up to be a wood tree, then we do want to know what variant was found which constituted a match.
+            // But have 2 possible scenarios - might have a wood_tree matching snap, or some other tree. Need to handle these two scenarios separately
+            if (name.indexOf("wood_tree") != 0)
+            {
+                // The match for this wood tree JSON file has been found with a non-wood tree image on the street snap
+                // So return the variant which was set in the original JSON file
+                printToFile.printDebugLine(this, " default wood tree variant to original value of " + extraInfo, 1);
+                foundVariant = thisItemInfo.readOrigItemExtraInfo();
+                return true;
+            }
+            
+            // else - continue on to extract the variant information below.
         }
         
-        // Remove the classTSID              
-        if (name.length() > (thisItemInfo.readItemClassTSID().length() + 1))
+        // Extract the variant information from the item file name
+        // Just do a sanity check that the class TSID is correct for the image we are matching to ...
+        if (name.indexOf(thisItemInfo.readItemClassTSID()) == 0)
         {
-            // Means there is an _info field to extract - so strip off the classTSID_ part and .png
-            //extraInfo = imageName.substring((thisItemInfo.itemClassTSID.length() + 1), imageName.length() - 4);
-            // Means there is an _info field to extract - so strip off the classTSID_ part and _
-            extraInfo = name.replace(thisItemInfo.readItemClassTSID() + "_", "");
+            if (name.length() > (thisItemInfo.readItemClassTSID().length() + 1))
+            {
+                // Means there is an _info field to extract - so strip off the classTSID_ part and _
+                foundVariant = name.replace(thisItemInfo.readItemClassTSID() + "_", "");
+                printToFile.printDebugLine(this, " image name "  + imageName + " for item class tsid " + thisItemInfo.readItemClassTSID() + " returns variant + " + foundVariant, 1);
+            }
+            else
+            {
+                // Should never reach this point - but if we do, just default the variant to nothing
+                foundVariant = "";
+                printToFile.printDebugLine(this, " WARNING - missing variant in image name "  + imageName + " for item class tsid " + thisItemInfo.readItemClassTSID(), 3);
+            }
+            return true;
         }
-        printToFile.printDebugLine(this, " image name "  + imageName + " for item class tsid " + thisItemInfo.readItemClassTSID() + " returns variant + " + extraInfo, 1);
-        return extraInfo;
+        else
+        {
+            // error - the matched name does not start with the item classTSID 
+            printToFile.printDebugLine(this, " image name "  + imageName + " is incorrect for (does not match) item class tsid " + thisItemInfo.readItemClassTSID(), 3);
+            return false;
+        }
+
     }
     
     void saveClosestQuoin()

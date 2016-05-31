@@ -37,22 +37,7 @@ import java.text.DecimalFormat;
  *
  */
   
- // BUG - if have a wood tree on street (Lothe Harte), and match found with non-wood tree,
- // end up with variant of wood tree set to mathing tree (instead of original variant)
- // Also need to confirm that if non-wood tree finds match on snap with wood tree, that don't
- // insert variant field into non-wood tree (and match info should be wood_tree (1))
- // Check that this doesn't break the recent fix in 'extractItemInfoFromItemImageFilename'
-  
  // Groddle Heights - LCR16VUKOQL18DU - not find egg trees - check this out - finds the 2nd/3rd 
- 
- // Possible bug - currently when search for trees, stop at first image/snap match - gives the x,y. Which is great for JSON files for trant_*.
- // However if we are dealing with a wood_tree, then might find the x,y for a fruit tree on a snap - and then not bother searching for wood_trees
- // on subsequent snaps. Not sure if this is worth fixing or not as it is somewhat complex. Would need to keep hold of the 
- // trant match found on the off-chance that a better wood tree match is found.
- // Could reorder the trant images so start with wood trees - but this only fixes the problem for the first snap used (and slows down tool). If a fruit image/snap match
- // is found then the tool won't bother going on to snap 2 which happens to have a wood tree on. In many respects, given how trees change so often
- // it is only the x,y which is really important, so probably not worth worrying about. 
- // User could always re-run the tool with just the wood tree snap available, forcing it to be found. 
    
  // BUG? xy variant only
  // Does it load up the single image for other non-quoin items with variant field?
@@ -69,11 +54,6 @@ import java.text.DecimalFormat;
 // NO - IS BETTER FOR THE PERSON TO DECIDE, AS GIVING LIST OF TSIDS, THEY CAN
 // RUN TOOL TWICE FOR STREETS ALREADY/NOT DONE WITH OPTION SET DIFFERENTLY.
   
- // Should I check in JSONDiff that the only fields changed are the expected ones???
- // i.e. x,y, variant, and some added fields. 
- // See extractItemInfoFromJson = could confirm valid type field for the item from within JSONDiff - level 3 report
- // NB Need to run over all items and check that what I consider to be an error case is an error case - couple where I Am not sure
- 
  // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
  // POSSIBLE FUTURE BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
