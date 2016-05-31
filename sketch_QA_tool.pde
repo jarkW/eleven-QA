@@ -37,6 +37,12 @@ import java.text.DecimalFormat;
  *
  */
   
+ // BUG - if have a wood tree on street (Lothe Harte), and match found with non-wood tree,
+ // end up with variant of wood tree set to mathing tree (instead of original variant)
+ // Also need to confirm that if non-wood tree finds match on snap with wood tree, that don't
+ // insert variant field into non-wood tree (and match info should be wood_tree (1))
+ // Check that this doesn't break the recent fix in 'extractItemInfoFromItemImageFilename'
+  
  // Groddle Heights - LCR16VUKOQL18DU - not find egg trees - check this out - finds the 2nd/3rd 
  
  // Possible bug - currently when search for trees, stop at first image/snap match - gives the x,y. Which is great for JSON files for trant_*.

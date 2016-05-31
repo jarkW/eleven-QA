@@ -486,7 +486,7 @@ class FragmentFind
             quoinType = extraInfo;
             distFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(thisItemInfo.readOrigItemX(), thisItemInfo.readOrigItemY(), foundX, foundY); 
             bestMatchInfo = RGBInfo;
-            printToFile.printDebugLine(this, "Saving quoin data for " + extraInfo + " with avg RGB " + bestMatchInfo.bestMatchAvgRGB + " at x,y " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 3);
+            printToFile.printDebugLine(this, "Saving quoin data for " + extraInfo + " with avg RGB " + bestMatchInfo.bestMatchAvgRGB + " at x,y " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 1);
         }
     }
     
