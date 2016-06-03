@@ -9,6 +9,10 @@ class FragmentFind
     
     int searchBoxWidth;
     int searchBoxHeight;
+    int searchRadius;
+    
+    // Fudge factor for searching for sloths
+    int adjustment;
           
     SpiralSearch spiralSearch;
     ItemInfo thisItemInfo;
@@ -134,8 +138,8 @@ class FragmentFind
         // Set up the structure to actually do the search
         spiralSearch = null;
         System.gc();
-        int adjustment = 0;
-        int searchRadius = configInfo.readSearchRadius();
+        adjustment = 0;
+        searchRadius = configInfo.readSearchRadius();
         if (thisItemInfo.readItemClassTSID().equals("npc_sloth"))
         {
             // extend the search area for sloths - otherwise branches difficult to find
@@ -227,9 +231,10 @@ class FragmentFind
                 }
                 newItemExtraInfo = foundVariant;
                 debugInfo = spiralSearch.debugRGBInfo();
+                // OK to overwrite bestMatchInfo - as we know we've found a valid item at last
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY, 2);
+                printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
             }
         }
         
@@ -246,8 +251,7 @@ class FragmentFind
                 // Won't reach this leg of the code for any other items - as once an item is found, it never enters FragmentFind again - skipped on future street snaps.
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - found 1 item, no more images to search", 2);
-                printToFile.printDebugLine(this, "searchForFragment - " + thisItemInfo.readItemClassTSID().equals("quoin") + " new X is " + thisItemInfo.readNewItemX() , 2);
+                printToFile.printDebugLine(this, "searchForFragment - found 1 item, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
             }
             else
             {
@@ -308,13 +312,6 @@ class FragmentFind
                     printToFile.printDebugLine(this, "searchForFragment - with new image " + itemImages.get(itemImageBeingUsed).readPNGImageName() + " and street " + streetSnapImage.readPNGImageName(), 2);
                     spiralSearch = null; 
                     System.gc();
-                    int adjustment = 0;
-                    int searchRadius = configInfo.readSearchRadius();
-                    if (thisItemInfo.readItemClassTSID().equals("npc_sloth"))
-                    {
-                        // extend the search area for sloths - otherwise branches difficult to find
-                        adjustment = SLOTH_ADJUSTMENT;
-                    }
 
                     spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
                         streetSnapImage.readPNGImage(), 
