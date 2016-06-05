@@ -49,6 +49,11 @@ class ConfigInfo {
             displayMgr.showErrMsg("Missing config.json file from " + workingDir, true);
             return false;
         }
+        else
+        {
+            println("Using config.json file in ", workingDir);
+            printToFile.printDebugLine(this, "Using config.json file in " + workingDir, 1);
+        }
         
         try
         {

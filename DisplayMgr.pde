@@ -64,7 +64,6 @@ class DisplayMgr
     {
         
         String s;
-        println("Entering showErrMsg with string", info);
         clearDisplay();
         fill(RED_TEXT);
         textSize(16);

@@ -137,7 +137,7 @@ class PrintToFile {
         // the attempt to rename outputFile to outputFile_2 will fail. But this is the simplest way of renaming a file
         // because the loadFilenames function returns files in alphabetical order so outputFile22 is earlier in the list than 
         // outputFile_8 ... 
-        String destFilename = outputFileDir + File.separatorChar + outputFileNamePrefix + "_" + outputFiles.length + ".txt";;
+        String destFilename = outputFileDir + File.separatorChar + outputFileNamePrefix + "_" + outputFiles.length + ".txt";
         File destFile = new File(destFilename);
         try
         {
@@ -215,6 +215,74 @@ class PrintToFile {
         // Output line 
         infoOutput.println(lineToWrite);
         infoOutput.flush();
+    }
+    
+    public void closeOutputFile()
+    {
+        // Do nothing if not yet initialised this object
+        if (!initOutputFileDone)
+        {
+            return;
+        }
+        
+        //flush stream
+        try
+        {
+            infoOutput.flush();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();  
+            println("Exception error attempting to flush " + configInfo.readOutputFilename());
+        }
+        
+        //close stream
+        try
+        {
+            infoOutput.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();  
+            println("Exception error attempting to close " + configInfo.readOutputFilename());
+            return;
+        }
+        println("Successfully closed output file " + configInfo.readOutputFilename());
+        return;
+    }
+    
+    public void closeDebugFile()
+    {
+        // Do nothing if not yet initialised this object
+        if (!initDebugFileDone)
+        {
+            return;
+        }
+        
+        //Flush stream
+        try
+        {
+            debugOutput.flush();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();  
+            println("Exception error attempting to flush " + workingDir + File.separatorChar + "debug_info.txt");
+        }
+
+        // Now close it
+        try
+        {
+            debugOutput.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();  
+            println("Exception error attempting to close " + workingDir + File.separatorChar + "debug_info.txt");
+            return;
+        }
+        System.out.println("Successfully closed debug file " + workingDir + File.separatorChar + "debug_info.txt");
+        return;
     }
     
     public void printSummaryHeader()

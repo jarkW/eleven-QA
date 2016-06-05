@@ -499,7 +499,7 @@ class StreetInfo
         if (snapFilenames == null || snapFilenames.length == 0)
         {
             printToFile.printDebugLine(this, "SKIPPING STREET - No valid street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName + " in directory " + configInfo.readStreetSnapPath(), 3);
-            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ")" + " in directory " + configInfo.readStreetSnapPath() + "\n");
+            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ")" + " in directory " + configInfo.readStreetSnapPath() + "\n\n");
             displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No valid street snaps found in directory " + configInfo.readStreetSnapPath());
             invalidStreet = true;
             return false;
@@ -599,7 +599,7 @@ class StreetInfo
         if (streetSnaps.size() == 0)
         {
             printToFile.printDebugLine(this, "SKIPPING STREET - No valid street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName + " with resolution " + geoWidth + " x " + geoHeight + " pixels", 3);
-            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ") with resolution " + geoWidth + " x " + geoHeight + " pixels\n");
+            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ") with resolution " + geoWidth + " x " + geoHeight + " pixels\n\n");
             displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No valid street snaps found with resolution " + geoWidth + " x " + geoHeight + " pixels");
             invalidStreet = true;
             return false;
@@ -618,7 +618,7 @@ class StreetInfo
             // Unable to get the L* JSON file
             // This isn't treated as an error - could have been a typo in the TSID list
             printToFile.printDebugLine(this, "Failed to copy/download street L* JSON file so SKIPPING STREET " + streetTSID, 3);
-            printToFile.printOutputLine("Failed to copy/download street L* JSON file so SKIPPING STREET " + streetTSID);
+            printToFile.printOutputLine("\nFailed to copy/download street L* JSON file so SKIPPING STREET " + streetTSID + "\n\n");
             displayMgr.setSkippedStreetsMsg("Skipping street: Failed to copy/download loc file " + streetTSID + ".json");
             invalidStreet = true;
             return true; // continue
@@ -631,7 +631,7 @@ class StreetInfo
         {
             // This isn't treated as an error - but don't want to carry on with this street
             printToFile.printDebugLine(this, "SKIPPING STREET because " + streetTSID + " already exists in persdata-qa; use change_xy_only option to change item x,y only", 3);
-            printToFile.printOutputLine("SKIPPING STREET because " + streetTSID + " already exists in persdata-qa; use change_xy_only option to change item x,y only");
+            printToFile.printOutputLine("\nSKIPPING STREET because " + streetTSID + " already exists in persdata-qa; use change_xy_only option to change item x,y only\n\n");
             displayMgr.setSkippedStreetsMsg("Skipping street: " + streetTSID  + " already exists in persdata-qa; use change_xy_only option to change item x,y only");
             invalidStreet = true;
             return true; // continue
@@ -641,7 +641,7 @@ class StreetInfo
         {
             // Unable to get the G* JSON file
             printToFile.printDebugLine(this, "Failed to copy/download street G* JSON file so SKIPPING STREET " + streetTSID, 3);
-            printToFile.printOutputLine("Failed to copy/download street G* JSON file so SKIPPING STREET " + streetTSID);
+            printToFile.printOutputLine("\nFailed to copy/download street G* JSON file so SKIPPING STREET " + streetTSID + "\n\n");
             displayMgr.setSkippedStreetsMsg("Skipping street: Failed to copy/download geo file " + streetTSID.replaceFirst("L", "G") + ".json");
             invalidStreet = true;
             return true; // continue
@@ -661,7 +661,7 @@ class StreetInfo
         {
             // This isn't treated as an error - but don't want to carry on with this street as it doesn't contain anything that can be handled
             printToFile.printDebugLine(this, "SKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool", 3);
-            printToFile.printOutputLine("SKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool");
+            printToFile.printOutputLine("\nSKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool\n\n");
             displayMgr.setSkippedStreetsMsg("SKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool");
             invalidStreet = true;
             return true; // continue

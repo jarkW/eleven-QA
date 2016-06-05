@@ -81,7 +81,7 @@ import java.text.DecimalFormat;
 // Directory where config.json is, and all saved JSON files - both original/new
 String workingDir;
 // Contains all the info read in from config.json
-ConfigInfo configInfo;
+ConfigInfo configInfo = null;
 
 // Information for this street i.e. the snaps of the street, items on the street
 StreetInfo streetInfo;
@@ -598,30 +598,31 @@ void doExitCleanUp()
     String dirName = workingDir + File.separatorChar + "NewJSONs";
     File myDir = new File(dirName);
     
-    if (!configInfo.readWriteJSONsToPersdata())
+    // Only check that the NewJSONs directory is empty for the case where we are writing to persdata - if this flag is false, then 
+    // NewJSONs will contain all the waiting new JSON files, which is not an error condition.
+    if (configInfo != null && configInfo.readWriteJSONsToPersdata())
     {
-        // As files not uploaded to persdata, this directory will be full
-        // which is not an error state, so just return.
-        return;
-    }
-    
-    if (myDir.exists())
-    {
-        // No point reporting error if it does not exist. So only continue if the directory if found
-        File[] contents = myDir.listFiles();
-        if (contents != null && contents.length > 0) 
+        if (myDir.exists())
         {
-            printToFile.printOutputLine("\n WARNING: Following changed item file(s) NOT been copied/uploaded correctly - may need to be manually added to persdata\n");
-            printToFile.printDebugLine(this, "\n WARNING: Following changed item file(s) have NOT been copied/uploaded correctly - may need to be manually added to persdata\n", 3);
-            for (int i=0; i< contents.length; i++)
+            // No point reporting error if it does not exist. So only continue if the directory if found
+            File[] contents = myDir.listFiles();
+            if (contents != null && contents.length > 0) 
             {
-                printToFile.printOutputLine("\t" + dirName + File.separatorChar + contents[i].getName());
-                printToFile.printDebugLine(this, "\t" + dirName + File.separatorChar + contents[i].getName(), 3);
+                printToFile.printOutputLine("\n WARNING: Following changed item file(s) NOT been copied/uploaded correctly - may need to be manually added to persdata\n");
+                printToFile.printDebugLine(this, "\n WARNING: Following changed item file(s) have NOT been copied/uploaded correctly - may need to be manually added to persdata\n", 3);
+                for (int i=0; i< contents.length; i++)
+                {
+                    printToFile.printOutputLine("\t" + dirName + File.separatorChar + contents[i].getName());
+                    printToFile.printDebugLine(this, "\t" + dirName + File.separatorChar + contents[i].getName(), 3);
+                }
             }
         }
     }
     
-    
+    // Close the output/debug files
+    printToFile.closeOutputFile();
+    printToFile.closeDebugFile();
+
 }
 
 boolean initialiseStreet()
@@ -895,11 +896,12 @@ void configJSONFileSelected(File selection)
         public void run () 
         {
 
-           // System.out.println("SHUTDOWN HOOK");
+           //System.out.println("SHUTDOWN HOOK");
 
            // application exit code here
-           nextAction = EXIT_NOW;
-
+           //nextAction = EXIT_NOW;
+           // Have to call the exit handling functionality directly
+           doExitCleanUp();
         }
 
     }));
