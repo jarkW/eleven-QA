@@ -91,7 +91,7 @@ class SummaryChanges implements Comparable
         {
             // If the original item was a mystery quoin, then this is an unchanged item rather than missing 
             // Means the tool has been run twice - so picking up a mystery quoin second time around
-            if (itemInfo.readItemClassTSID().equals("quoin") && itemInfo.readOrigItemExtraInfo().equals("mystery"))
+            if (itemInfo.readItemClassTSID().equals("quoin") && itemInfo.readOrigItemVariant().equals("mystery"))
             {
                 result = UNCHANGED;
             }
@@ -235,12 +235,12 @@ class SummaryChanges implements Comparable
                     if (itemInfo.readItemClassTSID().equals("quoin"))
                     {
                         misplacedQuoin = true;
-                        quoinInfo = quoinInfo + " " + itemInfo.readItemTSID() + " would have been of type " + itemInfo.readNewItemExtraInfo();
+                        quoinInfo = quoinInfo + " " + itemInfo.readItemTSID() + " would have been of type " + itemInfo.readNewItemVariant();
                     }
                     if (n.itemInfo.readItemClassTSID().equals("quoin"))
                     {
                         n.misplacedQuoin = true;
-                        quoinInfo = quoinInfo + " " + n.itemInfo.readItemTSID() + " would have been of type " + n.itemInfo.readNewItemExtraInfo();
+                        quoinInfo = quoinInfo + " " + n.itemInfo.readItemTSID() + " would have been of type " + n.itemInfo.readNewItemVariant();
                     }
                     // Don't print anything to the user output file for the first sorting of the results
                     info = info + " have been set to the same x,y " + X1 + "," + Y1 + " - if one/both is a quoin then then it will be redefined as missing";

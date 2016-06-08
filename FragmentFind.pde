@@ -23,7 +23,7 @@ class FragmentFind
     
     int newItemX;
     int newItemY;
-    String newItemExtraInfo;
+    String newItemVariant;
     String foundVariant;
     boolean itemFound;
     
@@ -52,7 +52,7 @@ class FragmentFind
         //streetImageBeingUsed = 0;
         newItemX = MISSING_COORDS;
         newItemY = MISSING_COORDS;
-        newItemExtraInfo = "";
+        newItemVariant = "";
         foundVariant = "";
         itemFound = false;
         
@@ -77,11 +77,11 @@ class FragmentFind
             String quoinType;
             if (configInfo.readChangeXYOnly())
             {
-                quoinType = thisItemInfo.readOrigItemExtraInfo();
+                quoinType = thisItemInfo.readOrigItemVariant();
             }
             else
             {
-                quoinType = thisItemInfo.readNewItemExtraInfo();
+                quoinType = thisItemInfo.readNewItemVariant();
             }
 
             for (int i = 0; i < itemImages.size(); i++)
@@ -229,7 +229,7 @@ class FragmentFind
                     // Error found - logged by called function
                     return false;
                 }
-                newItemExtraInfo = foundVariant;
+                newItemVariant = foundVariant;
                 debugInfo = spiralSearch.debugRGBInfo();
                 // OK to overwrite bestMatchInfo - as we know we've found a valid item at last
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
@@ -337,7 +337,7 @@ class FragmentFind
         if (searchDone)
         {
             // Dump out debug info to give me some idea of whether I've gotten the searchbox the right size or not
-            printToFile.printDebugLine(this, " Returning from FragmentFound item  found = " + itemFound + " " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemExtraInfo + 
+            printToFile.printDebugLine(this, " Returning from FragmentFound item  found = " + itemFound + " " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemVariant + 
                                         "> old x,y = " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " new x,y " + newItemX + "," + newItemY, 2);
             printToFile.printDebugLine(this, " and also RGB info is " + bestMatchInfo.bestMatchAvgRGB + "/" + bestMatchInfo.bestMatchAvgTotalRGB + " try " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 2);
             if (debugInfo.length() > 0)
@@ -355,7 +355,6 @@ class FragmentFind
         // Extract the information which describes the quoin type or dir/variant fields for different items
         // Just need to strip out the item class_tsid from the front of the file name - if anything left, then
         // this is the value needed for the JSON file if the street item is to match the archive snaps. 
-        String extraInfo = "";
         String imageName = itemImages.get(itemImageBeingUsed).readPNGImageName();
         String name = imageName.replace(".png", "");
         printToFile.printDebugLine(this, "What is this? " + thisItemInfo.readItemClassTSID() + " for image name " + name, 1);
@@ -371,7 +370,7 @@ class FragmentFind
             // Quite often might have a bean tree on our QA street, but the snap has a fruit tree. Therefore the itemClassTSID (bean)
             // in the JSON file doesn't reflect the found fruit tree on the snap. 
             // Unlike quoins, we are not changing tree JSONs to match snaps, therefore quite feasible that the itemClassTSID won't match the snap name. 
-            // So just return a clean empty extraInfo field if not appropriate - i.e. because have non-wood tree/patch present.  
+            // So just return a clean empty variant field if not appropriate - i.e. because have non-wood tree/patch present.  
             printToFile.printDebugLine(this, " tree or patch " + thisItemInfo.readItemClassTSID(), 1);
             foundVariant = "";
             return true;
@@ -384,8 +383,8 @@ class FragmentFind
             {
                 // The match for this wood tree JSON file has been found with a non-wood tree image on the street snap
                 // So return the variant which was set in the original JSON file
-                printToFile.printDebugLine(this, " default wood tree variant to original value of " + extraInfo, 1);
-                foundVariant = thisItemInfo.readOrigItemExtraInfo();
+                printToFile.printDebugLine(this, " default wood tree variant to original value of " + thisItemInfo.readOrigItemVariant(), 1);
+                foundVariant = thisItemInfo.readOrigItemVariant();
                 return true;
             }
             
@@ -428,7 +427,7 @@ class FragmentFind
             itemFound = false;        
             newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
             newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
-            newItemExtraInfo = "";
+            newItemVariant = "";
             bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
             printToFile.printDebugLine(this, "No quoin images matched", 2);
         }
@@ -440,7 +439,7 @@ class FragmentFind
             float nearestQuoinDist = quoinMatches.get(i).distFromOrigXY;
             newItemX = quoinMatches.get(i).itemX;
             newItemY = quoinMatches.get(i).itemY;
-            newItemExtraInfo = quoinMatches.get(i).quoinType;
+            newItemVariant = quoinMatches.get(i).quoinType;
             bestMatchInfo = quoinMatches.get(i).bestMatchInfo;
             
             for (i = 1; i < quoinMatches.size(); i++)
@@ -452,7 +451,7 @@ class FragmentFind
                     nearestQuoinDist = quoinMatches.get(i).distFromOrigXY;
                     newItemX = quoinMatches.get(i).itemX;
                     newItemY = quoinMatches.get(i).itemY;
-                    newItemExtraInfo = quoinMatches.get(i).quoinType;
+                    newItemVariant = quoinMatches.get(i).quoinType;
                     
                     bestMatchInfo = quoinMatches.get(i).bestMatchInfo;
                 }
@@ -461,7 +460,7 @@ class FragmentFind
                     printToFile.printDebugLine(this, "ignoring quoin image found for type " + quoinMatches.get(i).quoinType + " at x,y " + quoinMatches.get(i).itemX + "," + quoinMatches.get(i).itemY, 1);
                 }
             }
-            printToFile.printDebugLine(this, "closest quoin image found for type " + newItemExtraInfo + " at x,y " + newItemX + "," + newItemY, 2);
+            printToFile.printDebugLine(this, "closest quoin image found for type " + newItemVariant + " at x,y " + newItemX + "," + newItemY, 2);
             itemFound = true;
         }
     }
@@ -481,9 +480,9 @@ class FragmentFind
         return newItemY;
     }
     
-    public String readNewItemExtraInfo()
+    public String readNewItemVariant()
     {
-        return newItemExtraInfo;
+        return newItemVariant;
     }
     
     public boolean readItemFound()
@@ -509,14 +508,14 @@ class FragmentFind
         String quoinType;
         MatchInfo bestMatchInfo;
         
-        QuoinMatchData(int foundX, int foundY, String extraInfo, MatchInfo RGBInfo)
+        QuoinMatchData(int foundX, int foundY, String variant, MatchInfo RGBInfo)
         {
             itemX = foundX;
             itemY = foundY;
-            quoinType = extraInfo;
+            quoinType = variant;
             distFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(thisItemInfo.readOrigItemX(), thisItemInfo.readOrigItemY(), foundX, foundY); 
             bestMatchInfo = RGBInfo;
-            printToFile.printDebugLine(this, "Saving quoin data for " + extraInfo + " with avg RGB " + bestMatchInfo.bestMatchAvgRGB + " at x,y " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 1);
+            printToFile.printDebugLine(this, "Saving quoin data for " + variant + " with avg RGB " + bestMatchInfo.bestMatchAvgRGB + " at x,y " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 1);
         }
     }
     

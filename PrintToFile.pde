@@ -353,7 +353,7 @@ class PrintToFile {
             {
                 case SummaryChanges.SKIPPED:
                     s = s + "SKIPPED " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                    s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo());
+                    s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
                     skippedCount++;
                     break;    
                             
@@ -361,13 +361,13 @@ class PrintToFile {
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
                         s = s + "MISSING quoin " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                         s = s + " defaulted to (mystery/placement tester)";
                     }
                     else
                     {
                          s = s + "MISSING " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                         s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo());
+                         s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
                     }
                     missingCount++;
                     break; 
@@ -376,11 +376,11 @@ class PrintToFile {
                     s = s + "Changed co-ords " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo());
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
                     }
                     break;
                          
@@ -388,15 +388,15 @@ class PrintToFile {
                     s = s + "Changed variant " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
-                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemVariant() + "/" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
+                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemExtraInfo());
-                        if (itemResults.get(i).itemInfo.readOrigItemExtraInfo().length() > 0)
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemVariant());
+                        if (itemResults.get(i).itemInfo.readOrigItemVariant().length() > 0)
                         {
-                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo()) + ")";
+                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant()) + ")";
                         }
                         else
                         {
@@ -409,15 +409,15 @@ class PrintToFile {
                     s = s + "Changed variant & co-ords " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
-                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemVariant() + "/" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
+                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemExtraInfo());
-                        if (itemResults.get(i).itemInfo.readOrigItemExtraInfo().length() > 0)
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemVariant());
+                        if (itemResults.get(i).itemInfo.readOrigItemVariant().length() > 0)
                         {
-                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo()) + ")";
+                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant()) + ")";
                         }
                         else
                         {
@@ -442,11 +442,11 @@ class PrintToFile {
                     //}
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemExtraInfo() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemExtraInfo());
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
                     }
                     break;
                             
@@ -510,7 +510,7 @@ class PrintToFile {
 
             if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
             {
-                switch (itemResults.get(i).itemInfo.readNewItemExtraInfo())
+                switch (itemResults.get(i).itemInfo.readNewItemVariant())
                 {
                     case "xp":
                         quoinXP++;
@@ -541,8 +541,8 @@ class PrintToFile {
                         break;
                         
                     default:
-                        printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemExtraInfo(), 3);
-                        displayMgr.showErrMsg("Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemExtraInfo(), true);
+                        printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemVariant(), 3);
+                        displayMgr.showErrMsg("Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemVariant(), true);
                         failNow = true;
                         return false;
                 }

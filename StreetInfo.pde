@@ -756,7 +756,7 @@ class StreetInfo
             // Item needs to be skipped/or has already been found
             // Move onto next one
             printToFile.printDebugLine(this, "Skipping item " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
-                                       itemInfo.get(itemBeingProcessed).readOrigItemExtraInfo() + ") " + itemInfo.get(itemBeingProcessed).readItemTSID(), 1);
+                                       itemInfo.get(itemBeingProcessed).readOrigItemVariant() + ") " + itemInfo.get(itemBeingProcessed).readItemTSID(), 1);
                                        
             // As we just want to pass control back up, don't care about the succes/failure - top level will handle that
             if (moveToNextItem())
@@ -812,7 +812,7 @@ class StreetInfo
                 else
                 {
                    printToFile.printDebugLine(this, "Skipping item/item Found " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
-                                               itemInfo.get(itemBeingProcessed).readOrigItemExtraInfo() + ") " + 
+                                               itemInfo.get(itemBeingProcessed).readOrigItemVariant() + ") " + 
                                                itemInfo.get(itemBeingProcessed).readItemTSID(), 1); 
                 }
             }

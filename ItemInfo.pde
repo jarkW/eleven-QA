@@ -10,16 +10,16 @@ class ItemInfo
     JSONObject itemJSON;
     String itemTSID;
     String itemClassTSID;
-    String origItemExtraInfo;  // additional info needed for some items
+    String origItemVariant;  // additional info needed for some items
     String origItemClassName;    // used for quoins only/reporting differences at end
     int    origItemX;
     int    origItemY;
     
     // Used to read/set the additional info in item JSON
-    String itemExtraInfoKey;
+    String itemVariantKey;
 
     // Fields which are deduced from snap comparison - and then written to JSON file
-    String newItemExtraInfo;  
+    String newItemVariant;  
     String newItemClassName;    // used for quoins only
     int    newItemX;
     int    newItemY;
@@ -44,15 +44,15 @@ class ItemInfo
     {
         okFlag = true;
         itemJSON = null;
-        origItemExtraInfo = "";
+        origItemVariant = "";
         origItemClassName = "";
-        itemExtraInfoKey = "";
+        itemVariantKey = "";
         fragFind = null;
         origItemX = 0;
         origItemY = 0;
         newItemX = MISSING_COORDS;
         newItemY = MISSING_COORDS;
-        newItemExtraInfo = "";        
+        newItemVariant = "";        
         newItemClassName = "";
                 
         skipThisItem = false;
@@ -164,9 +164,9 @@ class ItemInfo
             return false;
         }      
         
-        if (origItemExtraInfo.length() > 0)
+        if (origItemVariant.length() > 0)
         {
-            printToFile.printDebugLine(this, "class_tsid " + itemClassTSID + " info = <" + origItemExtraInfo + "> with x,y " + str(origItemX) + "," + str(origItemY), 2); 
+            printToFile.printDebugLine(this, "class_tsid " + itemClassTSID + " info = <" + origItemVariant + "> with x,y " + str(origItemX) + "," + str(origItemY), 2); 
         }
         else
         {
@@ -239,7 +239,7 @@ class ItemInfo
            
             case "quoin":
                 // Do not want to search for temporary qurazy quoin as we use the marker_qurazy instead
-                if (origItemExtraInfo.equals("qurazy"))
+                if (origItemVariant.equals("qurazy"))
                 {
                     printToFile.printDebugLine(this, "Skipping item " + itemTSID + " quoin (qurazy)", 2);
                     return false;
@@ -294,15 +294,15 @@ class ItemInfo
             // Read in the dir field 
             
             // As dir may not exist - is not an error
-            itemExtraInfoKey = "dir";
-            origItemExtraInfo = Utils.readJSONString(itemJSON, itemExtraInfoKey, false);
+            itemVariantKey = "dir";
+            origItemVariant = Utils.readJSONString(itemJSON, itemVariantKey, false);
             
             // Currently all shrines are set to 'right' so flag up error if that isn't true
             // Putting this in so that if I ever come across a left-shrine, it will cause the code to fail
             // It is also OK at this stage for the dir field to be left unset 
-            if (origItemExtraInfo.length() > 0)
+            if (origItemVariant.length() > 0)
             {
-                if (!origItemExtraInfo.equals("right"))
+                if (!origItemVariant.equals("right"))
                 {
                     printToFile.printDebugLine(this, "Unexpected dir = left field in shrine JSON file  " + itemTSID, 3);
                     return false;
@@ -341,28 +341,28 @@ class ItemInfo
                     if (!Utils.readOkFlag() || origItemClassName.length() == 0)
                     {
                         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                        printToFile.printDebugLine(this, "Failed to get instanceProps.class_name" + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
+                        printToFile.printDebugLine(this, "Failed to get instanceProps.class_name" + itemVariantKey + " from item JSON file " + itemTSID, 3);
                         return false;
                     }    
                     
                     // Now continue with getting the type field from the json file
-                    itemExtraInfoKey = "type";
+                    itemVariantKey = "type";
                 }
                 else if ((itemClassTSID.equals("wood_tree")) || (itemClassTSID.equals("npc_mailbox")) || (itemClassTSID.equals("dirt_pile")) || (itemClassTSID.equals("wood_tree_enchanted")))
                 {
-                    itemExtraInfoKey = "variant";
+                    itemVariantKey = "variant";
                 }
                 else if ((itemClassTSID.equals("mortar_barnacle")) || (itemClassTSID.equals("jellisac")))
                 {
-                    itemExtraInfoKey = "blister";
+                    itemVariantKey = "blister";
                 }
                 else if (itemClassTSID.equals("ice_knob"))
                 {
-                    itemExtraInfoKey = "knob";
+                    itemVariantKey = "knob";
                 }
                 else if (itemClassTSID.equals("dust_trap"))
                 {
-                    itemExtraInfoKey = "trap_class";
+                    itemVariantKey = "trap_class";
                 }
                 else
                 {
@@ -371,15 +371,15 @@ class ItemInfo
                 }
                 
                 // Now read in the additional information using the key
-                origItemExtraInfo = Utils.readJSONString(instanceProps, itemExtraInfoKey, true);
-                if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
+                origItemVariant = Utils.readJSONString(instanceProps, itemVariantKey, true);
+                if (!Utils.readOkFlag() || origItemVariant.length() == 0)
                 {
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine(this, "Failed to get from instanceProps." + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
+                    printToFile.printDebugLine(this, "Failed to get from instanceProps." + itemVariantKey + " from item JSON file " + itemTSID, 3);
                     return false;
                 }
 
-                if (origItemExtraInfo.length() == 0)
+                if (origItemVariant.length() == 0)
                 {
                     return false;
                 }                
@@ -388,9 +388,9 @@ class ItemInfo
    
             case "subway_gate": 
                 // Read in the dir field 
-                itemExtraInfoKey = "dir";
-                origItemExtraInfo = Utils.readJSONString(itemJSON, itemExtraInfoKey, true);
-                if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
+                itemVariantKey = "dir";
+                origItemVariant = Utils.readJSONString(itemJSON, itemVariantKey, true);
+                if (!Utils.readOkFlag() || origItemVariant.length() == 0)
                 {
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                     printToFile.printDebugLine(this, "Failed to read dir field from item JSON file " + itemTSID, 3);
@@ -409,17 +409,17 @@ class ItemInfo
                     return false;
                 }
                               
-                itemExtraInfoKey = "dir";
+                itemVariantKey = "dir";
                 
-                origItemExtraInfo = Utils.readJSONString(instanceProps, itemExtraInfoKey, true);
-                if (!Utils.readOkFlag() || origItemExtraInfo.length() == 0)
+                origItemVariant = Utils.readJSONString(instanceProps, itemVariantKey, true);
+                if (!Utils.readOkFlag() || origItemVariant.length() == 0)
                 {
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
-                    printToFile.printDebugLine(this, "Failed to get from instanceProps." + itemExtraInfoKey + " from item JSON file " + itemTSID, 3);
+                    printToFile.printDebugLine(this, "Failed to get from instanceProps." + itemVariantKey + " from item JSON file " + itemTSID, 3);
                     return false;
                 }
 
-                String dir = Utils.readJSONString(itemJSON, itemExtraInfoKey, true);
+                String dir = Utils.readJSONString(itemJSON, itemVariantKey, true);
                 if (!Utils.readOkFlag() || dir.length() == 0)
                 {
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
@@ -427,10 +427,10 @@ class ItemInfo
                     return false;
                 }
                 
-                if (!origItemExtraInfo.equals(dir))
+                if (!origItemVariant.equals(dir))
                 {
                     // Should never happen - just flag up an error and continue
-                    printToFile.printDebugLine(this, "Sloth " + itemTSID + " has inconsistent dir settings in JSON files. Using value of " + origItemExtraInfo + " from instanceProps", 3);
+                    printToFile.printDebugLine(this, "Sloth " + itemTSID + " has inconsistent dir settings in JSON files. Using value of " + origItemVariant + " from instanceProps", 3);
                 }
                break;
             
@@ -439,8 +439,8 @@ class ItemInfo
                 // NB The dir field is not always set in visiting_stones - and often set wrong.
                 // Is OK if does not exist for now - as will be found when search the street and set to correct
                 // direction then
-                itemExtraInfoKey = "dir";  
-                origItemExtraInfo = Utils.readJSONString(itemJSON, itemExtraInfoKey, false);
+                itemVariantKey = "dir";  
+                origItemVariant = Utils.readJSONString(itemJSON, itemVariantKey, false);
                 break;
                                 
             default:
@@ -459,17 +459,17 @@ class ItemInfo
         if (itemClassTSID.indexOf("npc_shrine_", 0) == 0)
         {
             // Shorter code rather than adding in class_tsid for all 30 shrines
-            if (!newItemExtraInfo.equals("right"))
+            if (!newItemVariant.equals("right"))
             {
                 // Should never happen
-                printToFile.printDebugLine(this, "Dir field in shrine " + itemTSID + " is not set to right - is set to " + newItemExtraInfo, 3);
+                printToFile.printDebugLine(this, "Dir field in shrine " + itemTSID + " is not set to right - is set to " + newItemVariant, 3);
                 return false;
             }
             
-            if (origItemExtraInfo.length() == 0)
+            if (origItemVariant.length() == 0)
             {
                 // Need to insert the dir field - as missing from original JSON file                
-                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, "right"))
+                if (!Utils.setJSONString(itemJSON, itemVariantKey, "right"))
                 {
                     // Error occurred - fail
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
@@ -480,7 +480,7 @@ class ItemInfo
             }  
             return true;
         }
-        else if (!itemClassTSID.equals("quoin") && newItemExtraInfo.equals(origItemExtraInfo)) 
+        else if (!itemClassTSID.equals("quoin") && newItemVariant.equals(origItemVariant)) 
         {
             // For all non-quoins
             // None of the additional information has been changed from the original. 
@@ -527,7 +527,7 @@ class ItemInfo
                     printToFile.printDebugLine(this, "Failed to get instanceProps from item JSON file " + itemTSID, 3);
                     return false;
                 }
-                if (!Utils.setJSONString(instanceProps, itemExtraInfoKey, newItemExtraInfo))
+                if (!Utils.setJSONString(instanceProps, itemVariantKey, newItemVariant))
                 {
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                     return false;
@@ -535,7 +535,7 @@ class ItemInfo
                 break;
    
             case "subway_gate":
-                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, newItemExtraInfo))
+                if (!Utils.setJSONString(itemJSON, itemVariantKey, newItemVariant))
                 {
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                     return false;
@@ -543,7 +543,7 @@ class ItemInfo
                 break;
                 
             case "visiting_stone":
-                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, newItemExtraInfo))
+                if (!Utils.setJSONString(itemJSON, itemVariantKey, newItemVariant))
                 {
                     // Error occurred - fail
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
@@ -575,13 +575,13 @@ class ItemInfo
                     printToFile.printDebugLine(this, "Failed to get instanceProps from item JSON file " + itemTSID, 3);
                     return false;
                 }
-                if (!Utils.setJSONString(instanceProps, itemExtraInfoKey, newItemExtraInfo))
+                if (!Utils.setJSONString(instanceProps, itemVariantKey, newItemVariant))
                 {
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                     return false;
                 } 
                 // Also need to set the dir key at the root level
-                if (!Utils.setJSONString(itemJSON, itemExtraInfoKey, newItemExtraInfo))
+                if (!Utils.setJSONString(itemJSON, itemVariantKey, newItemVariant))
                 {
                     printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
                     return false;
@@ -638,9 +638,9 @@ class ItemInfo
     
     boolean setQuoinInstanceProps(JSONObject instanceProps)
     {
-        // Sets up the rest of the instanceProps fields depending on the setting of the newItemExtraInfo field    
+        // Sets up the rest of the instanceProps fields depending on the setting of the newItemVariant field    
         QuoinFields quoinInstanceProps = new QuoinFields();                   
-        if (!quoinInstanceProps.defaultFields(streetInfo.readHubID(), streetInfo.readStreetTSID(), newItemExtraInfo))
+        if (!quoinInstanceProps.defaultFields(streetInfo.readHubID(), streetInfo.readStreetTSID(), newItemVariant))
         {
             printToFile.printDebugLine(this, "Error defaulting fields in quoin instanceProps structure", 3);
             return false;
@@ -661,7 +661,7 @@ class ItemInfo
                     
                     // The type field has been reset, so pick up the changed value before carrying on
                     // Otherwise class name and quoin type will be out of sync
-                    newItemExtraInfo = quoinInstanceProps.readQuoinType();
+                    newItemVariant = quoinInstanceProps.readQuoinType();
                 }
                 break;
                 
@@ -678,7 +678,7 @@ class ItemInfo
         }
  
         // Now save the fields in instanceProps
-        if (!Utils.setJSONString(instanceProps, "type", newItemExtraInfo))
+        if (!Utils.setJSONString(instanceProps, "type", newItemVariant))
         {
             printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
             return false;
@@ -720,7 +720,7 @@ class ItemInfo
             return false;
         }
                     
-        if (newItemExtraInfo.equals("favor"))
+        if (newItemVariant.equals("favor"))
         {
             if (!Utils.setJSONString(instanceProps, "giant", quoinInstanceProps.readGiant()))
             {
@@ -763,9 +763,9 @@ class ItemInfo
                 }
     
                 s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
-                if (origItemExtraInfo.length() > 0)
+                if (origItemVariant.length() > 0)
                 {
-                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    s = s + " " + itemVariantKey + " = " + origItemVariant;
                 }
                 //printToFile.printOutputLine(s);
                 printToFile.printDebugLine(this, s, 2);         
@@ -797,12 +797,12 @@ class ItemInfo
                 if (!configInfo.readChangeXYOnly())
                 {
                     printToFile.printDebugLine(this, "Set missing quoin " + itemTSID + " to be type = mystery", 1);
-                    newItemExtraInfo = "mystery";
+                    newItemVariant = "mystery";
                 }
                 else
                 {    
                     // Do not reset to mystery, leave as is
-                    newItemExtraInfo = origItemExtraInfo;
+                    newItemVariant = origItemVariant;
                 }
                 // OK to then carry on in this function
 
@@ -828,7 +828,7 @@ class ItemInfo
             {
                 s1 = s1 + " " + itemYValues.get(i);
             }
-            printToFile.printOutputLine("Y values for " + itemTSID + "(" + newItemExtraInfo + ") x,y " + origItemX + "," + origItemY + " are " + s1);
+            printToFile.printOutputLine("Y values for " + itemTSID + "(" + newItemVariant + ") x,y " + origItemX + "," + origItemY + " are " + s1);
         }
 
         // Item has been found or has been reset as mystery quoin - so changes to write
@@ -856,7 +856,7 @@ class ItemInfo
             saveChangedJSONfile = true;
         }
             
-        // Sets up the special fields e.g. 'dir' or 'type' fields based on ExtraInfo field
+        // Sets up the special fields e.g. 'dir' or 'type' fields based on variant field
         // Only do this if not doing an x,y_only kind of search - which leaves the special fields
         // as originally set
         // Sets the saveChangedJSONFile flag as needed
@@ -873,12 +873,12 @@ class ItemInfo
         if (saveChangedJSONfile)
         {
             // First tell the user what has changed
-            if (newItemExtraInfo.length() > 0)
+            if (newItemVariant.length() > 0)
             {
-                if (newItemExtraInfo.equals(origItemExtraInfo) && newItemClassName.equals(origItemClassName))
+                if (newItemVariant.equals(origItemVariant) && newItemClassName.equals(origItemClassName))
                 {
                     s = "Saving change - unchanged item info/class (" + itemTSID + ") " + itemClassTSID;
-                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    s = s + " " + itemVariantKey + " = " + origItemVariant;
                     if (itemClassTSID.equals("quoin"))
                     {
                         s = s + " (" + origItemClassName + ")";
@@ -887,9 +887,9 @@ class ItemInfo
                 else
                 {
                     s = "";
-                    if (newItemExtraInfo.length() > 0)
+                    if (newItemVariant.length() > 0)
                     {
-                        if (newItemExtraInfo.equals("mystery"))
+                        if (newItemVariant.equals("mystery"))
                         {
                             s = "Saving change - missing quoin - (" + itemTSID + ") " + itemClassTSID;
                         }
@@ -900,12 +900,12 @@ class ItemInfo
                         s = "Saving change - changed item info/class (" + itemTSID + ") " + itemClassTSID;
                     }
                     
-                    s = s + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    s = s + itemVariantKey + " = " + origItemVariant;
                     if (itemClassTSID.equals("quoin"))
                     {
                         s = s + " (" + origItemClassName + ")";
                     }
-                    s = s + " to " + newItemExtraInfo;
+                    s = s + " to " + newItemVariant;
                     if (itemClassTSID.equals("quoin"))
                     {
                         s = s + " (" + newItemClassName + ")";
@@ -978,9 +978,9 @@ class ItemInfo
                 s = "No changes - not found item ERROR SHOULD NOT REACH THIS LEG (";
             }
             s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
-            if (origItemExtraInfo.length() > 0)
+            if (origItemVariant.length() > 0)
             {
-                s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                s = s + " " + itemVariantKey + " = " + origItemVariant;
                 if (itemClassTSID.equals("quoin"))
                 {
                     s = s + " (" + origItemClassName + ")";
@@ -1048,7 +1048,7 @@ class ItemInfo
                 if (itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy"))
                 {
                     // debug only
-                    s = "quoin/QQ (" + itemTSID + ") orig type <" + origItemExtraInfo + "> new type <" + newItemExtraInfo + " found on street snap " + streetInfo.streetSnapBeingUsed + " with new item X " + newItemX;
+                    s = "quoin/QQ (" + itemTSID + ") orig type <" + origItemVariant + "> new type <" + newItemVariant + " found on street snap " + streetInfo.streetSnapBeingUsed + " with new item X " + newItemX;
                     printToFile.printDebugLine(this, s, 1);
                 }
                 
@@ -1065,14 +1065,14 @@ class ItemInfo
                     }
                     if (newItemY < fragFind.readNewItemY())
                     {
-                        s = "SEARCH DONE Resetting y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " from " + newItemY + " to " + fragFind.readNewItemY();
+                        s = "SEARCH DONE Resetting y-value for " + itemTSID + " " + itemClassTSID + " " + newItemVariant + " from " + newItemY + " to " + fragFind.readNewItemY();
                         printToFile.printDebugLine(this, s, 2);
                         
                         newItemY = fragFind.readNewItemY();
                     }
                     else
                     {
-                        s = "SEARCH DONE Ignoring y-value for " + itemTSID + " " + itemClassTSID + " " + newItemExtraInfo + " remains at " + newItemY + " (new = " + fragFind.readNewItemY() + ")";
+                        s = "SEARCH DONE Ignoring y-value for " + itemTSID + " " + itemClassTSID + " " + newItemVariant + " remains at " + newItemY + " (new = " + fragFind.readNewItemY() + ")";
                         printToFile.printDebugLine(this, s, 1);
                     }
                     // continue on to next snap for quoins/QQ
@@ -1083,7 +1083,7 @@ class ItemInfo
                     // Save the information
                     newItemX = fragFind.readNewItemX();
                     newItemY = fragFind.readNewItemY();
-                    newItemExtraInfo = fragFind.readNewItemExtraInfo();
+                    newItemVariant = fragFind.readNewItemVariant();
                     itemFound = true;
                     
                     // For all non-quoins/QQ, we only need to do the search once, so on future street snaps, skip this item
@@ -1102,18 +1102,18 @@ class ItemInfo
                     }
                     
                     s = s + itemTSID + ") " + itemClassTSID + " x,y = " + newItemX + "," + newItemY;             
-                    if (newItemExtraInfo.length() > 0)
+                    if (newItemVariant.length() > 0)
                     {
-                        s = s + " " + itemExtraInfoKey + " = " + newItemExtraInfo;
+                        s = s + " " + itemVariantKey + " = " + newItemVariant;
                         if (itemClassTSID.equals("quoin"))
                         {
                             s = s + " (" + newItemClassName + ")";
                         }
                     }
                     s = s + " was x,y = " + origItemX + "," + origItemY;;             
-                    if (origItemExtraInfo.length() > 0)
+                    if (origItemVariant.length() > 0)
                     {
-                        s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                        s = s + " " + itemVariantKey + " = " + origItemVariant;
                         if (itemClassTSID.equals("quoin"))
                         {
                             s = s + " (" + origItemClassName + ")";
@@ -1128,9 +1128,9 @@ class ItemInfo
                 // Item was not found on the street
                 // So need to go on to the next item on this street
                 s = "SEARCH FAILED " + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
-                if (origItemExtraInfo.length() > 0)
+                if (origItemVariant.length() > 0)
                 {
-                    s = s + " " + itemExtraInfoKey + " = " + origItemExtraInfo;
+                    s = s + " " + itemVariantKey + " = " + origItemVariant;
                     if (itemClassTSID.equals("quoin"))
                     {
                         s = s + " (" + origItemClassName + ")";
@@ -1246,9 +1246,9 @@ class ItemInfo
         return true;
     }   
     
-    public String readOrigItemExtraInfo()
+    public String readOrigItemVariant()
     {
-        return origItemExtraInfo;
+        return origItemVariant;
     }
     
     public int readOrigItemX()
@@ -1276,9 +1276,9 @@ class ItemInfo
         return newItemY;
     }
     
-    public String readNewItemExtraInfo()
+    public String readNewItemVariant()
     {
-        return newItemExtraInfo;
+        return newItemVariant;
     }
       
     public boolean readSkipThisItem()
@@ -1307,7 +1307,7 @@ class ItemInfo
             differentVariant = true;
         }
         
-        if (!origItemExtraInfo.equals(newItemExtraInfo))
+        if (!origItemVariant.equals(newItemVariant))
         {
             differentVariant = true;
         }

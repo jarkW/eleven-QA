@@ -195,6 +195,7 @@ public void draw()
     
     // Carry out processing depending on whether setting up the street or processing it
     //println("nextAction is ", nextAction);
+    //memory.printMemoryUsage();
     switch (nextAction)
     {
         case IDLING:
