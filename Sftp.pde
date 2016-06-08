@@ -265,9 +265,13 @@ public class Sftp extends Thread {
             }
             catch(SftpException e)
             {
-                if (!silent && e.getMessage().equals("No such file"))
+                if (e.getMessage().equals("No such file"))
                 {
-                    printToFile.printDebugLine(this, "SFTP LS FAILED: \"no such file\" : check source folder/file exists for " + s2, 1);
+                    // Only print this warning message if a non-silent ls command - silent ls is used to test whether a file exists, when a failure is not an error, just information
+                    if (!silent)
+                    {
+                        printToFile.printDebugLine(this, "SFTP LS FAILED: \"no such file\" : check source folder/file exists for " + s2, 1);
+                    }
                 }
                 else
                 {
