@@ -38,6 +38,7 @@ class ItemInfo
     // Only used for debug purposes - to collect y values on the street with reference quoins on
     IntList itemYValues;
     boolean collectItemYValues = false;
+    String validationInfo;
               
     // constructor/initialise fields
     public ItemInfo(JSONObject item)
@@ -60,6 +61,7 @@ class ItemInfo
         saveChangedJSONfile = false;
         
         itemYValues = new IntList();
+        validationInfo = "";
         
         bestMatchInfoList = new ArrayList<MatchInfo>();
         
@@ -964,6 +966,12 @@ class ItemInfo
             }
             // Displays message to user in both debug files
             jsonDiff.displayInfoMsg(false);
+            
+            // Save the JSON diff information validation runs - will be later printed out in the output file so easy to view
+            if (configInfo.readDebugValidationRun())
+            {
+                validationInfo = jsonDiff.readValidationInfo();
+            }
                                 
          } // end if changes to save to JSON file
          else
@@ -1343,6 +1351,11 @@ class ItemInfo
     {
         return okFlag;
     } 
+    
+    public String readValidationInfo()
+    {
+        return validationInfo;
+    }
     
     public MatchInfo readBestMatchInfo()
     {

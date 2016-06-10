@@ -19,6 +19,7 @@ class ConfigInfo {
     
     boolean debugShowBWFragments;
     boolean debugDumpDiffImages;
+    boolean debugValidationRun;
     
     StringList streetTSIDs = new StringList();
     String outputFile;
@@ -68,6 +69,13 @@ class ConfigInfo {
             return false;
         }
         
+        // Do this first - as might need to reset the vagrant flag
+        debugValidationRun = Utils.readJSONBool(json, "debug_validation_run", false);
+        if (!Utils.readOkFlag())
+        {
+            debugValidationRun = false;
+        }
+        
         // Now read in the different fields
         useVagrant = Utils.readJSONBool(json, "use_vagrant_dirs", true);  
         if (!Utils.readOkFlag())
@@ -76,6 +84,12 @@ class ConfigInfo {
             println("Failed to read use_vagrant_dirs in config.json file");
             displayMgr.showErrMsg("Failed to read use_vagrant_dirs in config.json file", true);
             return false;
+        }
+        
+        // If running a validation run, then force it to use vagrant files
+        if (debugValidationRun)
+        {
+            useVagrant = true;
         }
         
         // Read in the locations of the JSON directories        
@@ -285,8 +299,7 @@ class ConfigInfo {
             return false;
         }
         
-        
-        
+
         // The following options are OPTIONAL - so don't need to be in the JSON file
         changeXYOnly = Utils.readJSONBool(json, "change_xy_only", false);
         if (!Utils.readOkFlag())
@@ -330,12 +343,18 @@ class ConfigInfo {
             return false;
         }
         
+        // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
+        debugShowBWFragments = Utils.readJSONBool(json, "debug_show_BW_fragments", false);
+        if (!Utils.readOkFlag())
+        {
+            debugShowBWFragments = false;
+        }
+        
         debugDumpDiffImages = Utils.readJSONBool(json, "debug_dump_diff_images", false);
         if (!Utils.readOkFlag())
         {
             debugDumpDiffImages = false;
         }
-        
         if (!usingBlackWhiteComparison && debugDumpDiffImages)
         {
             println("usingBlackWhiteComparison is set to false, so debug_dump_bw_diff_images in config.json cannot be set to true");
@@ -343,16 +362,55 @@ class ConfigInfo {
             return false;
         }
         
-        // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
-        debugShowBWFragments = Utils.readJSONBool(json, "debug_show_BW_fragments", false);
-        if (!Utils.readOkFlag())
+        // Default different fields so that validation runs always do the same testing
+        if (debugValidationRun)
         {
-            debugShowBWFragments = false;
+            debugLevel = 1;
+            percentMatchCriteria = 90;
+            searchRadius = 25;
+            changeXYOnly = false;
+            writeJSONsToPersdata = false;
+            
+            //Reset paths to snaps and persdata (so always use the same set of original JSON files)
+            
+            String validationPath = Utils.readJSONString(json, "debug_validation_path", true);
+            if (!Utils.readOkFlag() || validationPath.length() == 0)
+            {
+                println(Utils.readErrMsg());
+                println("Failed to read debug_validation_path in config.json file");
+                displayMgr.showErrMsg("Failed to read debug_validation_path in config.json file", true);
+                return false;
+            }          
+            outputFile = validationPath + File.separatorChar + "validation.txt";
+            streetSnapPath = validationPath + File.separatorChar + "Snaps";
+            myDir = new File(streetSnapPath);
+            if (!myDir.exists())
+            {
+                println("Validation street snap archive directory ", streetSnapPath, " does not exist");
+                displayMgr.showErrMsg("Validation street snap archive directory " + streetSnapPath + " does not exist", true);
+                return false;
+            }
+            persdataPath = validationPath + File.separatorChar + "JSONs";
+            myDir = new File(persdataPath);
+            if (!myDir.exists())
+            {
+                println("Validation source JSON directory ", persdataPath, " does not exist");
+                displayMgr.showErrMsg("Validation source JSON directory " + persdataPath + " does not exist", true);
+                return false;
+            }
         }
        // End of debug only info
         
         // Read in array of street TSID from config file
-        JSONArray TSIDArray = Utils.readJSONArray(json, "streets", true);
+        JSONArray TSIDArray;
+        if (debugValidationRun)
+        {
+            TSIDArray = Utils.readJSONArray(json, "streets_validation", true);
+        }
+        else
+        {
+            TSIDArray = Utils.readJSONArray(json, "streets", true);
+        }
         if (!Utils.readOkFlag())
         {
             println(Utils.readErrMsg());
@@ -503,6 +561,11 @@ class ConfigInfo {
     public boolean readDebugDumpDiffImages()
     {
         return debugDumpDiffImages;
+    }
+    
+    public boolean readDebugValidationRun()
+    {
+        return debugValidationRun;
     }
     
 }

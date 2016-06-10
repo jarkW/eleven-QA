@@ -507,6 +507,12 @@ class PrintToFile {
             }
             
             printOutputLine(s);
+            
+            // Now print out the JSON Diff info if it exists
+            if (configInfo.readDebugValidationRun() && itemResults.get(i).itemInfo.readValidationInfo().length() > 0)
+            {
+                printOutputLine(itemResults.get(i).itemInfo.readValidationInfo());
+            }
 
             if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
             {

@@ -11,6 +11,7 @@ class JSONDiff
     // Using list of information strings - so that if nothing found, just get simple one line message
     // User has to request the information be printed
     StringList infoMsgList;
+    String validationInfo;
     String itemTSID;
     String itemClassTSID;
     JSONObject origJSON;
@@ -23,6 +24,7 @@ class JSONDiff
     public JSONDiff(String iTSID, String iClassTSID, String origJSONFileName, String newJSONFileName)
     {
         infoMsgList = new StringList();
+        validationInfo = "";
         itemTSID = iTSID;
         itemClassTSID = iClassTSID;
         origJSON = null;
@@ -43,6 +45,10 @@ class JSONDiff
         
         s = "JSONDIFF: Starting compare of item file " + itemTSID + ".json";  
         infoMsgList.append(s);
+        if (configInfo.readDebugValidationRun())
+        {
+            validationInfo = "JSONDIFF: " + itemTSID + ": ";
+        }
         
         if (!compareJSONObjects(origJSON, newJSON, ""))
         {
@@ -128,7 +134,31 @@ class JSONDiff
             // Search for matching keys in file - trying to find a match in origList for the new key
             while (!newList.get(i).equals(origList.get(j)) && (i < newList.size()))
             {
-                s = "New key in new JSON file is " + newList.get(i);
+                if (!extractObjectFromJSONObject(newVersion, newList, i))
+                {
+                   // Unexpected type of object in JSON
+                   s = "ERROR - unexpected type of object in JSON file" + newFileName;
+                   infoMsgList.append(s);
+                   return false;
+                }                
+                // extractedObject is set by extractObjectFromJSONObject ()
+                if (!(extractedObject == null) && !(extractedObject instanceof JSONObject) && !(extractedObject instanceof JSONArray))
+                {
+                    // Means we have a bool/int/String we can dump out
+                    s = "New key in new JSON file is " + newList.get(i) + " set to " + extractedObject;
+                    if (configInfo.readDebugValidationRun())
+                    {
+                        validationInfo = validationInfo + newList.get(i) + " (new->" + extractedObject + "); ";
+                    }
+                }
+                else
+                {
+                    s = "New key in new JSON file is " + newList.get(i) + " set to ????????";
+                    if (configInfo.readDebugValidationRun())
+                    {
+                        validationInfo = validationInfo + newList.get(i) + " (new->????); ";
+                    }
+                }
                 infoMsgList.append(s);
                 i++;
             }
@@ -154,8 +184,32 @@ class JSONDiff
                         return false;
                     }
                     else
-                    {
-                        s = "Valid new key (" +  newList.get(j) + ") at end of new file";
+                    {                       
+                        if (!extractObjectFromJSONObject(newVersion, newList, j))
+                        {
+                            // Unexpected type of object in JSON
+                            s = "ERROR - unexpected type of object in JSON file" + newFileName;
+                            infoMsgList.append(s);
+                            return false;
+                        }
+                        // extractedObject is set by extractObjectFromJSONObject ()
+                        if (!(extractedObject == null) && !(extractedObject instanceof JSONObject) && !(extractedObject instanceof JSONArray))
+                        {
+                            // Means we have a bool/int/String we can dump out
+                            s = "Valid new key at end of file - " +  newList.get(j) + " set to " + extractedObject;
+                            if (configInfo.readDebugValidationRun())
+                            {
+                                validationInfo = validationInfo + newList.get(j) + " (new (end file)->" + extractedObject + "); ";
+                            }
+                        }
+                        else
+                        {
+                            s = "Valid new key at end of file - " +  newList.get(j) + " set to ????????";
+                            if (configInfo.readDebugValidationRun())
+                            {
+                                validationInfo = validationInfo + newList.get(j) + " (new (end file)->????); ";
+                            }
+                        }
                         infoMsgList.append(s);
                         return true;
                     }
@@ -197,9 +251,25 @@ class JSONDiff
             else if (origObj == null)
             {
                // Could this be the case when field not set, and we then set it correctly using the tool
-               s = "WARNING " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + " New key is non-null, orig key is null";
+               if (!(newObj instanceof JSONObject) && !(newObj instanceof JSONArray))
+               {
+                    // Means we have a bool/int/String we can dump out
+                    s = "WARNING " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + " new key is set to " + newObj + " orig key is null";
+                    if (configInfo.readDebugValidationRun())
+                    {
+                        validationInfo = validationInfo + newList.get(i) + " (null->" + newObj + "); ";
+                    }
+               }
+               else
+               {
+                    s = "WARNING " + itemTSID + ".json, at level " + level + "/" + newList.get(i) + " new key is set to ??????? orig key is null";
+                    if (configInfo.readDebugValidationRun())
+                    {
+                        validationInfo = validationInfo + newList.get(i) + " (null->????); ";
+                    }
+               }               
                infoMsgList.append(s);
-            }      
+            }
             else if (newObj instanceof JSONObject && origObj instanceof JSONObject)
             {
                 if (!compareJSONObjects((JSONObject)origObj, (JSONObject)newObj, level + "/" + newList.get(i)))
@@ -248,6 +318,10 @@ class JSONDiff
                     {
                         s = "Different values found for valid " + level + "/" + newList.get(i) + " new value is <" + newObj + "> was <" + origObj + ">";
                         infoMsgList.append(s);
+                        if (configInfo.readDebugValidationRun())
+                        {
+                            validationInfo = validationInfo + newList.get(i) + "(" + origObj + "->" + newObj + "); ";
+                        }
                     }
                 }
                 else
@@ -312,7 +386,23 @@ class JSONDiff
             else if (origObj == null)
             {
                // This could be valid if the tool sets up a field which was originally null
-               s = "WARNING in " + itemTSID + ".json, at level " + level + "/" + i + "New index i is non-null orig index i is -null";
+               if (!(newObj instanceof JSONObject) && !(newObj instanceof JSONArray))
+               {
+                    // Means we have a bool/int/String we can dump out
+                    s = "WARNING " + itemTSID + ".json, at level " + level + "/" + i + " new value is " + newObj + " orig value is null";
+                    if (configInfo.readDebugValidationRun())
+                    {
+                        validationInfo = validationInfo + level + "/" + i + " (WARNING null->" + newObj + "); ";
+                    }
+               }
+               else
+               {
+                    s = "WARNING " + itemTSID + ".json, at level " + level + "/" + i + " new value is ??????? orig value is null";
+                    if (configInfo.readDebugValidationRun())
+                    {
+                        validationInfo = validationInfo + level + "/" + i + " (WARNING null->???????); ";
+                    }
+               }
                infoMsgList.append(s);
             } 
             else if (newObj instanceof JSONArray && origObj instanceof JSONArray)
@@ -348,6 +438,10 @@ class JSONDiff
                     // Difference found in values in array
                     s = "Different values found for " + level + "/" + i + " new value is <" + newObj + "> was <" + origObj + ">";
                     infoMsgList.append(s);
+                    if (configInfo.readDebugValidationRun())
+                    {
+                        validationInfo = validationInfo + level + "/" + i + "(" + origObj + "->" + newObj + "); ";
+                    }
                 }
                 else
                 {
@@ -684,6 +778,11 @@ class JSONDiff
             }
         }
         
+    }
+    
+    public String readValidationInfo()
+    {
+        return validationInfo;
     }
     
 }

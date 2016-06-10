@@ -717,6 +717,14 @@ class StreetInfo
     boolean streetNotExistInPersdataQA(String streetTSID)
     {
 
+        if (configInfo.readDebugValidationRun())
+        {
+            // For validation runs we never write to persdata, so doesn't matter if the
+            // street already exists in persdata-qa - irrelevant
+            printToFile.printDebugLine(this, "Skip persdata-qa test for street TSID " + streetTSID, 1);
+            return true;
+        }
+        
         if (configInfo.readUseVagrantFlag())
         {
             File myDir = new File(configInfo.readPersdataQAPath() + File.separatorChar + streetTSID);
@@ -1037,6 +1045,12 @@ class StreetInfo
             File file = new File(sourcePath);
             if (!file.exists())
             {
+                if (configInfo.readDebugValidationRun())
+                {
+                    // Should never reach this point - file should have been read from the special validation JSON directory
+                    printToFile.printDebugLine(this, "Unable to find validation JSON file on vagrant - " + sourcePath, 3);
+                    return false;
+                }
                 // Retrieve from fixtures
                 if (TSID.startsWith("L") || TSID.startsWith("G"))
                 {
