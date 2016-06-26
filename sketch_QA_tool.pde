@@ -74,8 +74,9 @@ import java.text.DecimalFormat;
  // Rather than failing after an hour. So would just check all the JSON files exist for each
  // of the streets.
 
-//
 //NEED TO CHECK USING ALL FUNCTION CALLS - I.E. READ/SET ONES
+
+// Default memory in preferences to 300mb to help offset Processing memory problems with (un)loading snaps
 
 
 // Directory where config.json is, and all saved JSON files - both original/new
