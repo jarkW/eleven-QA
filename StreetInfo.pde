@@ -763,8 +763,13 @@ class StreetInfo
         {
             // Item needs to be skipped/or has already been found
             // Move onto next one
-            printToFile.printDebugLine(this, "Skipping item " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
-                                       itemInfo.get(itemBeingProcessed).readOrigItemVariant() + ") " + itemInfo.get(itemBeingProcessed).readItemTSID(), 1);
+            String s = "Skipping item " + itemInfo.get(itemBeingProcessed).readItemClassTSID();
+            if (itemInfo.get(itemBeingProcessed).readOrigItemVariant().length() > 0)
+            {
+                s = s + " (" + itemInfo.get(itemBeingProcessed).readOrigItemVariant() + ")";
+            }
+            s = s + " " + itemInfo.get(itemBeingProcessed).readItemTSID();           
+            printToFile.printDebugLine(this, s, 1);
                                        
             // As we just want to pass control back up, don't care about the succes/failure - top level will handle that
             if (moveToNextItem())
@@ -780,7 +785,6 @@ class StreetInfo
         //ItemInfo itemData = itemInfo.get(itemBeingProcessed);      
         
         // Display information
-        //displayMgr.setStreetName(streetName, streetTSID, streetBeingProcessed + 1, configInfo.readTotalJSONStreetCount());
         displayMgr.setItemProgress(itemInfo.get(itemBeingProcessed).itemClassTSID, itemInfo.get(itemBeingProcessed).itemTSID, itemBeingProcessed+1, itemInfo.size());
         
         // Search the snap for this image/item
@@ -797,32 +801,21 @@ class StreetInfo
             if (!moveToNextItem())
             {
                 // Either error condition or at end of street/items - so need to return to top level to start over with new snap/street
-                //failNow = true;
                 return;
             }
             else
             {
                 // Next item is safe to procced to
-                       
-                // Set up fragFind in item ready to start the next item/streetsnap search combo
-                // i.e. loads up pointers to correct street snap and item images
-                // Only do this for items we still need to search for
                 if (itemValidToContinueSearchingFor(itemBeingProcessed))
                 {
-                    if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
-                    {
-                        displayMgr.showErrMsg("Unexpected error getting ready for new item search", true);
-                        failNow = true;
-                        return;
-                    }
-                    printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " ON STREET SNAP " + streetSnapBeingUsed, 1);
+                    printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + "(" + itemInfo.get(itemBeingProcessed).readItemTSID() + ") ON STREET SNAP " + streetSnapBeingUsed, 1);
                 }
                 else
                 {
                    printToFile.printDebugLine(this, "Skipping item/item Found " + itemInfo.get(itemBeingProcessed).readItemClassTSID() + "(" + 
                                                itemInfo.get(itemBeingProcessed).readOrigItemVariant() + ") " + 
                                                itemInfo.get(itemBeingProcessed).readItemTSID(), 1); 
-                }
+                } 
             }
             
         }
@@ -841,6 +834,11 @@ class StreetInfo
         {
             // Finished all items on the street
             // So move onto the next street snap after unloading the current one
+            
+            // But first need to null the FragFind structure in the structure for the last item - as it contains a reference to the street snap
+            // which means the call below to unload the street snap won't work - and then memory hell ensues.
+            itemInfo.get(itemBeingProcessed-1).clearFragFind();
+            
             streetSnaps.get(streetSnapBeingUsed).unloadPNGImage();
             
             // reset itemBeingProcessed back to 0
@@ -879,7 +877,7 @@ class StreetInfo
                 // Now print out the summary array
                 // The second sorting of item results shouldn't throw up any duplicate x,y - if it happens they'll just be reported as warnings.
                 // Any actual errors are reported from within printSummaryData
-                if (! printToFile.printSummaryData(itemResults))
+                if (!printToFile.printSummaryData(itemResults))
                 {
                     failNow = true;
                     return false;
@@ -902,8 +900,7 @@ class StreetInfo
                     return false;
                 }
                 itemBeingProcessed = 0;
-                printToFile.printDebugLine(this, "STARTING WITH FIRST ITEM ON STREET SNAP " + streetSnapBeingUsed, 1);
-                
+                printToFile.printDebugLine(this, "STARTING WITH FIRST ITEM (" + itemInfo.get(itemBeingProcessed).readItemTSID() + ") ON STREET SNAP " + streetSnapBeingUsed, 1);
                 if (itemValidToContinueSearchingFor(itemBeingProcessed))
                 {
                     if (!itemInfo.get(itemBeingProcessed).resetReadyForNewItemSearch())
@@ -912,11 +909,10 @@ class StreetInfo
                         failNow = true;
                         return false;
                     }
-                    printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " ON STREET SNAP " + streetSnapBeingUsed, 1);
+                    printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " (" + itemInfo.get(itemBeingProcessed).readItemTSID() + ") ON STREET SNAP " + streetSnapBeingUsed, 1);
                 }
                 
             }
-            //return false;
             
         } // if past end of item list
         else
@@ -930,7 +926,7 @@ class StreetInfo
                     failNow = true;
                     return false;
                 }
-                printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " ON STREET SNAP " + streetSnapBeingUsed, 1);
+                printToFile.printDebugLine(this, "PROCESSING ITEM " + itemBeingProcessed + " (" + itemInfo.get(itemBeingProcessed).readItemTSID() + ") ON STREET SNAP " + streetSnapBeingUsed, 1);
             }
         }
         return true;
@@ -1257,7 +1253,7 @@ class StreetInfo
         }
         return true;
     }
-    
+   
     void initStreetItemVars()
     {
         for  (int i = 0; i < itemInfo.size(); i++)

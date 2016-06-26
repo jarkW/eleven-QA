@@ -361,7 +361,7 @@ class PrintToFile {
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
                         s = s + "MISSING quoin " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                         s = s + " defaulted to (mystery/placement tester)";
                     }
                     else
@@ -376,7 +376,7 @@ class PrintToFile {
                     s = s + "Changed co-ords " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
@@ -388,8 +388,8 @@ class PrintToFile {
                     s = s + "Changed variant " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemVariant() + "/" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
-                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
+                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
@@ -409,8 +409,8 @@ class PrintToFile {
                     s = s + "Changed variant & co-ords " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemVariant() + "/" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
-                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
+                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {
@@ -427,22 +427,12 @@ class PrintToFile {
                     break;
                     
                 case SummaryChanges.UNCHANGED:
-                /*
-                    if (itemResults.get(i).readAlreadySetDirField())
-                    {
-                        // This handles the case of e.g. shrine where x,y unchanged and just inserted the missing dir field
-                        // Had to fake up the missing variant field in order to correctly handle images
-                        s = s + "Changed variant ";
-                        s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                    }
-                    else
-                    {*/
-                        s = s + "Unchanged ";
-                        s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                    //}
+                    s = s + "Unchanged ";
+                    s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
-                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemVariant() + "/" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
                     }
                     else
                     {

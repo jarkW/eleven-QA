@@ -16,4 +16,15 @@ public class Memory {
                                     //"  Used Memory: " + (instance.totalMemory() - instance.freeMemory()) +
                                     "   Max Memory: " + instance.maxMemory() / mb + (instance.totalMemory() - instance.freeMemory()) / mb, 1);
     }
+    
+    public void printUsedMemory(String info)
+    {
+        int mb = 1024 * 1024; 
+ 
+        // get Runtime instance
+        Runtime instance = Runtime.getRuntime();
+        // Insert a comma - then allows these output lines to be put into a spreadsheet so can graph memory usage
+        printToFile.printDebugLine(this, "\"" + info + "\"," + (instance.totalMemory() - instance.freeMemory()) / mb, 1);
+       
+    }
 }

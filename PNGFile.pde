@@ -89,12 +89,14 @@ class PNGFile
     
     public boolean loadPNGImage()
     {
+        memory.printUsedMemory("image load start " + PNGImageName);
         // Load up this snap/item image
         String fullFileName;
         
         if (PNGImage != null)
         {
             // Image has already been loaded into memory
+            memory.printUsedMemory("image load end (already loaded) " + PNGImageName);
             return true;
         } 
         
@@ -128,6 +130,7 @@ class PNGFile
         try
         {
             // load image pixels
+             memory.printUsedMemory("image load pre-loadPixels " + PNGImageName);
             PNGImage.loadPixels();
         }
         catch(Exception e)
@@ -138,16 +141,25 @@ class PNGFile
         } 
         
         printToFile.printDebugLine(this, "Loading image from " + fullFileName + " with width " + PNGImage.height + " height " + PNGImage.width, 1);
-        
+        memory.printUsedMemory("image load end " + PNGImageName);
         return true;
     }
     
     public void unloadPNGImage()
-    {
+    {        
+        memory.printUsedMemory("image unload start " + PNGImageName);
+        if (PNGImage == null)
+        {
+            printToFile.printDebugLine(this, "!!!! Unloading null image " + PNGImageName, 3);
+        }
+        // workaround to remove memory leak - https://github.com/processing/processing/issues/1391.html#issuecomment-13356835
+        g.removeCache(PNGImage);  
+        
         PNGImage = null;
         printToFile.printDebugLine(this, "Unloading image " + PNGImageName, 1);
         // Need this to force the garbage collection to free up the memory associated with the image
         System.gc();
+        memory.printUsedMemory("image unload end " + PNGImageName);
     }
 
 }

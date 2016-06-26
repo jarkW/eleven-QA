@@ -92,7 +92,7 @@ class ItemInfo
     }
       
     public boolean initialiseItemInfo()
-    {        
+    {                
         // Now open the relevant I* file - use the version which has been downloaded/copied to OrigJSONs
         // If it is not there then report an error
         String itemFileName = workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar+ itemTSID  + ".json";
@@ -182,7 +182,6 @@ class ItemInfo
         
         // Initialise for the item to be searched for
         //itemImageBeingUsed = 0;
-        
         if (!resetReadyForNewItemSearch())
         {
             return false;
@@ -1191,6 +1190,12 @@ class ItemInfo
         
         itemFinished = false;
         return true;
+    }
+    
+    public void clearFragFind()
+    {
+        fragFind = null;
+        System.gc();
     }
     
     public boolean resetAsMissingQuoin()

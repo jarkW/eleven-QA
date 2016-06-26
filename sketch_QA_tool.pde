@@ -196,6 +196,7 @@ public void draw()
     // Carry out processing depending on whether setting up the street or processing it
     //println("nextAction is ", nextAction);
     //memory.printMemoryUsage();
+    //memory.printUsedMemory("start");
     switch (nextAction)
     {
         case IDLING:
@@ -383,7 +384,7 @@ public void draw()
             // Carries out the setting up of the street and associated items 
             printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);        
             printToFile.printDebugLine(this, "Read street data for TSID " + configInfo.readStreetTSID(streetBeingProcessed), 2);
-           
+                       
             if (!initialiseStreet())
             {
                 // fatal error
@@ -581,6 +582,7 @@ public void draw()
             printToFile.printDebugLine(this, "Unexpected next action - " + nextAction, 3);
             exit();
     }
+    //memory.printUsedMemory("end");
 }
 
 void doExitCleanUp()
