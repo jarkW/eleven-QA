@@ -334,7 +334,7 @@ class ConfigInfo {
         debugLevel = Utils.readJSONInt(json, "tracing_level", false);
         if (!Utils.readOkFlag())
         {
-            debugLevel = 3;
+            debugLevel = 1;
         }
         else if ((debugLevel < 0) || (debugLevel > 3))
         {
