@@ -144,7 +144,8 @@ public void setup()
     // Set size of Processing window
     // width, height
     // Must be first line in setup()
-    size(1200,800);
+    //size(1200,800);
+    size(1200,700);
     
     // Used for final application title bar
     surface.setTitle("QA tool for setting co-ordinates and variants of items in Ur"); 
