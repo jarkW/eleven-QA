@@ -145,7 +145,7 @@ public void setup()
     // width, height
     // Must be first line in setup()
     //size(1200,800);
-    size(1200,700);
+    size(1200,700); 
     
     // Used for final application title bar
     surface.setTitle("QA tool for setting co-ordinates and variants of items in Ur"); 
