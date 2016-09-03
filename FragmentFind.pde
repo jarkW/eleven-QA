@@ -245,19 +245,34 @@ class FragmentFind
         
         if (!searchDone)
         {
-            // Item was not found on this image, or still searching through entire set of quoins before deciding on best find, so move on to the next image to search
-            // However no point doing this in the case where only looking to update x,y values for quoins (and so won't change their type, are using
-            // the JSON as the expected type), or if the quoin has been previously found on a street snap (and so we know what to look for from then onwards).
-            if (thisItemInfo.readItemClassTSID().equals("quoin") && (configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != MISSING_COORDS))
+            // Item was not found on this image
+            
+            // Several options are available at this point.
+            // If have multiple possible images to use to search with on this snap, then can cycle to the next one e.g. quoins, barnacles, trees
+            // However there is no point in doing this in the case for quoins - where the quoin type has already been determined from a previous
+            // street snap, and so no need to check all the other quoin images.
+            // Similarly in the case where the change_xy_only option has been set, as we don't change the type of an item, then have to assume that
+            // the type field in the JSON file is the only image that needs checking for. Any failure is due to the user in this case.
+            
+            if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() != MISSING_COORDS)
             {
-                // We only ever search on one image in this case - for quoins, we know what the quoin looks like as is in the JSON file
-                // and that info was used to select the single quoin image that needed to be used to search this street snap. Therefore if
-                // if was not found - and we enter this leg of code - then consider the search done for this item.
-                // Won't reach this leg of the code for any other items - as once an item is found, it never enters FragmentFind again - skipped on future street snaps.
+                // We only ever search on one image in this case - the quoin type determined on a previous street snap
+                // So if the item didn't match, and we enter this leg of code - then consider the search done for this item.
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - found 1 item, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
+                printToFile.printDebugLine(this, "searchForFragment - searched for 1 quoin image only deduced from previous street snap, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
             }
+            else if (configInfo.readChangeXYOnly() && thisItemInfo.readItemVariantKey() != "")
+            {
+                // We only ever search on one image in this case - using the type that has been specified in the JSON file.
+                // So if the item didn't match, and we enter this leg of code - then consider the search done for this item.
+                bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
+                searchDone = true;
+                printToFile.printDebugLine(this, "searchForFragment - searched for 1 image only, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
+            }
+
+            // If we reach here, then this is the default use of the tool to determine types as well as co-ordinates, so move on to the next fragment image, if it exists
+            // Still need to search all tree images for change_xy_only option. 
             else
             {
                 // Move on to search with the next image in the set

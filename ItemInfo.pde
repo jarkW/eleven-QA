@@ -1304,6 +1304,11 @@ class ItemInfo
         return itemFound;
     }
     
+    public String readItemVariantKey()
+    {
+        return itemVariantKey;
+    }
+    
     public boolean readSaveChangedJSONfile()
     {
         return saveChangedJSONfile;
