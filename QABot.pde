@@ -36,24 +36,7 @@ import java.text.DecimalFormat;
  * the resolution as given in the G* file will be ignored.
  *
  */
-  
- // Groddle Heights - LCR16VUKOQL18DU - not find egg trees - check this out - finds the 2nd/3rd 
-   
- // BUG? xy variant only
- // Does it load up the single image for other non-quoin items with variant field?
- // Except wood trees - where still needs to test all tree images.
- // Also in JSON diff, ensure that only x,y have changed, error otherwise
- // ALSO JUST TRIED IT OUT AND ALL THE QUOINS GOT RESET BACK TO MYSTERY ...
- // CHeck line if (thisItemInfo.readItemClassTSID().equals("quoin") && ((configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != MISSING_COORDS))) in fragfind
- // as I think it needs these extra brackets
- 
- // Have an option where only changes x,y in files (e.g. if on street where already started
-// QA. Or could do something where if street is in persdata-qa, only change the x,y? 
-// so that still does full changes on streets not yet QA'd? Could do reminder to 
-// person in output file to do /qasave on those streets? Might be better option - 
-// NO - IS BETTER FOR THE PERSON TO DECIDE, AS GIVING LIST OF TSIDS, THEY CAN
-// RUN TOOL TWICE FOR STREETS ALREADY/NOT DONE WITH OPTION SET DIFFERENTLY.
-  
+    
  // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
  // POSSIBLE FUTURE BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this

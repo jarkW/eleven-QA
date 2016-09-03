@@ -627,6 +627,13 @@ class JSONDiff
             return true;
         }
         
+        if (configInfo.readChangeXYOnly())
+        {
+            // Should never reach this point - as the only changes permitted are x,y changes. So report an error if this happens
+            printToFile.printDebugLine(this, "ERROR - unexpected change to field - " + keyName + " - should never be changed when change_xy_only option is set, for this item class " + itemClassTSID, 3);
+            return false;
+        }
+        
         if (itemClassTSID.indexOf("npc_shrine_", 0) == 0)
         {
             if (!keyName.equals("dir"))

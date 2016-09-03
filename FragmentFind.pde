@@ -253,7 +253,7 @@ class FragmentFind
             // street snap, and so no need to check all the other quoin images.
             // Similarly in the case where the change_xy_only option has been set, as we don't change the type of an item, then have to assume that
             // the type field in the JSON file is the only image that needs checking for. Any failure is due to the user in this case.
-            
+                        
             if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() != MISSING_COORDS)
             {
                 // We only ever search on one image in this case - the quoin type determined on a previous street snap
@@ -262,10 +262,12 @@ class FragmentFind
                 searchDone = true;
                 printToFile.printDebugLine(this, "searchForFragment - searched for 1 quoin image only deduced from previous street snap, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
             }
-            else if (configInfo.readChangeXYOnly() && thisItemInfo.readItemVariantKey() != "")
+            else if (configInfo.readChangeXYOnly() && thisItemInfo.readItemVariantKey() != "" && !thisItemInfo.readItemClassTSID().equals("wood_tree"))
             {
                 // We only ever search on one image in this case - using the type that has been specified in the JSON file.
                 // So if the item didn't match, and we enter this leg of code - then consider the search done for this item.
+                // NB Wood trees need to be handled separately - as probably that although JSON file is a wood tree, that the street snap will have a different
+                // tree on - so still need to search all tree images to find best x,y.
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
                 printToFile.printDebugLine(this, "searchForFragment - searched for 1 image only, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
