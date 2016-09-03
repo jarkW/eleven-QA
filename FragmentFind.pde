@@ -189,10 +189,15 @@ class FragmentFind
         printToFile.printDebugLine(this, "Search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " using item image " + itemImages.get(itemImageBeingUsed).readPNGImageName() , 2);
         
         boolean searchSuccess = spiralSearch.searchForItem();
+         
         if (searchSuccess)
         {
             // NB This can be because a perfect match has been found, or a good-enough that fits within the % match required criteria
-            if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS)
+        
+            // Need to treat quoins different to other non-moving items
+            // When searching for x,y updates only we expect the quoin type to have already been set correctly - therefore goes to next else leg rather
+            // than being handled here
+            if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS && !configInfo.readChangeXYOnly())
             {
                 // have yet to scan through all images to find the best/closest quoin image 
                 // So save this information before dropping down below to search with the next image available  

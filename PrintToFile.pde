@@ -362,7 +362,10 @@ class PrintToFile {
                     {
                         s = s + "MISSING quoin " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                         s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
-                        s = s + " defaulted to (mystery/placement tester)";
+                        if (!configInfo.readChangeXYOnly())
+                        {
+                            s = s + " defaulted to (mystery/placement tester)";
+                        }
                     }
                     else
                     {

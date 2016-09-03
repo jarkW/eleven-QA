@@ -89,8 +89,10 @@ class SummaryChanges implements Comparable
         }
         else
         {
+            // Item has not been found
+            
             // If the original item was a mystery quoin, then this is an unchanged item rather than missing 
-            // Means the tool has been run twice - so picking up a mystery quoin second time around
+            // Means the tool has been run twice - so picking up a mystery quoin second time around, which won't match any of the normal quoin images.
             if (itemInfo.readItemClassTSID().equals("quoin") && itemInfo.readOrigItemVariant().equals("mystery"))
             {
                 result = UNCHANGED;
