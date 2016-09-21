@@ -581,8 +581,8 @@ class StreetInfo
             
             if (streetSnaps.get(j).readPNGImageWidth() != geoWidth || streetSnaps.get(j).readPNGImageHeight() != geoHeight)
             {
-                printToFile.printDebugLine(this, "Skipping street snap " + streetSnaps.get(j).readPNGImageName() + " because resolution is smaller than " + 
-                geoWidth + "x" + geoHeight + "pixels", 3);
+                printToFile.printDebugLine(this, "Skipping street snap " + streetSnaps.get(j).readPNGImageName() + " because resolution is not " + 
+                geoWidth + "x" + geoHeight + " pixels", 3);
                 // save this name so can report to user at end
                 skippedStreetSnapNames.append(streetSnaps.get(j).readPNGImageName());
                 streetSnaps.remove(j);
