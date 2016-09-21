@@ -193,11 +193,11 @@ class ConfigInfo {
             // Use default path
             if (useVagrant)
             {
-                fixturesPath = elevenPath + File.separatorChar + "eleven-fixtures";
+                fixturesPath = elevenPath + File.separatorChar + "eleven-fixtures-json";
             }
             else
             {
-                fixturesPath = elevenPath + "/eleven-fixtures";
+                fixturesPath = elevenPath + "/eleven-fixtures-json";
             }
         }
         persdataPath = Utils.readJSONString(fileSystemInfo, "persdata_path", false);
