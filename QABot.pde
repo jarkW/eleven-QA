@@ -62,6 +62,7 @@ import java.text.DecimalFormat;
 // Default memory in preferences to 300mb to help offset Processing memory problems with (un)loading snaps
 
 
+
 // Directory where config.json is, and all saved JSON files - both original/new
 String workingDir;
 // Contains all the info read in from config.json
