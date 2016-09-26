@@ -259,8 +259,8 @@
   },
   {
     "class_tsid": "trant_spice",
-    "offset_x": -22,
-    "offset_y": -81,
+    "offset_x": -36,
+    "offset_y": -63,
     "info": ""
   },
   {
@@ -271,8 +271,8 @@
   },
   {
     "class_tsid": "trant_fruit",
-    "offset_x": 2,
-    "offset_y": -75,
+    "offset_x": 0,
+    "offset_y": -55,
     "info": ""
   },
   {
