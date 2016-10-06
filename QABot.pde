@@ -36,6 +36,8 @@ import java.text.DecimalFormat;
  * the resolution as given in the G* file will be ignored.
  *
  */
+ 
+ // Need to fix line in PrintToFile that refers to qa_sketch as now is called something different
     
  // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
  
@@ -56,6 +58,10 @@ import java.text.DecimalFormat;
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
  // Rather than failing after an hour. So would just check all the JSON files exist for each
  // of the streets.
+ 
+ // Might need to add support for different examples of trees - I've come across 2 different spice trunks in GF for example. But
+ // will be difficult to work out the offsets as I can't grown these other forms of tree. So might be better to just accept that
+ // some trees won't be found.
 
 //NEED TO CHECK USING ALL FUNCTION CALLS - I.E. READ/SET ONES
 

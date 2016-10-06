@@ -180,7 +180,7 @@ class PrintToFile {
         
         if (severity >= debugLevel)
         {
-            String s = callingClass.getClass().getName().replace("sketch_QA_tool$", " ") + "::";
+            String s = callingClass.getClass().getName().replace("QABot$", " ") + "::";
             String methodName = Thread.currentThread().getStackTrace()[2].getMethodName();
             
             // Do we need to print this line to the console
