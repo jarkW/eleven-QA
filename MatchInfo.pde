@@ -8,23 +8,33 @@
         float percentageMatch;
         String bestMatchItemImageName;
         // Used to dump out a diff - so can see mismatched pixels in read - save the image and the useful filename to save it as, if this is the best match at the end
-        PImage bestMatchDiffImage;
+        PImage bestMatchBWDiffImage;
+        PImage bestMatchColRDiffImage;
+        PImage bestMatchColBDiffImage;
+        PImage bestMatchColGDiffImage;
+        
         PImage BWItemFragment;
         PImage ColourItemFragment;
         PImage BWStreetFragment;
         PImage ColourStreetFragment;
-        String bestMatchDiffImageName;
+        
+        String bestMatchBWDiffImageName;
+        String bestMatchColRDiffImageName;
+        String bestMatchColGDiffImageName;
+        String bestMatchColBDiffImageName;
         String BWItemFragmentName;
         String ColourItemFragmentName;
         String BWStreetFragmentName;
         String ColourStreetFragmentName;
+        
         int bestItemRGBMedian;
         int bestStreetRGBMedian;
         String itemTSID;
         
         public MatchInfo(float avgRGB, float totalAvgRGB, int x, int y, int itemRGBMedian, int streetRGBMedian,
                          String TSID, String itemImageFname, String streetSnapFname, 
-                         PImage colourStreetFragImage, PImage BWStreetFragImage, PImage colourItemImage, PImage BWItemImage, PImage BWDiffImage)    
+                         PImage colourStreetFragImage, PImage BWStreetFragImage, PImage colourItemImage, PImage BWItemImage, 
+                         PImage BWDiffImage, PImage ColDiffRImage, PImage ColDiffGImage, PImage ColDiffBImage)    
         {           
             bestMatchAvgRGB = avgRGB;
             bestMatchAvgTotalRGB = totalAvgRGB;
@@ -49,9 +59,18 @@
             // Save the diff image passed to class - might be later saved
             if (configInfo.readDebugDumpDiffImages())
             {
-                bestMatchDiffImage = BWDiffImage;
-                bestMatchDiffImageName = TSID  + "_BWDiff_" + itemImageFname + "__" + streetSnapFname + round(percentageMatch) + ".png";
+                bestMatchBWDiffImage = BWDiffImage;
+                bestMatchBWDiffImageName = TSID  + "_BWDiff_" + itemImageFname + "__" + streetSnapFname + round(percentageMatch) + ".png";
                 
+                bestMatchColRDiffImage = ColDiffRImage;
+                bestMatchColRDiffImageName = TSID  + "_ColR_Diff_" + itemImageFname + "__" + streetSnapFname + round(percentageMatch) + ".png";
+                
+                bestMatchColGDiffImage = ColDiffGImage;
+                bestMatchColGDiffImageName = TSID  + "_ColG_Diff_" + itemImageFname + "__" + streetSnapFname + round(percentageMatch) + ".png";               
+                
+                bestMatchColBDiffImage = ColDiffBImage;
+                bestMatchColBDiffImageName = TSID  + "_ColB_Diff_" + itemImageFname + "__" + streetSnapFname + round(percentageMatch) + ".png";
+                                
                 BWItemFragment = BWItemImage;
                 BWItemFragmentName = TSID  + "_BW_" + itemImageFname + "__" + round(percentageMatch) + ".png";
                 
@@ -66,7 +85,10 @@
             }
             else
             {
-                bestMatchDiffImage = null;
+                bestMatchBWDiffImage = null;
+                bestMatchColRDiffImage = null;
+                bestMatchColGDiffImage = null;
+                bestMatchColBDiffImage = null;
                 BWItemFragment = null;
                 ColourItemFragment = null;
                 BWStreetFragment = null;
@@ -94,13 +116,20 @@
             return s;
         }
         
-        public String matchPercentString()
+        public String matchPercentAsFloatString()
         {
             // Have %Match as 2 decimal places
             DecimalFormat df = new DecimalFormat("#.##"); 
             String formattedPercentage = df.format(percentageMatch); 
 
             String s = formattedPercentage + "%";
+            return s;
+        }
+        
+        public String matchPercentString()
+        {
+            // Have match to nearest whole digit
+            String s = round(percentageMatch) + "%";
             return s;
         }
         
@@ -138,13 +167,23 @@
         {                
             if (configInfo.readDebugDumpDiffImages())
             {
-                // Always dump out the black/white images
-                if (!saveImageFile(bestMatchDiffImage, bestMatchDiffImageName))
+                if (!saveImageFile(bestMatchBWDiffImage, bestMatchBWDiffImageName))
                 {
                     return false;
                 }
-                
-                // The following images may not have been saved in FragmentFind - e.g. if match was successful
+                if (!saveImageFile(bestMatchColRDiffImage, bestMatchColRDiffImageName))
+                {
+                    return false;
+                }
+                if (!saveImageFile(bestMatchColGDiffImage, bestMatchColGDiffImageName))
+                {
+                    return false;
+                }                
+                  if (!saveImageFile(bestMatchColBDiffImage, bestMatchColBDiffImageName))
+                {
+                    return false;
+                }              
+
                 if (!saveImageFile(BWItemFragment, BWItemFragmentName))
                 {
                     return false;
@@ -171,6 +210,7 @@
             if (fragment == null)
             {
                 // Might have null image because did not need saving
+                printToFile.printDebugLine(this, "Null image passed for " + fragmentName, 1);
                 return true;
             }
             

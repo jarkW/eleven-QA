@@ -17,9 +17,13 @@ class ConfigInfo {
     int serverPort;
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
     
-    boolean debugShowBWFragments;
+    boolean debugShowFragments;
     boolean debugDumpDiffImages;
     boolean debugValidationRun;
+    boolean debugUseTintedFragment;
+    boolean debugRun;
+    
+    boolean debugShowPercentMatchAsFloat;
     
     StringList streetTSIDs = new StringList();
     String outputFile;
@@ -344,10 +348,10 @@ class ConfigInfo {
         }
         
         // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
-        debugShowBWFragments = Utils.readJSONBool(json, "debug_show_BW_fragments", false);
+        debugShowFragments = Utils.readJSONBool(json, "debug_show_fragments", false);
         if (!Utils.readOkFlag())
         {
-            debugShowBWFragments = false;
+            debugShowFragments = false;
         }
         
         debugDumpDiffImages = Utils.readJSONBool(json, "debug_dump_diff_images", false);
@@ -355,11 +359,26 @@ class ConfigInfo {
         {
             debugDumpDiffImages = false;
         }
-        if (!usingBlackWhiteComparison && debugDumpDiffImages)
+        
+        // Turns off minor information in output file
+        debugRun = Utils.readJSONBool(json, "debug_run", false);
+        if (!Utils.readOkFlag())
         {
-            println("usingBlackWhiteComparison is set to false, so debug_dump_bw_diff_images in config.json cannot be set to true");
-            displayMgr.showErrMsg("usingBlackWhiteComparison is set to false, so debug_dump_bw_diff_images in config.json cannot be set to true", true);
-            return false;
+            debugRun = false;
+        }
+        
+        debugUseTintedFragment = Utils.readJSONBool(json, "debug_tint_fragment", false);
+        // By default will always be tinting the fragment before doing a BW test
+        // The tinted comparison alone is not robust enough, so always have to do BW
+        if (!Utils.readOkFlag())
+        {
+            debugUseTintedFragment = true;
+        }
+        
+        debugShowPercentMatchAsFloat = Utils.readJSONBool(json, "debug_show_percentage_match_as_float", false);
+        if (!Utils.readOkFlag())
+        {
+            debugShowPercentMatchAsFloat = false;
         }
         
         // Default different fields so that validation runs always do the same testing
@@ -370,6 +389,8 @@ class ConfigInfo {
             searchRadius = 25;
             changeXYOnly = false;
             writeJSONsToPersdata = false;
+            debugUseTintedFragment = true;
+            debugShowPercentMatchAsFloat = true;
             
             //Reset paths to snaps and persdata (so always use the same set of original JSON files)
             
@@ -537,12 +558,7 @@ class ConfigInfo {
     {
         return serverPort;
     }
-    
-    public boolean readDebugShowBWFragments()
-    {
-        return debugShowBWFragments;
-    }
-    
+        
     public String readElevenPath()
     {
         return elevenPath;
@@ -566,6 +582,26 @@ class ConfigInfo {
     public boolean readDebugValidationRun()
     {
         return debugValidationRun;
+    }
+    
+    public boolean readDebugShowFragments()
+    {
+        return debugShowFragments;
+    }
+    
+    public boolean readDebugShowPercentMatchAsFloat()
+    {
+        return debugShowPercentMatchAsFloat;
+    }
+    
+    public boolean readDebugUseTintedFragment()
+    {
+        return debugUseTintedFragment;
+    }
+    
+    public boolean readDebugRun()
+    {
+        return debugRun;
     }
     
 }

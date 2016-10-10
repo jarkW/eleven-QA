@@ -2,37 +2,37 @@
   {
     "class_tsid": "marker_qurazy",
     "offset_x": -4,
-    "offset_y": -17,
+    "offset_y": -19,
     "info": ""
   },
   {
     "class_tsid": "quoin",
     "offset_x": -5,
-    "offset_y": -16,
+    "offset_y": -13,
     "info": "currants"
   },
   {
     "class_tsid": "quoin",
     "offset_x": -5,
-    "offset_y": -16,
+    "offset_y": -18,
     "info": "mood"
   },
   {
     "class_tsid": "quoin",
     "offset_x": -4,
-    "offset_y": -20,
+    "offset_y": -19,
     "info": "xp"
   },
   {
     "class_tsid": "quoin",
     "offset_x": -4,
-    "offset_y": -16,
+    "offset_y": -20,
     "info": "time"
   },
   {
     "class_tsid": "quoin",
-    "offset_x": -3,
-    "offset_y": -17,
+    "offset_x": -4,
+    "offset_y": -21,
     "info": "mystery"
   },
   {
@@ -44,7 +44,7 @@
   {
     "class_tsid": "quoin",
     "offset_x": -3,
-    "offset_y": -22,
+    "offset_y": -16,
     "info": "favor"
   },
   {
@@ -253,14 +253,14 @@
   },
   {
     "class_tsid": "trant_gas",
-    "offset_x": -7,
-    "offset_y": -53,
+    "offset_x": -12,
+    "offset_y": -49,
     "info": ""
   },
   {
     "class_tsid": "trant_spice",
-    "offset_x": -36,
-    "offset_y": -63,
+    "offset_x": -26,
+    "offset_y": -65,
     "info": ""
   },
   {
@@ -505,7 +505,7 @@
   },
   {
     "class_tsid": "peat_3",
-    "offset_x": 25,
+    "offset_x": 26,
     "offset_y": -35,
     "info": ""
   },
@@ -673,8 +673,8 @@
   },
   {
     "class_tsid": "npc_gardening_vendor",
-    "offset_x": -15,
-    "offset_y": -62,
+    "offset_x": -13,
+    "offset_y": -70,
     "info": ""
   },
   {

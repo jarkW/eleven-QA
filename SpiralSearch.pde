@@ -191,13 +191,13 @@ class SpiralSearch
                 foundStepY = stepY;
                 printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) + " spiralCount = " + spiralCount, 2);
                            
-                if (usingBlackWhiteComparison)
+                if (!configInfo.readDebugUseTintedFragment())
                 {
-                    info = "Perfect fit/grey at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
+                    info = "Perfect fit/B&W at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
                 }
                 else
                 {
-                    info = "Perfect fit/colour at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
+                    info = "Perfect fit/tinted at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
                 }
                 displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
                 return true;
@@ -238,9 +238,11 @@ class SpiralSearch
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
             " ratio lowest:total avg RGB diff = " + formattedRatio, 2); 
                
-            // Recreate the appropriate street fragment for this good enough search result
+            // Recreate the appropriate street fragment for this good enough search result - which doesn't need tinting, but does need converting to B&W
             testStreetFragment = thisStreetImage.get(foundStepX, foundStepY, thisItemImage.width, thisItemImage.height);
-            testStreetFragment = convertImage(testStreetFragment, false);
+            testStreetFragment = convertImageToBW(testStreetFragment, false); 
+
+            // Item images are good as they are - are the ones which have been used to do the searching with
             info = "good enough fit (avgRGBDiff = " + formattedRatio + ") at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
             displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
 
@@ -335,8 +337,14 @@ class SpiralSearch
         testStreetFragment = thisStreetImage.get(stepX, stepY, thisItemImage.width, thisItemImage.height);
         testItemFragment = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
         // Draw out image pre-conversion  
-        testStreetFragment = convertImage(testStreetFragment, false);
-        testItemFragment = convertImage(testItemFragment, true);
+        if (configInfo.readDebugUseTintedFragment())
+        {
+             // Street fragment does not need adjusting, only the item
+             testItemFragment = applyGeoSettingsToItemImage(testItemFragment);
+        }
+        // Now convert both fragments to B&W ready for testing
+        testStreetFragment = convertImageToBW(testStreetFragment, false);
+        testItemFragment = convertImageToBW(testItemFragment, true);
         
         // Don't draw these out now - only want to show the closest match ones.
         //image(streetFragment, 650, 100, 50, 50);
@@ -416,19 +424,53 @@ class SpiralSearch
             return false;
         }
     }
-   
-    PImage convertImage(PImage fragment, boolean usingItem)
+    
+    PImage applyGeoSettingsToItemImage(PImage fragment)
     {
-        if (!usingBlackWhiteComparison)
-        {
-            return (fragment);
-        }
+        // Converts the original item fragment to be coloured in the same way as the street is e.g. saturation, brightness etc
+        int i;
+        int j;
+        int locItem;
+        float r;
+        float g;
+        float b;
+        float a;
+        PImage workingImage = fragment;       
+        color newColour;
         
+        //printToFile.printDebugLine(this, "Applying geo matrix info to fragment", 1);
+        ColorMatrix cm = streetInfo.readCM();
+        
+        for (i = 0; i < workingImage.height; i++) 
+        {
+            for (j = 0; j < workingImage.width; j++)
+            {
+                //int loc = pixelXPosition + (pixelYPosition * streetItemInfo[streetItemCount].sampleWidth);
+                locItem = j + (i * workingImage.width);
+                r = red(workingImage.pixels[locItem]);
+                g = green(workingImage.pixels[locItem]);
+                b = blue(workingImage.pixels[locItem]);
+                a = alpha(workingImage.pixels[locItem]);
+                
+                // Convert using the matrix
+                newColour = cm.calcNewRPGA(r, g, b, a);
+                
+                //Update the pixel
+                workingImage.pixels[locItem] = newColour;
+            }
+        }
+        workingImage.updatePixels();
+        
+        return (workingImage);        
+    }
+   
+    PImage convertImageToBW(PImage fragment, boolean usingItem)
+    {
         // Convert image to be greyscale
         PImage workingImage = fragment;
         workingImage.filter(GRAY);
 
-        
+        //printToFile.printDebugLine(this, "Converting image to B&W", 1);
         // Now find what the rgb value is for the median bright pixel in the fragment
         // Now it is greyscale, r = g = b
         int[] brightCount = new int[256];
@@ -479,14 +521,14 @@ class SpiralSearch
         
     }
     
-    PImage diffImage(PImage bestStreetFragment)
+    PImage diffBWImages(PImage bestBWStreetFragment, PImage bestBWItemFragment)
     {
         // Need to diff and set pixels to be red where don't match.
         int loc;
         float rStreet;
         float rItem;
         
-        PImage diffImage = createImage(testItemFragment.width, testItemFragment.height, RGB);
+        PImage diffImage = createImage(thisItemImage.width, thisItemImage.height, RGB);
                 
         for (int pixelYPosition = 0; pixelYPosition < thisItemImage.height; pixelYPosition++) 
         {
@@ -494,10 +536,10 @@ class SpiralSearch
             {                    
                 // For street snap
                 loc = pixelXPosition + (pixelYPosition * thisItemImage.width);
-                rStreet = red(bestStreetFragment.pixels[loc]);
+                rStreet = red(bestBWStreetFragment.pixels[loc]);
             
                 // for Item snap
-                rItem = red(testItemFragment.pixels[loc]);
+                rItem = red(bestBWItemFragment.pixels[loc]);
                                 
                 if (rStreet != rItem)
                 {
@@ -506,7 +548,7 @@ class SpiralSearch
                 }
                 else
                 {
-                    diffImage.pixels[loc] = testItemFragment.pixels[loc];
+                    diffImage.pixels[loc] = bestBWItemFragment.pixels[loc];
                 }
             }
         }        
@@ -518,6 +560,96 @@ class SpiralSearch
         return diffImage;
     }
     
+    PImage diffColourImages(PImage bestColStreetFragment, PImage bestColItemFragment, String rgbType)
+    {
+        // Need to diff the component requested and set the pixel to be this shade of grey
+        int loc;
+        float colStreet;
+        float colItem;
+        float diff;
+        float deltaMultiplier;
+        float rgbIncrement;
+        
+        float largestDeltaNeg = 0;
+        float largestDeltaPos = 0;
+        
+        PImage diffImage = createImage(bestColItemFragment.width, bestColItemFragment.height, RGB);
+                
+        for (int pixelYPosition = 0; pixelYPosition < bestColItemFragment.height; pixelYPosition++) 
+        {
+            for (int pixelXPosition = 0; pixelXPosition < bestColItemFragment.width; pixelXPosition++) 
+            {                    
+
+                loc = pixelXPosition + (pixelYPosition * bestColItemFragment.width);
+                switch (rgbType)
+                {
+                    case "red":
+                        colStreet = red(bestColStreetFragment.pixels[loc]);
+                        colItem = red(bestColItemFragment.pixels[loc]);
+                        break;
+                    case "blue":
+                        colStreet = blue(bestColStreetFragment.pixels[loc]);
+                        colItem = blue(bestColItemFragment.pixels[loc]);
+                        break;
+                    case "green":
+                        colStreet = green(bestColStreetFragment.pixels[loc]);
+                        colItem = green(bestColItemFragment.pixels[loc]);
+                        break;
+                    default:
+                        printToFile.printDebugLine(this, "Received invalid parameter of " + rgbType, 3);
+                        return null;
+                }
+
+                diff = colStreet-colItem;
+                // Update the range - used for reporting for now
+                if (diff < largestDeltaNeg)
+                {
+                    largestDeltaNeg = diff;
+                }
+                else if (diff > largestDeltaPos)
+                {
+                    largestDeltaPos = diff;
+                }
+                
+                //printToFile.printDebugLine(this, "Delta for " + rgbType + " at " + pixelXPosition + "," + pixelYPosition + " = " + diff, 1);
+                
+                // Increase range of the diffs so easier to see subtle differences - but ensure is still 0-255
+                //diff = constrain(128 + (5 * diff), (float)0, (float)255);
+                // Now save this back using same value for r, g, b = grey                
+                //diffImage.pixels[loc] = color(diff, diff, diff);
+                
+                deltaMultiplier = 1;
+                rgbIncrement = 50;
+                // If there is no difference in pixels, set to black (0). Otherwise if positive difference, make more red, if negative difference, make bluer.
+                if (diff > 0)
+                {
+                    // make more red
+                    diffImage.pixels[loc] = color(constrain((128 + (diff * deltaMultiplier) + rgbIncrement), (float)0, (float)255), 
+                                                  constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255), 
+                                                  constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255));
+                }
+                else if (diff < 0)
+                {
+                    // make more blue
+                    diffImage.pixels[loc] = color(constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255),
+                                                  constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255), 
+                                                  constrain((128 + (diff * deltaMultiplier) + rgbIncrement), (float)0, (float)255));
+                }
+                else
+                {
+                    diffImage.pixels[loc] = color(0, 0, 0);
+                }
+            }
+        }        
+        
+        printToFile.printDebugLine(this, "Delta range for " + rgbType + " is " + (int)largestDeltaNeg + " to "  + (int)largestDeltaPos, 1);
+        
+        // Update the pixel array for this fragment
+        diffImage.updatePixels();
+    
+        return diffImage;
+   }    
+
     int adjustedPercentMatchCriteria()
     {
         float adjustedPercent;
@@ -616,57 +748,40 @@ class SpiralSearch
         }
         
         PImage BWfragmentDiffImage = null;
+        PImage BWItemFragImage = null;
         PImage BWStreetFragImage = null;
+        PImage colourItemFragImage = null;
         PImage colourStreetFragImage = null;
+        PImage colourfragmentDiffRImage = null;
+        PImage colourfragmentDiffGImage = null;
+        PImage colourfragmentDiffBImage = null;
         MatchInfo RGBInfo = null;
         
-        if (readPercentageMatchInfo() < configInfo.readPercentMatchCriteria())
-        //if (readPercentageMatchInfo() < 200)
-        {
-            if (!usingBlackWhiteComparison)
-            {
-                printToFile.printDebugLine(this, "Unable to generage image of black/red/white fragment - not using black/white comparison", 3);
-                printToFile.printOutputLine("Unable to generage image of black/red/white fragment - not using black/white comparison");
+        // Generate both colour and black/white images as might be useful if being dumped out in cases where not sure why matches are not being found
             
-                colourStreetFragImage = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
-            }
-            else
-            {
-                // Recalculate the part of the street snap that represents the best fit to the item and convert to black and white
-                PImage tempColStreetFragImage = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
-                BWStreetFragImage = convertImage(tempColStreetFragImage, false);
-        
-                // Now carry out a diff of the item with this image
-                BWfragmentDiffImage = diffImage(BWStreetFragImage);
-
-                colourStreetFragImage = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
-            }
-            RGBInfo = new MatchInfo(lowestAvgRGBDiffPerPixel, avgTotalRGBDiffPerPixel, x, y, 
-                                    itemRGBMedian, streetRGBMedian,
-                                    itemTSID, itemImageName, streetImageName,
-                                    colourStreetFragImage, BWStreetFragImage, thisItemImage, testItemFragment, BWfragmentDiffImage);
-        }
-        else
+        // Generate the colour images, and re-tint the item image to match the street
+        colourStreetFragImage = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
+        colourItemFragImage = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
+        if (configInfo.readDebugUseTintedFragment())
         {
-            if (!usingBlackWhiteComparison)
-            {
-                printToFile.printDebugLine(this, "Unable to generage image of black/red/white fragment - not using black/white comparison", 3);
-                printToFile.printOutputLine("Unable to generage image of black/red/white fragment - not using black/white comparison");
-            }
-            else
-            {
-                // Recalculate the part of the street snap that represents the best fit to the item and convert to black and white
-                colourStreetFragImage = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
-                BWStreetFragImage = convertImage(colourStreetFragImage, false);
-        
-                // Now carry out a diff of the item with this image
-                BWfragmentDiffImage = diffImage(BWStreetFragImage);
-            }
-            RGBInfo = new MatchInfo(lowestAvgRGBDiffPerPixel, avgTotalRGBDiffPerPixel, x, y, 
-                                    itemRGBMedian, streetRGBMedian,
-                                    itemTSID, itemImageName, streetImageName, 
-                                    null, null, null, null, BWfragmentDiffImage);
+            colourItemFragImage = applyGeoSettingsToItemImage(colourItemFragImage);
         }
+        colourfragmentDiffRImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "red");
+        colourfragmentDiffGImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "green");
+        colourfragmentDiffBImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "blue");
+            
+        // generate the black & white images and obtain the diff image
+        // Can use copies of the ones above - will then have correct tinting etc
+        PImage tempStreetImage = colourStreetFragImage.get(0, 0, colourStreetFragImage.width, colourStreetFragImage.height);
+        PImage tempItemImage = colourItemFragImage.get(0, 0, colourItemFragImage.width, colourItemFragImage.height);
+        BWStreetFragImage = convertImageToBW(tempStreetImage, false);
+        BWItemFragImage = convertImageToBW(tempItemImage, true);
+        BWfragmentDiffImage = diffBWImages(BWStreetFragImage, BWItemFragImage);
+
+        RGBInfo = new MatchInfo(lowestAvgRGBDiffPerPixel, avgTotalRGBDiffPerPixel, x, y, 
+                                itemRGBMedian, streetRGBMedian,
+                                itemTSID, itemImageName, streetImageName,
+                                colourStreetFragImage, BWStreetFragImage, colourItemFragImage, BWItemFragImage, BWfragmentDiffImage, colourfragmentDiffRImage, colourfragmentDiffGImage, colourfragmentDiffBImage);
         
         return RGBInfo;
     }

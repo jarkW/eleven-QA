@@ -16,6 +16,9 @@ class StreetInfo
     String streetName;
     String hubID;
     
+    // Matrix which is used to adjusts image pixels to match the street colour/saturation etc
+    ColorMatrix cm;
+    
     // list of street snaps and associated images
     ArrayList<PNGFile> streetSnaps;
     StringList skippedStreetSnapNames;
@@ -35,12 +38,7 @@ class StreetInfo
     
     StringList changedItemJSONs;
     
-    // Data read in from G* 
-    int geoTintColor;
-    int geoContrast;
-    int geoTintAmount;
-    int geoSaturation;
-    int geoBrightness;
+    // Data read in from G* which is used elsewhere in class
     int geoHeight;
     int geoWidth;
     
@@ -76,11 +74,6 @@ class StreetInfo
         changedItemJSONs = new StringList();
         numberTimesResultsSortedSoFar = 0;
          
-        geoTintColor = 0;
-        geoContrast = 0;
-        geoTintAmount = 0;
-        geoSaturation = 0;
-        geoBrightness = 0;
         geoHeight = 0;
         geoWidth = 0;
         
@@ -291,6 +284,11 @@ class StreetInfo
     
     boolean readStreetGeoInfo()
     {
+        int geoTintColor = 0;
+        int geoContrast = 0;
+        int geoTintAmount = 0;
+        int geoSaturation = 0;
+        int geoBrightness = 0;
         
         // Now read in information about contrast etc from the G* file if it exists - should have been downloaded to OrigJSONs dir
         String geoFileName = workingDir + File.separatorChar + "OrigJSONs" + File.separatorChar + streetTSID.replaceFirst("L", "G") + ".json";  
@@ -318,13 +316,7 @@ class StreetInfo
         } 
         printToFile.printDebugLine(this, "Reading geo file " + geoFileName, 2);
 
-        // Now chain down to get at the fields in the geo file
-        geoTintColor = 0;
-        geoContrast = 0;
-        geoTintAmount = 0;
-        geoSaturation = 0;
-        geoBrightness = 0;
-                
+        // Now chain down to get at the fields in the geo file               
         JSONObject dynamic = Utils.readJSONObject(json, "dynamic", false);
         if (!Utils.readOkFlag() || dynamic == null)
         {
@@ -366,105 +358,105 @@ class StreetInfo
                 }
                 printToFile.printDebugLine(this, "Geo JSON file " + geoFileName + " gives street snap height " + geoHeight + " snap width " + geoWidth, 1);
                 
-                // Only bother reading in the remaining geo information if not using a black/white comparison method
-                if (!usingBlackWhiteComparison)
-                {
-                    // Don't always have a filtersNew on this layer - if absent, will just use the default values of 0 set up earlier
-                    JSONObject filtersNEW = Utils.readJSONObject(middleground, "filtersNEW", false);
+                // Read in the remaining geo information even if not using a black/white comparison method because might be useful debug info later when dump out images
+
+                // Don't always have a filtersNew on this layer - if absent, will just use the default values of 0 set up earlier
+                JSONObject filtersNEW = Utils.readJSONObject(middleground, "filtersNEW", false);
                 
-                    if (Utils.readOkFlag() && filtersNEW != null)
-                    {
-                        printToFile.printDebugLine(this, "size of filtersNew is " + filtersNEW.size() + " in " + geoFileName, 2);
+                if (Utils.readOkFlag() && filtersNEW != null)
+                {
+                    printToFile.printDebugLine(this, "size of filtersNew is " + filtersNEW.size() + " in " + geoFileName, 2);
                         
-                        // extract the fields inside
-                        // If filtersNew is present, then will report missing values, but still carry on using defaults of 0
-                        
-                        JSONObject filtersNewObject = Utils.readJSONObject(filtersNEW, "tintColor", true);
-                        if (Utils.readOkFlag() && filtersNewObject != null)
-                        {                           
-                            geoTintColor = Utils.readJSONInt(filtersNewObject, "value", true);
-                            if (!Utils.readOkFlag())
-                            {
-                                printToFile.printDebugLine(this, "Failed to read value from tintColor in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
-                                geoTintColor = 0;
-                            }
-                        }
-                        else
+                    // extract the fields inside
+                    // If filtersNew is present, then will report missing values, but still carry on using defaults of 0
+                                                
+                    JSONObject filtersNewObject = Utils.readJSONObject(filtersNEW, "tintAmount", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {                           
+                        geoTintAmount = Utils.readJSONInt(filtersNewObject, "value", true);
+                        if (!Utils.readOkFlag())
                         {
-                            printToFile.printDebugLine(this, "Failed to read tintColor from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
-                            geoTintColor = 0;
-                        }
-                        
-                        filtersNewObject = Utils.readJSONObject(filtersNEW, "contrast", true);
-                        if (Utils.readOkFlag() && filtersNewObject != null)
-                        {                           
-                            geoContrast = Utils.readJSONInt(filtersNewObject, "value", true);
-                            if (!Utils.readOkFlag())
-                            {
-                                printToFile.printDebugLine(this, "Failed to read value from contrast in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
-                                geoContrast = 0;
-                            }
-                        }
-                        else
-                        {
-                            printToFile.printDebugLine(this, "Failed to read contrast from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
-                            geoContrast = 0;
-                        }                        
-                        
-                        filtersNewObject = Utils.readJSONObject(filtersNEW, "tintAmount", true);
-                        if (Utils.readOkFlag() && filtersNewObject != null)
-                        {                           
-                            geoTintAmount = Utils.readJSONInt(filtersNewObject, "value", true);
-                            if (!Utils.readOkFlag())
-                            {
-                                printToFile.printDebugLine(this, "Failed to read value from tintAmount in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
-                                geoTintAmount = 0;
-                            }
-                        }
-                        else
-                        {
-                            printToFile.printDebugLine(this, "Failed to read tintAmount from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                            printToFile.printDebugLine(this, "Failed to read value from tintAmount in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
                             geoTintAmount = 0;
                         }
+                    }
+                    else
+                    {
+                        printToFile.printDebugLine(this, "Failed to read tintAmount from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                        geoTintAmount = 0;
+                    }
                         
-                        filtersNewObject = Utils.readJSONObject(filtersNEW, "saturation", true);
-                        if (Utils.readOkFlag() && filtersNewObject != null)
-                        {                           
-                            geoSaturation = Utils.readJSONInt(filtersNewObject, "value", true);
-                            if (!Utils.readOkFlag())
-                            {
-                                printToFile.printDebugLine(this, "Failed to read value from saturation in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
-                                geoSaturation = 0;
-                            }
-                        }
-                        else
+                    filtersNewObject = Utils.readJSONObject(filtersNEW, "tintColor", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {                           
+                        geoTintColor = Utils.readJSONInt(filtersNewObject, "value", true);
+                        if (!Utils.readOkFlag())
                         {
-                            printToFile.printDebugLine(this, "Failed to read saturation from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                            printToFile.printDebugLine(this, "Failed to read value from tintColor in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                            geoTintColor = 0;
+                            geoTintAmount = 0;
+                        }
+                    }
+                    else
+                    {
+                        printToFile.printDebugLine(this, "Failed to read tintColor from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                        geoTintColor = 0;
+                        geoTintAmount = 0;
+                    }
+                    
+                    filtersNewObject = Utils.readJSONObject(filtersNEW, "contrast", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {                           
+                        geoContrast = Utils.readJSONInt(filtersNewObject, "value", true);
+                        if (!Utils.readOkFlag())
+                        {
+                            printToFile.printDebugLine(this, "Failed to read value from contrast in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                            geoContrast = 0;
+                        }
+                    }
+                    else
+                    {
+                        printToFile.printDebugLine(this, "Failed to read contrast from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                        geoContrast = 0;
+                    }                        
+                     
+                    filtersNewObject = Utils.readJSONObject(filtersNEW, "saturation", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {                           
+                        geoSaturation = Utils.readJSONInt(filtersNewObject, "value", true);
+                        if (!Utils.readOkFlag())
+                        {
+                            printToFile.printDebugLine(this, "Failed to read value from saturation in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
                             geoSaturation = 0;
                         }
-                        
-                        filtersNewObject = Utils.readJSONObject(filtersNEW, "brightness", true);
-                        if (Utils.readOkFlag() && filtersNewObject != null)
-                        {                           
-                            geoBrightness = Utils.readJSONInt(filtersNewObject, "value", true);
-                            if (!Utils.readOkFlag())
-                            {
-                                printToFile.printDebugLine(this, "Failed to read value from brightness in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
-                                geoBrightness = 0;
-                            }
-                        }
-                        else
+                    }
+                    else
+                    {
+                        printToFile.printDebugLine(this, "Failed to read saturation from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                        geoSaturation = 0;
+                    }
+                     
+                    filtersNewObject = Utils.readJSONObject(filtersNEW, "brightness", true);
+                    if (Utils.readOkFlag() && filtersNewObject != null)
+                    {                           
+                        geoBrightness = Utils.readJSONInt(filtersNewObject, "value", true);
+                        if (!Utils.readOkFlag())
                         {
-                            printToFile.printDebugLine(this, "Failed to read brightness from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                            printToFile.printDebugLine(this, "Failed to read value from brightness in filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
                             geoBrightness = 0;
                         }
                     }
                     else
                     {
-                        // This is not an error - but report anyhow 
-                        printToFile.printDebugLine(this, "Reading geo file - failed to read filtersNEW " + geoFileName, 2);
+                        printToFile.printDebugLine(this, "Failed to read brightness from filtersNEW in geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 2);
+                        geoBrightness = 0;
                     }
-                }// end if !using B&W comparison 
+                }
+                else
+                {
+                    // This is not an error - but report anyhow 
+                    printToFile.printDebugLine(this, "Reading geo file - failed to read filtersNEW " + geoFileName, 2);
+                }
             } // if middleground not null
             else
             {
@@ -482,7 +474,13 @@ class StreetInfo
          printToFile.printDebugLine(this, "After reading geo file  " + geoFileName + " TintColor = " + geoTintColor + " TintAmount = " + geoTintAmount +
                                          " geoContrast = " + geoContrast + " geoSaturation = " + geoSaturation + " Brightness = " + geoBrightness, 1);  
           
-         // Everything OK   
+         // Everything OK 
+         
+         // Set up the ColorMatrix which contains the matrix transformation needed to convert pixels in the item fragment so that they are coloured the same as the street
+         cm = new ColorMatrix(geoTintColor, geoTintAmount, geoContrast, geoSaturation, geoBrightness);
+         // Dump out the matrix
+         cm.dumpMatrix();
+
         return true;
     }
     
@@ -650,7 +648,7 @@ class StreetInfo
         // Read in street data - list of item TSIDs 
         if (!readStreetData()) //<>//
         {
-            // error - need to stop
+            // error - need to stop //<>//
             printToFile.printDebugLine(this, "Error in readStreetData", 3);
             okFlag = false;
             return false;
@@ -1266,32 +1264,7 @@ class StreetInfo
     {
         return invalidStreet;
     }
-    
-    public int readGeoTintColor()
-    {
-            return geoTintColor;
-    }
-
-    public int readGeoContrast()
-    {
-        return geoContrast;
-    }
-    
-    public int readGeoTintAmount()
-    {
-        return geoTintAmount;
-    }
-     
-    public int readGeoSaturation()
-    {
-        return geoSaturation;
-    }
-    
-    public int readGeoBrightness()
-    {
-        return geoBrightness;
-    }
-    
+   
     public int readGeoHeight()
     {
         return geoHeight;
@@ -1382,5 +1355,8 @@ class StreetInfo
         }
     }
     
-        
+    public ColorMatrix readCM()
+    {
+        return cm;
+    }
 }

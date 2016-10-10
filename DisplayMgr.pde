@@ -265,11 +265,11 @@ class DisplayMgr
     
     public void showDebugImages(PImage testStreetFragment, PImage testItemFragment, String infoText)
     {
-        if (!configInfo.readDebugShowBWFragments())
+        if (!configInfo.readDebugShowFragments())
         {
             return;
         }
-        // Displays black and white search comparisons
+        // Displays search comparisons
         clearImage(650, 100, 50, 50);
         clearImage(750, 100, 50, 50);
         clearTextBox(650, 200, 200, 50);        

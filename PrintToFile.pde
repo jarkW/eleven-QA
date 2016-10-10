@@ -96,16 +96,19 @@ class PrintToFile {
             printOutputLine("WARNING Changing x,y ONLY of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
         }
         
-        if (!usingBlackWhiteComparison)
+        if (configInfo.readDebugRun())
         {
-            printOutputLine("DEBUG Using Geo data to change image files");
-        }
-        else
-        {
-            printOutputLine("DEBUG Converting images to black/white for compare");
+            // Only print out these messages for my use
+            if (configInfo.readDebugUseTintedFragment())
+            {
+                printOutputLine("DEBUG Using Geo data to change item image for B&W comparison");
+            }
+            else
+            {
+                printOutputLine("DEBUG Using UNTINTED item images for B&W comparison");
+            }
         }
 
-    
         return true;
     } 
     
@@ -476,29 +479,53 @@ class PrintToFile {
                     case SummaryChanges.COORDS_ONLY:
                     case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
                         // Just print out the match information - as the new co-ordinates have already been given
-                        s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                        if (configInfo.readDebugShowPercentMatchAsFloat())
+                        {
+                            s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + ")";
+                        }
+                        else
+                        {
+                            s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                        }
                         s = s + " (" + bestMatchInfo.furthestCoOrdDistance(itemResults.get(i).itemInfo.readOrigItemX(), itemResults.get(i).itemInfo.readOrigItemY()) + "px from original x,y)";
                         break;
                         
                     case SummaryChanges.VARIANT_ONLY:
                     case SummaryChanges.UNCHANGED:
                         // Just print out the match information - as the new co-ordinates have already been given
-                        s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                        if (configInfo.readDebugShowPercentMatchAsFloat())
+                        {
+                            s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + ")";
+                        }
+                        else
+                        {
+                            s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                        }
                         break;
                 
                     case SummaryChanges.MISSING:
                         // Give the match data and the x,y this pertains to.
                         String variant = bestMatchInfo.bestMatchVariant(itemResults.get(i).itemInfo.readItemClassTSID());
-                        s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString();
-                        if (variant.length() > 0)
+                        if (configInfo.readDebugShowPercentMatchAsFloat())
                         {
-                            s = s + ", variant " + variant;
+                            s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + " for x,y " + bestMatchInfo.matchXYString();
+                        }
+                        else
+                        {
+                            s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString();
+                        }
+                        if (configInfo.readDebugRun()) 
+                        {
+                            // Only indicate the variant of this match for my uses - is confusing otherwise
+                            if (variant.length() > 0)
+                            {
+                                s = s + ", variant " + variant;
+                            }
                         }
                         s = s + ")";
                         break;
                 }
             }
-            
             printOutputLine(s);
             
             // Now print out the JSON Diff info if it exists

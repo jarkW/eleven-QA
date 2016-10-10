@@ -125,7 +125,6 @@ PrintToFile printToFile;
 int debugLevel = 3;
 boolean debugToConsole = true;
 boolean doDelay = false;
-boolean usingBlackWhiteComparison = true; // using black/white comparison if this is false, otherwise need to apply the street tint/contrast to item images
 
 Memory memory = new Memory();
 

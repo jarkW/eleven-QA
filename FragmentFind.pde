@@ -239,7 +239,7 @@ class FragmentFind
                 // OK to overwrite bestMatchInfo - as we know we've found a valid item at last
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
+                printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentAsFloatString() + ")", 2);
             }
         }
         
@@ -260,7 +260,7 @@ class FragmentFind
                 // So if the item didn't match, and we enter this leg of code - then consider the search done for this item.
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - searched for 1 quoin image only deduced from previous street snap, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
+                printToFile.printDebugLine(this, "searchForFragment - searched for 1 quoin image only deduced from previous street snap, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentAsFloatString() + ")", 2);
             }
             else if (configInfo.readChangeXYOnly() && thisItemInfo.readItemVariantKey() != "" && !thisItemInfo.readItemClassTSID().equals("wood_tree"))
             {
@@ -270,7 +270,7 @@ class FragmentFind
                 // tree on - so still need to search all tree images to find best x,y.
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - searched for 1 image only, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentString() + ")", 2);
+                printToFile.printDebugLine(this, "searchForFragment - searched for 1 image only, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentAsFloatString() + ")", 2);
             }
 
             // If we reach here, then this is the default use of the tool to determine types as well as co-ordinates, so move on to the next fragment image, if it exists
@@ -359,9 +359,12 @@ class FragmentFind
         if (searchDone)
         {
             // Dump out debug info to give me some idea of whether I've gotten the searchbox the right size or not
+            String s = bestMatchInfo.bestMatchVariant(thisItemInfo.readItemClassTSID());
             printToFile.printDebugLine(this, " Returning from FragmentFound item  found = " + itemFound + " " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemVariant + 
                                         "> old x,y = " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " new x,y " + newItemX + "," + newItemY, 2);
-            printToFile.printDebugLine(this, " and also RGB info is " + bestMatchInfo.bestMatchAvgRGB + "/" + bestMatchInfo.bestMatchAvgTotalRGB + " try " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 2);
+            printToFile.printDebugLine(this, " and best match is " + bestMatchInfo.matchPercentAsFloatString() + " (RGB info is " + bestMatchInfo.bestMatchAvgRGB + "/" + bestMatchInfo.bestMatchAvgTotalRGB + 
+                                        ") for " + s + " - try " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 2);
+            
             if (debugInfo.length() > 0)
             {
                 printToFile.printDebugLine(this, " For reference - " + debugInfo, 2);
