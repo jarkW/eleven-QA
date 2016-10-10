@@ -694,5 +694,29 @@
     "offset_x": -11,
     "offset_y": -54,
     "info": "4"
+  },
+  {
+    "class_tsid": "street_spirit_zutto",
+    "offset_x": -23,
+    "offset_y": -82,
+    "info": "capPurple"
+  },
+  {
+    "class_tsid": "street_spirit_zutto",
+    "offset_x": -25,
+    "offset_y": -82,
+    "info": "capAqua"
+  },
+  {
+    "class_tsid": "street_spirit_zutto",
+    "offset_x": -27,
+    "offset_y": -80,
+    "info": "capOrange"
+  },
+  {
+    "class_tsid": "street_spirit_zutto",
+    "offset_x": -24,
+    "offset_y": -78,
+    "info": "capGreen"
   }
 ]}
