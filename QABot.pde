@@ -37,23 +37,7 @@ import java.text.DecimalFormat;
  *
  */
  
- // Need to fix line in PrintToFile that refers to qa_sketch as now is called something different
-    
- // Seeing more failures in grey region of Brillah. Might need different way of comparing the images so more reliable? For now just leave it.
- 
- // POSSIBLE FUTURE BUG - need to take account of the contrast/brightness of each street and change my item images to reflect this
- // Currently I am doing this with simple black/white setting.
- // Butdo collect the values in readStreetGeoInfo() even though not used. usingGeoInfo flag
- // But at some point might need to be more sophisticated - see eleven-client/src/com/quasimodo/geom/ColorMatrix.as
- // Might need to apply
- // cm.colorize(tin colour, tint amount/100)  tint colour is the RGB but in decimal (in the G* file)
- // cm.adjustContrast(contrast/100)
- // cm.adjustSaturation(saturation/100)
- // cm.adjustBrightness(brightness)
- // restore? cm.filter
- // Basically I think the code just creates a matrix which is then applied to each pixel (in my case the item fragment)
- // in turn.
- // If do this - could reimplemnt the zutto street spirits which are coloured (and as they bounce, give them the extra 15% error margin)   
+// Zutto street vendors bounce up and down too much - can't match reliably. So will not be implemented.
 
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
  // Rather than failing after an hour. So would just check all the JSON files exist for each
