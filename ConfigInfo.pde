@@ -22,6 +22,7 @@ class ConfigInfo {
     boolean debugValidationRun;
     boolean debugUseTintedFragment;
     boolean debugRun;
+    String debugValidationPath;
     
     boolean debugShowPercentMatchAsFloat;
     
@@ -358,7 +359,7 @@ class ConfigInfo {
         if (!Utils.readOkFlag())
         {
             debugDumpDiffImages = false;
-        }
+        }     
         
         // Turns off minor information in output file
         debugRun = Utils.readJSONBool(json, "debug_run", false);
@@ -389,21 +390,20 @@ class ConfigInfo {
             searchRadius = 25;
             changeXYOnly = false;
             writeJSONsToPersdata = false;
-            debugUseTintedFragment = true;
             debugShowPercentMatchAsFloat = true;
             
             //Reset paths to snaps and persdata (so always use the same set of original JSON files)
             
-            String validationPath = Utils.readJSONString(json, "debug_validation_path", true);
-            if (!Utils.readOkFlag() || validationPath.length() == 0)
+            debugValidationPath = Utils.readJSONString(json, "debug_validation_path", true);
+            if (!Utils.readOkFlag() || debugValidationPath.length() == 0)
             {
                 println(Utils.readErrMsg());
                 println("Failed to read debug_validation_path in config.json file");
                 displayMgr.showErrMsg("Failed to read debug_validation_path in config.json file", true);
                 return false;
             }          
-            outputFile = validationPath + File.separatorChar + "validation.txt";
-            streetSnapPath = validationPath + File.separatorChar + "Snaps";
+            outputFile = debugValidationPath + File.separatorChar + "validation.txt";
+            streetSnapPath = debugValidationPath + File.separatorChar + "Snaps";
             myDir = new File(streetSnapPath);
             if (!myDir.exists())
             {
@@ -411,7 +411,7 @@ class ConfigInfo {
                 displayMgr.showErrMsg("Validation street snap archive directory " + streetSnapPath + " does not exist", true);
                 return false;
             }
-            persdataPath = validationPath + File.separatorChar + "JSONs";
+            persdataPath = debugValidationPath + File.separatorChar + "JSONs";
             myDir = new File(persdataPath);
             if (!myDir.exists())
             {
@@ -584,6 +584,11 @@ class ConfigInfo {
         return debugValidationRun;
     }
     
+    public String readDebugValidationPath()
+    {
+        return debugValidationPath;
+    }
+    
     public boolean readDebugShowFragments()
     {
         return debugShowFragments;
@@ -602,6 +607,5 @@ class ConfigInfo {
     public boolean readDebugRun()
     {
         return debugRun;
-    }
-    
+    }    
 }

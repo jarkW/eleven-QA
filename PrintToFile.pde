@@ -1,137 +1,106 @@
-class PrintToFile {
+class PrintToFile 
+{
    
-   // Used for saving debug info
-   PrintWriter debugOutput;
-   PrintWriter infoOutput;
    boolean okFlag;
-   boolean initDebugFileDone;
-   boolean initOutputFileDone;
-   
+ 
    StringList existingOutputText;
     
      // constructor/initialise fields
     public PrintToFile()
     {
         okFlag = true;
-        initDebugFileDone = false;
-        initOutputFileDone = false;
     }
     
     public boolean initPrintToDebugFile()
-    {       
-                
+    { 
+        // Open debug file
+        debugOutput = new OutputFile(workingDir + File.separatorChar + "debug_info.txt", true);  
+        
         // Open debug file
         if (debugLevel > 0)
         {
             // Collecting debug info so open file
-            try
+            if (!debugOutput.openOutputFile())
             {
-                debugOutput = createWriter(workingDir + File.separatorChar + "debug_info.txt");
-            }
-            catch(Exception e)
-            {
-                println(e);
-                // Cannot write this error to debug file ...
-                println("Failed to open debug file");
-                displayMgr.showErrMsg("Failed to open debug file", true);
                 return false;
             }
-        }
-
-        initDebugFileDone = true;        
+        }     
         return true;
-    } 
+    }     
     
     public boolean initPrintToOutputFile()
-    {       
-                        
+    {   
         // Open output file
-        // If file already exists - then rename before creating this output file  
-        if (!renameExistingOutputFile())
-        {
-            return false;
-        }
-
-        // Now have saved any existing Output file contents, can open the output file ready for writing     
-        try
-        {
-            infoOutput = createWriter(configInfo.readOutputFilename());
-        }
-        catch(Exception e)
-        {
-            println(e);
-            printToFile.printDebugLine(this, "Failed to open output file " + configInfo.readOutputFilename(), 3);
-            displayMgr.showErrMsg("Failed to open output file " + configInfo.readOutputFilename(), true);
-            return false;
-        }
-
+        infoOutput = new OutputFile(configInfo.readOutputFilename(), false);
         
-        initOutputFileDone = true;
+        // If file already exists - then rename before creating this output file  
+        if (!renameExistingFile(configInfo.readOutputFilename()))
+        {
+            return false;
+        }
+
+        // Now have saved any existing Output file contents, can open the output file ready for writing  
+        if (!infoOutput.openOutputFile())
+        {
+            return false;
+        }
         
         // Write header information - which just dumps out the settings in the config.json file   
-        if (!configInfo.readUseVagrantFlag())
-        {
-            printOutputLine("Reading/writing files from server " + configInfo.readServerName() + " (** indicates changed JSON file)");
-        }
-        else
-        {
-            printOutputLine("Reading/writing files using vagrant file system (** indicates changed JSON file)");
-        }
-                
-        if (configInfo.readWriteJSONsToPersdata())
-        {
-            printOutputLine("Writing JSON files to persdata (see list of changed files below)");
-        }
-        else
-        {
-            printOutputLine("WARNING No JSON files being written to persdata");
-        }
-        
-        if (!configInfo.readChangeXYOnly())
-        {
-            printOutputLine("Changing x,y and variants of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
-        }
-        else
-        {
-            printOutputLine("WARNING Changing x,y ONLY of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
-        }
-        
-        if (configInfo.readDebugRun())
-        {
-            // Only print out these messages for my use
-            if (configInfo.readDebugUseTintedFragment())
-            {
-                printOutputLine("DEBUG Using Geo data to change item image for B&W comparison");
-            }
-            else
-            {
-                printOutputLine("DEBUG Using UNTINTED item images for B&W comparison");
-            }
-        }
-
+        infoOutput.writeHeaderInfo(false);
         return true;
     } 
     
-    boolean renameExistingOutputFile()
+    public boolean initPrintToValidationSummaryOutputFile()
     {
-        // If the output file already exists, then rename before continuing on
+        // Used to produce summary of streets for a validation run - to make differences easier to find
+        validationSummaryOutput = new OutputFile(configInfo.readDebugValidationPath() + File.separatorChar + "validation_summary.txt", false);
         
-        File f = new File(configInfo.readOutputFilename());
+        if (!configInfo.readDebugValidationRun())
+        {
+            // output structure should not not set up, flag remains set to false so will never be written to or closed
+            return true;
+        }
+        // Open output file
+        // If file already exists - then rename before creating this validation summary output file
+        if (!renameExistingFile(configInfo.readDebugValidationPath() + File.separatorChar + "validation_summary.txt"))
+        {
+            return false;
+        }
+
+        // Now have saved any existing validation file contents, can open the file ready for writing 
+        if (!validationSummaryOutput.openOutputFile())
+        {
+            return false;
+        }
+        
+        // Write header information - which just dumps out the settings in the config.json file   
+        validationSummaryOutput.writeHeaderInfo(true);
+        
+        // Add in reminder line to file about what is being dumped
+        printValidationSummaryOutputLine("Only changed items are being reported in this file - see validation.txt for the full picture");
+        return true;
+    } 
+    
+    boolean renameExistingFile(String existingFname)
+    {
+        // If the file already exists, then rename before continuing on
+        
+        File f = new File(existingFname);
         if (!f.exists())
         {
             // Does not exist - so OK to continue
             return true;
         }
-        
+
         // Output file already exists. So rename
-        String outputFileName = f.getName();
-        String outputFileNamePrefix = outputFileName.replace(".txt", "");
-        String outputFileDir = configInfo.readOutputFilename().replace(File.separatorChar + outputFileName, "");
-        String [] outputFiles = Utils.loadFilenames(outputFileDir, outputFileNamePrefix, ".txt");
-        if (outputFiles.length == 0)
+        String fileName = f.getName();
+        String fileNamePrefix = fileName.replace(".txt", "");
+        String fileDir = existingFname.replace(File.separatorChar + fileName, "");
+        String [] files = Utils.loadFilenames(fileDir, fileNamePrefix, ".txt");
+        if (files.length == 0)
         {
-            println("Unexpected error setting up outputfile ", configInfo.readOutputFilename(), " - please remove all versions of the outputfile before retrying");
-            displayMgr.showErrMsg("Unexpected error setting up outputfile " + configInfo.readOutputFilename() + " - please remove all versions of the outputfile before retrying", true);
+            println("Unexpected error setting up file " + existingFname + " - please remove all versions of the file before retrying");
+            displayMgr.showErrMsg("Unexpected error setting up file " + existingFname + " - please remove all versions of the file before retrying", true);
             return false;
         }
 
@@ -140,14 +109,14 @@ class PrintToFile {
         // the attempt to rename outputFile to outputFile_2 will fail. But this is the simplest way of renaming a file
         // because the loadFilenames function returns files in alphabetical order so outputFile22 is earlier in the list than 
         // outputFile_8 ... 
-        String destFilename = outputFileDir + File.separatorChar + outputFileNamePrefix + "_" + outputFiles.length + ".txt";
+        String destFilename = fileDir + File.separatorChar + fileNamePrefix + "_" + files.length + ".txt";
         File destFile = new File(destFilename);
         try
         {
             if (!f.renameTo(destFile))
             {
-                println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
-                displayMgr.showErrMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying", true);
+                println("Error attempting to move " + existingFname + " to ", destFilename + " - please remove all versions of the file before retrying");
+                displayMgr.showErrMsg("Error attempting to move " + existingFname + " to " + destFilename + " - please remove all versions of the file before retrying", true);
                 return false;
             }
         }
@@ -155,26 +124,20 @@ class PrintToFile {
         {
              // if any error occurs
              e.printStackTrace();  
-             println("Error attempting to move ", configInfo.readOutputFilename(), " to ", destFilename, " - please remove all versions of the outputfile before retrying");
-             displayMgr.showErrMsg("Error attempting to move " + configInfo.readOutputFilename() + " to " + destFilename + " - please remove all versions of the outputfile before retrying", true);
+             println("Error attempting to move " + existingFname + " to " + destFilename + " - please remove all versions of the file before retrying");
+             displayMgr.showErrMsg("Error attempting to move " + existingFname + " to " + destFilename + " - please remove all versions of the file before retrying", true);
              return false;
         }
         
-        println("Moving ", configInfo.readOutputFilename(), " to ", destFilename);
-        displayMgr.showInfoMsg("Moving " + configInfo.readOutputFilename() + " to " + destFilename);
+        println("Moving " + existingFname + " to " + destFilename);
+        displayMgr.showInfoMsg("Moving " + existingFname + " to " + destFilename);
         return true;
     }
  
     // Used to just print debug information - so can filter out minor messages
     // if not needed
     public void printDebugLine(Object callingClass, String lineToWrite, int severity)
-    {
-        // Do nothing if not yet initialised this object
-        if (!initDebugFileDone)
-        {
-            return;
-        }
-       
+    {     
         // Do nothing if not collecting debug info
         if (debugLevel == 0)
         {
@@ -193,10 +156,8 @@ class PrintToFile {
             }
         
             // Output line 
-            debugOutput.println(s + methodName + ":\t" + lineToWrite);
-            debugOutput.flush();
+            debugOutput.printLine(s + methodName + ":\t" + lineToWrite);
         }
-        
     }
     
     // prints out line to file which tells the user what the tool actually did/found
@@ -209,388 +170,64 @@ class PrintToFile {
             println(lineToWrite);
         }
         
-        // Do nothing if not yet initialised this object
-        if (!initOutputFileDone)
-        {
-            return;
-        }
-        
         // Output line 
-        infoOutput.println(lineToWrite);
-        infoOutput.flush();
+        infoOutput.printLine(lineToWrite);
+    }
+
+    public void printValidationSummaryOutputLine(String lineToWrite)
+    {               
+        // Output line 
+        validationSummaryOutput.printLine(lineToWrite);
     }
     
     public void closeOutputFile()
     {
-        // Do nothing if not yet initialised this object
-        if (!initOutputFileDone)
-        {
-            return;
-        }
-        
-        //flush stream
-        try
-        {
-            infoOutput.flush();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();  
-            println("Exception error attempting to flush " + configInfo.readOutputFilename());
-        }
-        
-        //close stream
-        try
-        {
-            infoOutput.close();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();  
-            println("Exception error attempting to close " + configInfo.readOutputFilename());
-            return;
-        }
-        println("Successfully closed output file " + configInfo.readOutputFilename());
+        infoOutput.closeFile();
         return;
     }
     
     public void closeDebugFile()
     {
-        // Do nothing if not yet initialised this object
-        if (!initDebugFileDone)
-        {
-            return;
-        }
-        
-        //Flush stream
-        try
-        {
-            debugOutput.flush();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();  
-            println("Exception error attempting to flush " + workingDir + File.separatorChar + "debug_info.txt");
-        }
-
-        // Now close it
-        try
-        {
-            debugOutput.close();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();  
-            println("Exception error attempting to close " + workingDir + File.separatorChar + "debug_info.txt");
-            return;
-        }
-        System.out.println("Successfully closed debug file " + workingDir + File.separatorChar + "debug_info.txt");
+        debugOutput.closeFile();
         return;
     }
     
+    public void closevalidationSummaryOutputFile()
+    {
+        validationSummaryOutput.closeFile();
+        return;
+    }
+        
     public void printSummaryHeader()
     {
-        String s = "============================================================================================";
-        printOutputLine(s);
-        s = "\nResults for " + streetInfo.readStreetName() + " (" + streetInfo.readStreetTSID() + ")";
-        printOutputLine(s);
-               
-        // print out information about skipped street snaps
-        if (streetInfo.readSkippedStreetSnapCount() > 0)
+        infoOutput.writeStreetHeaderInfo();
+        if (configInfo.readDebugValidationRun())
         {
-            for (int i = 0; i < streetInfo.readSkippedStreetSnapCount(); i++)
-            {
-                s = "Skipped street snap (wrong size): " + streetInfo.readSkippedStreetSnapName(i);
-                printOutputLine(s);
-            }
+            validationSummaryOutput.writeStreetHeaderInfo();
         }
-        s = "Searched " + streetInfo.readValidStreetSnapCount() + " valid street snaps of correct size " + streetInfo.readGeoWidth() + "x" + streetInfo.readGeoHeight() + " pixels";
-        printOutputLine(s);
-        
-        // Print information about any special quoin defaulting which might have happened e.g. because Ancestral Lands
-        // For the default case nothing is printed
-        s = streetInfo.readQuoinDefaultingInfo();
-        if (s.length() > 0)
-        {
-            printOutputLine(s);
-        }
-        // This warning message is only ever written for problems with Rainbow Run where quoins are reset
-        s = streetInfo.readQuoinDefaultingWarningMsg();
-        if (s.length() > 0)
-        {
-            printOutputLine(s);
-        }
+        return; 
     }
     
-    public boolean printSummaryData(ArrayList<SummaryChanges> itemResults)
+    public boolean printOutputSummaryData(ArrayList<SummaryChanges> itemResults)
     {
-        String s;
-        // Now print out the summary array
-  
-        // Sort array by x co-ord so listing items from L to R
-        // There won't be any colocated items because these have already been resolved
-        Collections.sort(itemResults);
-       
-        int missingCount = 0;
-        int skippedCount = 0;
-        int quoinEnergy = 0;
-        int quoinMood = 0;
-        int quoinCurrants = 0;
-        int quoinTime = 0;
-        int quoinFavor = 0;
-        int quoinXP = 0;
-        int quoinMystery = 0;
-        
-        MatchInfo bestMatchInfo;
-                
-        for (int i = 0; i < itemResults.size(); i++)
+        if (!infoOutput.printSummaryData(itemResults, false))
         {
-            s = "";
-            if (itemResults.get(i).itemInfo.readSaveChangedJSONfile())
+            return false;
+        }
+        if (configInfo.readDebugValidationRun())
+        {
+            if (!validationSummaryOutput.printSummaryData(itemResults, true))
             {
-                // Used to clearly show if JSON has been changed
-                s = "** ";
-            }
-            
-            switch (itemResults.get(i).readResult())
-            {
-                case SummaryChanges.SKIPPED:
-                    s = s + "SKIPPED " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                    s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
-                    skippedCount++;
-                    break;    
-                            
-                case SummaryChanges.MISSING:
-                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
-                    {
-                        s = s + "MISSING quoin " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
-                        if (!configInfo.readChangeXYOnly())
-                        {
-                            s = s + " defaulted to (mystery/placement tester)";
-                        }
-                    }
-                    else
-                    {
-                         s = s + "MISSING " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                         s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
-                    }
-                    missingCount++;
-                    break; 
-                            
-                case SummaryChanges.COORDS_ONLY:
-                    s = s + "Changed co-ords " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
-                    {
-                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
-                    }
-                    else
-                    {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
-                    }
-                    break;
-                         
-                case SummaryChanges.VARIANT_ONLY:
-                    s = s + "Changed variant " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
-                    {
-                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
-                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
-                    }
-                    else
-                    {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemVariant());
-                        if (itemResults.get(i).itemInfo.readOrigItemVariant().length() > 0)
-                        {
-                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant()) + ")";
-                        }
-                        else
-                        {
-                            s = s + " (inserted variant field)";
-                        }
-                    }
-                    break;
-                            
-                case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
-                    s = s + "Changed variant & co-ords " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
-                    {
-                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
-                        s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
-                    }
-                    else
-                    {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemVariant());
-                        if (itemResults.get(i).itemInfo.readOrigItemVariant().length() > 0)
-                        {
-                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant()) + ")";
-                        }
-                        else
-                        {
-                            s = s + " (inserted variant field)";
-                        }
-                    }
-                    break;
-                    
-                case SummaryChanges.UNCHANGED:
-                    s = s + "Unchanged ";
-                    s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
-
-                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
-                    {
-                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
-                    }
-                    else
-                    {
-                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
-                    }
-                    break;
-                            
-                default:
-                    printDebugLine(this, "Unexpected results type " + itemResults.get(i).readResult(), 3);
-                    displayMgr.showErrMsg("Unexpected results type " + itemResults.get(i).readResult(), true);
-                    failNow = true;
-                    return false;  
-            }
-                        
-            s = s + " at x,y " + itemResults.get(i).readItemX() + "," + itemResults.get(i).readItemY();
-            if (itemResults.get(i).readResult() == SummaryChanges.COORDS_ONLY || itemResults.get(i).readResult() == SummaryChanges.VARIANT_AND_COORDS_CHANGED)
-            {
-                s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemX() + "," +  itemResults.get(i).itemInfo.readOrigItemY() + ")"; 
-            }
-
-            // Now add some information about the efficiency of the match
-            if (itemResults.get(i).readResult() != SummaryChanges.SKIPPED)
-            {
-                bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
-                if (!bestMatchInfo.saveBestDiffImageFiles())
-                {
-                    // Error has been logged by the function - just return failure case
-                    displayMgr.showErrMsg("Unable to save best match images ", true);
-                    failNow = true;
-                    return false;  
-                }
-                
-                // Dump out RGB info to file
-                printToFile.printDebugLine(this, bestMatchInfo.dumpRGBInfo(), 1);
-
-                switch (itemResults.get(i).readResult())
-                {
-                    case SummaryChanges.COORDS_ONLY:
-                    case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
-                        // Just print out the match information - as the new co-ordinates have already been given
-                        if (configInfo.readDebugShowPercentMatchAsFloat())
-                        {
-                            s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + ")";
-                        }
-                        else
-                        {
-                            s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
-                        }
-                        s = s + " (" + bestMatchInfo.furthestCoOrdDistance(itemResults.get(i).itemInfo.readOrigItemX(), itemResults.get(i).itemInfo.readOrigItemY()) + "px from original x,y)";
-                        break;
-                        
-                    case SummaryChanges.VARIANT_ONLY:
-                    case SummaryChanges.UNCHANGED:
-                        // Just print out the match information - as the new co-ordinates have already been given
-                        if (configInfo.readDebugShowPercentMatchAsFloat())
-                        {
-                            s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + ")";
-                        }
-                        else
-                        {
-                            s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
-                        }
-                        break;
-                
-                    case SummaryChanges.MISSING:
-                        // Give the match data and the x,y this pertains to.
-                        String variant = bestMatchInfo.bestMatchVariant(itemResults.get(i).itemInfo.readItemClassTSID());
-                        if (configInfo.readDebugShowPercentMatchAsFloat())
-                        {
-                            s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + " for x,y " + bestMatchInfo.matchXYString();
-                        }
-                        else
-                        {
-                            s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString();
-                        }
-                        if (configInfo.readDebugRun()) 
-                        {
-                            // Only indicate the variant of this match for my uses - is confusing otherwise
-                            if (variant.length() > 0)
-                            {
-                                s = s + ", variant " + variant;
-                            }
-                        }
-                        s = s + ")";
-                        break;
-                }
-            }
-            printOutputLine(s);
-            
-            // Now print out the JSON Diff info if it exists
-            if (configInfo.readDebugValidationRun() && itemResults.get(i).itemInfo.readValidationInfo().length() > 0)
-            {
-                printOutputLine(itemResults.get(i).itemInfo.readValidationInfo());
-            }
-
-            if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
-            {
-                switch (itemResults.get(i).itemInfo.readNewItemVariant())
-                {
-                    case "xp":
-                        quoinXP++;
-                        break;
-                        
-                    case "energy":
-                        quoinEnergy++;
-                        break;
-                        
-                    case "mood":
-                        quoinMood++;
-                        break;
-                        
-                    case "currants":
-                        quoinCurrants++;
-                        break;
-                        
-                    case "time":
-                        quoinTime++;
-                        break;
-                        
-                    case "favor":
-                        quoinFavor++;
-                        break;
-                        
-                    case "mystery":
-                        quoinMystery++;
-                        break;
-                        
-                    default:
-                        printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemVariant(), 3);
-                        displayMgr.showErrMsg("Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemVariant(), true);
-                        failNow = true;
-                        return false;
-                }
+                return false;
             }
         }
-        
-        // Just dump out number of quoins
-        s = "\nSkipped " + skippedCount + " items, missing " + missingCount + " items";
-        printOutputLine(s);
-        
-        s = "Quoin count is: XP=" + quoinXP + "   energy=" + quoinEnergy + "   mood=" + quoinMood +
-            "   currants=" + quoinCurrants +"   favor=" + quoinFavor +"   time=" + quoinTime +"   mystery=" + quoinMystery +
-            " Total=" + (quoinXP + quoinEnergy + quoinMood + quoinCurrants + quoinFavor + quoinTime + quoinMystery);
 
-        printOutputLine(s);
-        printOutputLine("\n");
         return true;
-    }
-    
+    }   
           
     public boolean readOkFlag()
     {
         return (okFlag);
     }
+    
 }

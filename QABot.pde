@@ -78,6 +78,11 @@ String downloadString;
 // Handles connection to server
 Sftp QAsftp;
 
+// Handles all text output
+OutputFile debugOutput;
+OutputFile infoOutput;
+OutputFile validationSummaryOutput;
+
 // missing item co-ordinates - if set to this, know not found
 final static int MISSING_COORDS = 32700;
 
@@ -140,7 +145,7 @@ public void setup()
         failNow = true;
         return;
     }
-                  
+                     
     // Find the directory that contains the config.json 
     workingDir = "";
     if (!validConfigJSONLocation())
@@ -214,6 +219,18 @@ public void draw()
                 displayMgr.showErrMsg("Error opening output file", true);
                 failNow = true;
                 return;
+            }
+            
+            // Set up the file which will contain a summary of validation changes (easier to compare against previous validation runs)
+            if (configInfo.readDebugValidationRun())
+            {
+                if (!printToFile.initPrintToValidationSummaryOutputFile())
+                {
+                    println("Error opening output file");
+                    displayMgr.showErrMsg("Error opening output file", true);
+                    failNow = true;    
+                    return;
+                }
             }
             
             printToFile.printDebugLine(this, "Timestamp: " + nf(hour(),2) + nf(minute(),2) + nf(second(),2), 1);
@@ -600,6 +617,10 @@ void doExitCleanUp()
     // Close the output/debug files
     printToFile.closeOutputFile();
     printToFile.closeDebugFile();
+    if (configInfo.readDebugValidationRun())
+    {
+        printToFile.closevalidationSummaryOutputFile();
+    }
 
 }
 

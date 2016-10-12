@@ -1,0 +1,512 @@
+class OutputFile
+{
+    PrintWriter output;
+    boolean initFlag;
+    String fname;
+    boolean isDebugFile;
+        
+    public OutputFile(String filename, boolean debugFileFlag)
+    {
+        output = null;
+        initFlag = false;
+        fname = filename;
+        isDebugFile = debugFileFlag;
+    }
+        
+    public boolean openOutputFile()
+    {
+        // open the file ready for writing     
+        try
+        {
+            output = createWriter(fname);
+        }
+        catch(Exception e)
+        {
+            println(e);
+            if (isDebugFile)
+            {
+                // Cannot write this error to debug file ...
+                println("Failed to open debug file");
+            }
+            else
+            {
+                printToFile.printDebugLine(this, "Failed to open file " + fname, 3);
+            }
+            displayMgr.showErrMsg("Failed to open file " + fname, true);
+            return false;
+        }
+        
+        initFlag = true;
+        return true;
+    }
+        
+    public void writeHeaderInfo(boolean validationFlag)
+    {
+     
+        String s;
+        
+        // Write header information - which just dumps out the settings in the config.json file   
+        if (!configInfo.readUseVagrantFlag())
+        {
+            s = "Reading/writing files from server " + configInfo.readServerName();
+        }
+        else
+        {
+            s = "Reading/writing files using vagrant file system";
+        }
+        if (!validationFlag)
+        {
+            s = s + " (** indicates changed JSON file)";
+        }
+        printLine(s);
+            
+        if (configInfo.readWriteJSONsToPersdata())
+        {
+            printLine("Writing JSON files to persdata (see list of changed files below)");
+        }
+        else
+        {
+            printLine("WARNING No JSON files being written to persdata");
+        }
+    
+        if (!configInfo.readChangeXYOnly())
+        {
+            printLine("Changing x,y and variants of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
+        }
+        else
+        {
+            printLine("WARNING Changing x,y ONLY of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
+        }
+    
+        if (configInfo.readDebugRun())
+        {
+            // Only print out these messages for my use
+            if (configInfo.readDebugUseTintedFragment())
+            {
+                printLine("DEBUG Using Geo data to change item image for B&W comparison");
+            }
+            else
+            {
+                printLine("DEBUG Using UNTINTED item images for B&W comparison");
+            }
+        }
+    }
+    
+    public void printLine(String info)
+    {
+    
+        // Do nothing if not yet initialised this object
+        if (!initFlag)
+        {
+            return;
+        }
+    
+        // Output line 
+        output.println(info);
+        output.flush();
+    }
+    
+    public void writeStreetHeaderInfo()
+    {
+        String s = "============================================================================================";
+        printLine(s);
+        s = "\nResults for " + streetInfo.readStreetName() + " (" + streetInfo.readStreetTSID() + ")";
+        printLine(s);
+           
+        // print out information about skipped street snaps
+        if (streetInfo.readSkippedStreetSnapCount() > 0)
+        {
+            for (int i = 0; i < streetInfo.readSkippedStreetSnapCount(); i++)
+            {
+                s = "Skipped street snap (wrong size): " + streetInfo.readSkippedStreetSnapName(i);
+                printLine(s);
+            }
+        }
+        s = "Searched " + streetInfo.readValidStreetSnapCount() + " valid street snaps of correct size " + streetInfo.readGeoWidth() + "x" + streetInfo.readGeoHeight() + " pixels";
+        printLine(s);
+    
+        // Print information about any special quoin defaulting which might have happened e.g. because Ancestral Lands
+        // For the default case nothing is printed
+        s = streetInfo.readQuoinDefaultingInfo();
+        if (s.length() > 0)
+        {
+            printLine(s);
+        }
+        // This warning message is only ever written for problems with Rainbow Run where quoins are reset
+        s = streetInfo.readQuoinDefaultingWarningMsg();
+        if (s.length() > 0)
+        {
+            printLine(s);
+        }
+        return;
+    }
+ 
+    public boolean printSummaryData(ArrayList<SummaryChanges> itemResults, boolean validationSummaryFlag)
+    {
+        String s;
+        // Now print out the summary array - what is printed depends on the flag
+  
+        // Sort array by x co-ord so listing items from L to R
+        // There won't be any colocated items because these have already been resolved
+        Collections.sort(itemResults);
+   
+        int missingCount = 0;
+        int skippedCount = 0;
+        int quoinEnergy = 0;
+        int quoinMood = 0;
+        int quoinCurrants = 0;
+        int quoinTime = 0;
+        int quoinFavor = 0;
+        int quoinXP = 0;
+        int quoinMystery = 0;
+        int nosChangedItems = 0;
+    
+        MatchInfo bestMatchInfo;
+            
+        for (int i = 0; i < itemResults.size(); i++)
+        {
+            s = "";
+            if (!validationSummaryFlag && itemResults.get(i).itemInfo.readSaveChangedJSONfile())
+            {
+                // Used to clearly show if JSON has been changed
+                s = "** ";
+            }
+        
+            switch (itemResults.get(i).readResult())
+            {
+                case SummaryChanges.SKIPPED:
+                    s = s + "SKIPPED " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                    s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
+                    skippedCount++;
+                    break;    
+                        
+                case SummaryChanges.MISSING:
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        s = s + "MISSING quoin " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        if (!configInfo.readChangeXYOnly())
+                        {
+                            s = s + " defaulted to (mystery/placement tester)";
+                        }
+                    }
+                    else
+                    {
+                         s = s + "MISSING " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                         s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
+                    }
+                    missingCount++;
+                    break; 
+                        
+                case SummaryChanges.COORDS_ONLY:
+                    if (!validationSummaryFlag)
+                    {
+                        s = s + "Changed co-ords ";
+                    }
+                    s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                    }
+                    else
+                    {
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
+                    }
+                    nosChangedItems++;
+                    break;
+                     
+                case SummaryChanges.VARIANT_ONLY:
+                    if (!validationSummaryFlag)
+                    {
+                        s = s + "Changed variant ";
+                    }
+                    s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
+                        if (!validationSummaryFlag)
+                        {
+                            s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        }
+                    }
+                    else
+                    {
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemVariant());
+                    }
+                    if (!validationSummaryFlag)
+                    {
+                        if (itemResults.get(i).itemInfo.readOrigItemVariant().length() > 0)
+                        {
+                            s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant()) + ")";
+                        }
+                        else
+                        {
+                            s = s + " (inserted variant field)";
+                        }
+                    }
+                    nosChangedItems++;
+                    break;
+                        
+                case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
+                    if (!validationSummaryFlag)
+                    {
+                        s = s + "Changed variant & co-ords ";
+                    }
+                    s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        s = s + "(" + itemResults.get(i).itemInfo.readNewItemClassName() + ")";
+                        if (!validationSummaryFlag)
+                        {
+                            s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                        }
+                    }
+                    else
+                    {
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readNewItemVariant());
+                        if (!validationSummaryFlag)
+                        {
+                            if (itemResults.get(i).itemInfo.readOrigItemVariant().length() > 0)
+                            {
+                                s = s + " (was " + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant()) + ")";
+                            }
+                            else
+                            {
+                                s = s + " (inserted variant field)";
+                            }
+                        }
+                    }
+                    nosChangedItems++;
+                    break;
+                
+                case SummaryChanges.UNCHANGED:
+                    s = s + "Unchanged ";
+                    s = s + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
+
+                    if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
+                    }
+                    else
+                    {
+                        s = s + Utils.formatItemInfoString(itemResults.get(i).itemInfo.readOrigItemVariant());
+                    }
+                    break;
+                        
+                default:
+                    printToFile.printDebugLine(this, "Unexpected results type " + itemResults.get(i).readResult(), 3);
+                    displayMgr.showErrMsg("Unexpected results type " + itemResults.get(i).readResult(), true);
+                    failNow = true;
+                    return false;  
+            }
+            
+            // In in the co-ordinate information
+            s = s + " at x,y " + itemResults.get(i).readItemX() + "," + itemResults.get(i).readItemY();
+            
+            // Omit the efficiency information in the validation summary file
+            if (!validationSummaryFlag)
+            {
+                if (itemResults.get(i).readResult() == SummaryChanges.COORDS_ONLY || itemResults.get(i).readResult() == SummaryChanges.VARIANT_AND_COORDS_CHANGED)
+                {
+                    s = s + " (was " + itemResults.get(i).itemInfo.readOrigItemX() + "," +  itemResults.get(i).itemInfo.readOrigItemY() + ")"; 
+                }
+
+                // Now add some information about the efficiency of the match
+                if (itemResults.get(i).readResult() != SummaryChanges.SKIPPED)
+                {
+                    bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
+                    if (!bestMatchInfo.saveBestDiffImageFiles())
+                    {
+                        // Error has been logged by the function - just return failure case
+                        displayMgr.showErrMsg("Unable to save best match images ", true);
+                        failNow = true;
+                        return false;  
+                    }
+            
+                    // Dump out RGB info to file
+                    printToFile.printDebugLine(this, bestMatchInfo.dumpRGBInfo(), 1);
+
+                    switch (itemResults.get(i).readResult())
+                    {
+                        case SummaryChanges.COORDS_ONLY:
+                        case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
+                            // Just print out the match information - as the new co-ordinates have already been given
+                            if (configInfo.readDebugShowPercentMatchAsFloat())
+                            {
+                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + ")";
+                            }
+                            else
+                            {
+                                s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                            }
+                            s = s + " (" + bestMatchInfo.furthestCoOrdDistance(itemResults.get(i).itemInfo.readOrigItemX(), itemResults.get(i).itemInfo.readOrigItemY()) + "px from original x,y)";
+                            break;
+                    
+                        case SummaryChanges.VARIANT_ONLY:
+                        case SummaryChanges.UNCHANGED:
+                            // Just print out the match information - as the new co-ordinates have already been given
+                            if (configInfo.readDebugShowPercentMatchAsFloat())
+                            {
+                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + ")";
+                            }
+                            else
+                            {
+                                s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                            }
+                            break;
+                    
+                        case SummaryChanges.MISSING:
+                            // Give the match data and the x,y this pertains to.
+                            String variant = bestMatchInfo.bestMatchVariant(itemResults.get(i).itemInfo.readItemClassTSID());
+                            if (configInfo.readDebugShowPercentMatchAsFloat())
+                            {
+                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + " for x,y " + bestMatchInfo.matchXYString();
+                            }
+                            else
+                            {
+                                s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString();
+                            }
+                            if (configInfo.readDebugRun()) 
+                            {
+                                // Only indicate the variant of this match for my uses - is confusing otherwise
+                                if (variant.length() > 0)
+                                {
+                                    s = s + ", variant " + variant;
+                                }
+                            }
+                            s = s + ")";
+                            break;
+                            
+                        case SummaryChanges.SKIPPED:
+                            break;
+                    }// end switch
+                }// end if !skipped
+            }
+            // Only print the line for the summary validation file if something was actually changed
+            if (validationSummaryFlag)
+            {
+                switch (itemResults.get(i).readResult())
+                {
+                    case SummaryChanges.COORDS_ONLY:
+                    case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
+                    case SummaryChanges.VARIANT_ONLY:
+                        printLine(s);
+                        break;
+                        
+                    case SummaryChanges.UNCHANGED:
+                    case SummaryChanges.MISSING:
+                    case SummaryChanges.SKIPPED:
+                        // Nothing to print
+                        break;
+                }
+            }
+            else
+            {
+                printLine(s);
+            }
+            // Now print out the JSON Diff info if it exists into the full validation output file (not the summary validation file)
+            if (!validationSummaryFlag && configInfo.readDebugValidationRun() && itemResults.get(i).itemInfo.readValidationInfo().length() > 0)
+            {
+                printLine(itemResults.get(i).itemInfo.readValidationInfo());
+            }
+
+            if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
+            {
+                switch (itemResults.get(i).itemInfo.readNewItemVariant())
+                {
+                    case "xp":
+                    quoinXP++;
+                    break;
+                    
+                case "energy":
+                    quoinEnergy++;
+                    break;
+                    
+                case "mood":
+                    quoinMood++;
+                    break;
+                    
+                case "currants":
+                    quoinCurrants++;
+                    break;
+                    
+                case "time":
+                    quoinTime++;
+                    break;
+                    
+                case "favor":
+                    quoinFavor++;
+                    break;
+                    
+                case "mystery":
+                    quoinMystery++;
+                    break;
+                    
+                default:
+                    printToFile.printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemVariant(), 3);
+                    displayMgr.showErrMsg("Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemVariant(), true);
+                    failNow = true;
+                    return false;
+                }
+            }
+        }
+    
+        if (validationSummaryFlag)
+        {
+            s = "Number of changed items = " + nosChangedItems;
+        }
+        else
+        {
+            // Just dump out number of quoins
+            s = "\nSkipped " + skippedCount + " items, missing " + missingCount + " items";
+            printLine(s);
+    
+            s = "Quoin count is: XP=" + quoinXP + "   energy=" + quoinEnergy + "   mood=" + quoinMood +
+                "   currants=" + quoinCurrants +"   favor=" + quoinFavor +"   time=" + quoinTime +"   mystery=" + quoinMystery +
+                " Total=" + (quoinXP + quoinEnergy + quoinMood + quoinCurrants + quoinFavor + quoinTime + quoinMystery);
+
+            printLine(s);
+        }
+        s = s + "\n";
+        printLine(s);   
+        return true;
+    }
+    
+    public void closeFile()
+    {
+        if (!initFlag)
+        {
+            return;
+        }
+    
+        //flush stream
+        try
+        {
+            output.flush();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();  
+            println("Exception error attempting to flush " + fname);
+        }
+    
+        //close stream
+        try
+        {
+            output.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();  
+            println("Exception error attempting to close " + fname);
+            return;
+        }
+        println("Successfully closed file " + fname);
+        return;
+    }
+    
+    public boolean readInitFlag()
+    {
+        return initFlag;
+    }
+}
