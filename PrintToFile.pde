@@ -2,6 +2,7 @@ class PrintToFile
 {
    
    boolean okFlag;
+   String timestamp;
  
    StringList existingOutputText;
     
@@ -9,6 +10,7 @@ class PrintToFile
     public PrintToFile()
     {
         okFlag = true;
+        timestamp = nf(day(),2) + "/" + nf(month(),2) + "/" + year() + "   " + nf(hour(),2) + ":" + nf(minute(),2) + ":" + nf(second(),2);
     }
     
     public boolean initPrintToDebugFile()
@@ -24,7 +26,9 @@ class PrintToFile
             {
                 return false;
             }
-        }     
+        } 
+        // Print timestamp at top of file
+        printDebugLine(this, timestamp, 3);             
         return true;
     }     
     
@@ -45,7 +49,8 @@ class PrintToFile
             return false;
         }
         
-        // Write header information - which just dumps out the settings in the config.json file   
+        // Write header information - which just dumps out the settings in the config.json file 
+        printOutputLine(timestamp);      
         infoOutput.writeHeaderInfo(false);
         return true;
     } 
@@ -74,6 +79,7 @@ class PrintToFile
         }
         
         // Write header information - which just dumps out the settings in the config.json file   
+        printValidationSummaryOutputLine(timestamp);  
         validationSummaryOutput.writeHeaderInfo(true);
         
         // Add in reminder line to file about what is being dumped
