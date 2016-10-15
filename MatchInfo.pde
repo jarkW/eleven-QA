@@ -94,6 +94,8 @@
                 BWStreetFragment = null;
                 ColourStreetFragment = null;
             }
+            
+            printToFile.printDebugLine(this, "Creating matchinfo entry for " + TSID + " " + itemImageFname + " avgRGB=" + bestMatchAvgRGB + " totalAvgRGB=" + bestMatchAvgTotalRGB + " = " + percentageMatch + "%", 1);
         }
         
         public String matchDebugInfoString()

@@ -200,8 +200,8 @@ class FragmentFind
             if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS && !configInfo.readChangeXYOnly())
             {
                 // have yet to scan through all images to find the best/closest quoin image 
-                // So save this information before dropping down below to search with the next image available  
-                bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
+                // So save this information before dropping down below to search with the next image available
+                bestMatchInfo = spiralSearch.readSearchMatchInfo();
                 if (!extractItemInfoFromItemImageFilename())
                 {
                     // Error found - logged by called function
@@ -448,12 +448,9 @@ class FragmentFind
         // Go through the array of results and save the new x,y and type field with the quoin found nearest to the original x,y
         if (quoinMatches.size() == 0)
         {
-            // Nothing was found that matched - so mark as not found
-            itemFound = false;        
-            newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
-            newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
+            // Nothing was found that matched well enough - so mark as not found 
+            itemFound = false;  
             newItemVariant = "";
-            bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
             printToFile.printDebugLine(this, "No quoin images matched", 2);
         }
         else
