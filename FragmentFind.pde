@@ -256,7 +256,7 @@ class FragmentFind
                         
             if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() != MISSING_COORDS)
             {
-                // We only ever search on one image in this case - the quoin type determined on a previous street snap
+                // We only ever search on one image in this case - the quoin type was determined on a previous street snap
                 // So if the item didn't match, and we enter this leg of code - then consider the search done for this item.
                 bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
                 searchDone = true;
@@ -300,14 +300,20 @@ class FragmentFind
                         if (bestMatchInfo == null)
                         {
                             // Returned from first search, so OK to overwrite with the information for this search
+                            printToFile.printDebugLine(this, "First search - so save the bestmatchInfo for this item", 1);
                             bestMatchInfo = spiralSearch.readSearchMatchInfo();
                         }
                         else if (bestMatchInfo.readPercentageMatch() < spiralSearch.readPercentageMatchInfo())
                         {
                             // Last search returned a better percentage match - so save this information 
+                            printToFile.printDebugLine(this, "Found better % match (" + spiralSearch.readPercentageMatchInfo() + "% > " + bestMatchInfo.readPercentageMatch() + "%) so save this better match", 1);
                             bestMatchInfo = spiralSearch.readSearchMatchInfo();
                         }
                         // else - ignore the results of the last search as it was worse than the best we have so far
+                        else
+                        {
+                            printToFile.printDebugLine(this, "Keep existing best % match (" + spiralSearch.readPercentageMatchInfo() + "% < " + bestMatchInfo.readPercentageMatch() + "%)", 1);
+                        }
                     }                             
                     searchDone = true;
                 }

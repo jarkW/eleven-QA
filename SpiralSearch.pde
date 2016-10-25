@@ -642,7 +642,7 @@ class SpiralSearch
             }
         }        
         
-        printToFile.printDebugLine(this, "Delta range for " + rgbType + " is " + (int)largestDeltaNeg + " to "  + (int)largestDeltaPos, 1);
+        //printToFile.printDebugLine(this, "Delta range for " + rgbType + " is " + (int)largestDeltaNeg + " to "  + (int)largestDeltaPos, 1);
         
         // Update the pixel array for this fragment
         diffImage.updatePixels();

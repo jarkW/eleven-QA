@@ -191,18 +191,7 @@ class ItemInfo
     } 
     
     boolean validItemToCheckFor()
-    {   
-        /*
-        switch (itemTSID)
-        {
-            //case "IIF10MG5VTK1126":
-            case "IIF18F2UM4K1MEP":
-                //break;
-            default:
-                return false;
-        } */
-
-        
+    {           
         // Returns true if this an item we expect to be scanning for on a snap
         if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
             (itemClassTSID.indexOf("trant_", 0) == 0) ||
@@ -1367,7 +1356,7 @@ class ItemInfo
         return validationInfo;
     }
     
-    public MatchInfo readBestMatchInfo()
+    public MatchInfo readBestMatchInfoFromList()
     {
         if (bestMatchInfoList.size() < 1)
         {

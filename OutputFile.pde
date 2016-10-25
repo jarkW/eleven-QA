@@ -314,7 +314,7 @@ class OutputFile
                 // Now add some information about the efficiency of the match
                 if (itemResults.get(i).readResult() != SummaryChanges.SKIPPED)
                 {
-                    bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
+                    bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfoFromList();
                     if (!bestMatchInfo.saveBestDiffImageFiles())
                     {
                         // Error has been logged by the function - just return failure case
@@ -366,13 +366,34 @@ class OutputFile
                             {
                                 s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString();
                             }
-                            if (configInfo.readDebugRun()) 
+                            // Only give the type of tree for my uses as confusing otherwise - but is probably useful to indicate the variant
+                            switch (itemResults.get(i).itemInfo.readItemClassTSID())
                             {
-                                // Only indicate the variant of this match for my uses - is confusing otherwise
-                                if (variant.length() > 0)
-                                {
-                                    s = s + ", variant " + variant;
-                                }
+                                case "wood_tree":
+                                case "trant_bean":
+                                case "trant_fruit":
+                                case "trant_bubble":
+                                case "trant_spice":
+                                case "trant_gas":
+                                case "trant_egg":
+                                    // Only give the information in debug mode
+                                    if (configInfo.readDebugRun()) 
+                                    {
+                                        // Only indicate the variant of this match for my uses - is confusing otherwise
+                                        if (variant.length() > 0)
+                                        {
+                                            s = s + ", variant " + variant;
+                                        }
+                                    }
+                                    break;
+                                    
+                                default:
+                                    // Always give this information as it might be useful 
+                                    if (variant.length() > 0)
+                                    {
+                                        s = s + ", variant " + variant;
+                                    }   
+                                    break;
                             }
                             s = s + ")";
                             break;
