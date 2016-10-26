@@ -333,11 +333,20 @@ class OutputFile
                             // Just print out the match information - as the new co-ordinates have already been given
                             if (configInfo.readDebugShowPercentMatchAsFloat())
                             {
-                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + ")";
+                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString();
                             }
                             else
                             {
-                                s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                                s = s + " (match = " + bestMatchInfo.matchPercentString();
+                            }
+                            
+                            if (configInfo.readDebugRun()) 
+                            {
+                                s = s + " from " + bestMatchInfo.readBestMatchItemImageName() + ")";
+                            }
+                            else
+                            {
+                                s = s + ")";
                             }
                             s = s + " (" + bestMatchInfo.furthestCoOrdDistance(itemResults.get(i).itemInfo.readOrigItemX(), itemResults.get(i).itemInfo.readOrigItemY()) + "px from original x,y)";
                             break;
@@ -347,11 +356,19 @@ class OutputFile
                             // Just print out the match information - as the new co-ordinates have already been given
                             if (configInfo.readDebugShowPercentMatchAsFloat())
                             {
-                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + ")";
+                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString();
                             }
                             else
                             {
-                                s = s + " (match = " + bestMatchInfo.matchPercentString() + ")";
+                                s = s + " (match = " + bestMatchInfo.matchPercentString();
+                            }
+                            if (configInfo.readDebugRun()) 
+                            {
+                                s = s + " from " + bestMatchInfo.readBestMatchItemImageName() + ")";
+                            }
+                            else
+                            {
+                                s = s + ")";
                             }
                             break;
                     
