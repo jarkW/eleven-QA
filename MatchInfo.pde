@@ -1,11 +1,10 @@
     class MatchInfo
     {    
         // New values - average RGB per pixel, rather than per whole fragment compare
-        float bestMatchAvgRGB;
-        float bestMatchAvgTotalRGB; 
         int bestMatchX;
         int bestMatchY;
         float percentageMatch;
+        int bestMatchResult;
         String bestMatchItemImageName;
         // Used to dump out a diff - so can see mismatched pixels in read - save the image and the useful filename to save it as, if this is the best match at the end
         PImage bestMatchBWDiffImage;
@@ -27,35 +26,20 @@
         String BWStreetFragmentName;
         String ColourStreetFragmentName;
         
-        int bestItemRGBMedian;
-        int bestStreetRGBMedian;
         String itemTSID;
         
-        public MatchInfo(float avgRGB, float totalAvgRGB, int x, int y, int itemRGBMedian, int streetRGBMedian,
+        public MatchInfo(float percentMatch, int x, int y, int matchResult,
                          String TSID, String itemImageFname, String streetSnapFname, 
                          PImage colourStreetFragImage, PImage BWStreetFragImage, PImage colourItemImage, PImage BWItemImage, 
                          PImage BWDiffImage, PImage ColDiffRImage, PImage ColDiffGImage, PImage ColDiffBImage)    
         {           
-            bestMatchAvgRGB = avgRGB;
-            bestMatchAvgTotalRGB = totalAvgRGB;
+            percentageMatch = percentMatch;
+            bestMatchResult = matchResult;
             bestMatchX = x;
             bestMatchY = y;
-            bestItemRGBMedian = itemRGBMedian;
-            bestStreetRGBMedian = streetRGBMedian;
             itemTSID = TSID;
             bestMatchItemImageName = itemImageFname;
-            
-            // Need to avoid dividing by 0, or a very small number.
-            if (bestMatchAvgTotalRGB < 0.01)
-            {
-                // Treat as 0, i.e. the first match was perfect, so the average total is the same as the average for the fragment
-                percentageMatch = 100;
-            }
-            else
-            {
-                percentageMatch = 100 - ((bestMatchAvgRGB/bestMatchAvgTotalRGB) * 100);
-            }
-            
+             
             // Save the diff image passed to class - might be later saved
             if (configInfo.readDebugDumpDiffImages())
             {
@@ -95,7 +79,7 @@
                 ColourStreetFragment = null;
             }
             
-            printToFile.printDebugLine(this, "Creating matchinfo entry for " + TSID + " " + itemImageFname + " avgRGB=" + bestMatchAvgRGB + " totalAvgRGB=" + bestMatchAvgTotalRGB + " = " + percentageMatch + "%", 1);
+            printToFile.printDebugLine(this, "Creating matchinfo entry for " + TSID + " " + itemImageFname + " %match = " + percentageMatch + "%", 1);
         }
         
         public String matchDebugInfoString()
@@ -105,16 +89,7 @@
             DecimalFormat df = new DecimalFormat("#.##"); 
             String formattedPercentage = df.format(percentageMatch); 
 
-            String s = "avg RGB = " + int (bestMatchAvgRGB) + 
-                       "/" + int (bestMatchAvgTotalRGB) + 
-                       " = " + formattedPercentage + "%" +
-                       " at x,y " + bestMatchX + "," + bestMatchY;
-            return s;
-        }
-        
-        public String dumpRGBInfo()
-        {
-            String s = "RGB Median info: " + itemTSID  + " item =" + bestItemRGBMedian + ", street = " + bestStreetRGBMedian;
+            String s = formattedPercentage + "% at x,y " + bestMatchX + "," + bestMatchY;
             return s;
         }
         
@@ -226,15 +201,38 @@
             return true;
         }
         
-        public String bestMatchVariant(String classTSID)
+        public int readBestMatchX()
         {
-            String variant = "";
-            // If the saved best match image name has the same root as the class TSID, then the variant information can
-            // be extracted and given to the user - used when an item is not found and simply reporting the nearest match
-            if (bestMatchItemImageName.indexOf(classTSID) == 0)
-            {
-                variant = bestMatchItemImageName.replace(classTSID+"_", "");
-            }
-            return variant;
+            return bestMatchX;
+        }
+        
+        public int readBestMatchY()
+        {
+            return bestMatchY;
+        }
+        
+        public void setBestMatchX(int x)
+        {
+            bestMatchX = x;
+        }
+        
+        public void setBestMatchY(int y)
+        {
+            bestMatchY = y;
+        }
+        
+        public String readBestMatchItemImageName()
+        {
+            return bestMatchItemImageName;
+        }
+        
+        public int readBestMatchResult()
+        {
+            return bestMatchResult;
+        }
+        
+        public void setBestMatchResult(int result)
+        {
+            bestMatchResult = result;
         }
  }

@@ -22,6 +22,8 @@ class SpiralSearch
     int startY;
     String thisItemClassTSID;
     
+    int searchResult;
+    
     // For debug info?
     int itemJSONX;
     int itemJSONY;
@@ -44,15 +46,9 @@ class SpiralSearch
     float avgTotalRGBDiffPerPixel;
     float lowestAvgRGBDiffPerPixel;
 
-    // Saving the x,y associated with the lowest average RGB difference found so far
+    // Saving the x,y associated with the lowest average RGB difference found so far - which for a perfect match will be RGB diff = 0
     int lowestAvgRGBDiffStepX;
     int lowestAvgRGBDiffStepY;
-    
-
-        
-    // final found difference in x,y
-    int foundStepX;
-    int foundStepY;
 
     boolean noMoreValidFragments;
     
@@ -153,8 +149,6 @@ class SpiralSearch
         // current position (i, j) and how much of current segment we passed
         stepX = startX;
         stepY = startY;
-        foundStepX = MISSING_COORDS;
-        foundStepY = MISSING_COORDS;
         segmentPassed = 0;
 
         // Initialise values for keeping record of 'best' fit of QA fragments with archive
@@ -172,35 +166,39 @@ class SpiralSearch
 
         noMoreValidFragments = false; 
         
+        searchResult = NO_MATCH;
+        
         printToFile.printDebugLine(this, "New SpiralSearch for " + classTSID + " at snap x,y " + itemX + "," + itemY + " using offsetX=" + fragOffsetX + " offsetY=" + fragOffsetY + " with search box wxh " + widthBox + "x" + heightBox, 1);
         //printHashCodes(this);
     }
     
-    public boolean searchForItem()
+    public int searchForItem()
     {    
         String info;
         //printToFile.printDebugLine(this, "Enter searchForItem " + thisItemClassTSID + " (" + itemJSONX + "," + itemJSONY, 1);
         noMoreValidFragments = false;
+        searchResult = NO_MATCH;
 
         for (spiralCount = 0; spiralCount < maxSpiralCount && !noMoreValidFragments; spiralCount++)
         {
             if (checkFragmentsMatch())
             {
                 // This only returns true for a perfect match - for everything else do a full search and then just take the smallest RGBDiff as the result
-                foundStepX = stepX;
-                foundStepY = stepY;
-                printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) + " spiralCount = " + spiralCount, 2);
+                searchResult = PERFECT_MATCH;
+                lowestAvgRGBDiffStepX = stepX;
+                lowestAvgRGBDiffStepY = stepY;
+                printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) + " spiralCount = " + spiralCount, 2);
                            
                 if (!configInfo.readDebugUseTintedFragment())
                 {
-                    info = "Perfect fit/B&W at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
+                    info = "Perfect fit/B&W at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY);
                 }
                 else
                 {
-                    info = "Perfect fit/tinted at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
+                    info = "Perfect fit/tinted at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY);
                 }
                 displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
-                return true;
+                return searchResult;
             }
             else 
             {
@@ -230,23 +228,21 @@ class SpiralSearch
         String formattedRatio = df.format(ratioRGBDiff); 
         if (ratioRGBDiff < maxRGBDiffVariation)
         {
-            foundStepX = lowestAvgRGBDiffStepX;
-            foundStepY = lowestAvgRGBDiffStepY;
+            searchResult = GOOD_MATCH;
             printToFile.printDebugLine(this, "Good enough match found " +
-            " at x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY) +
+            " at x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) +
             " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
             " ratio lowest:total avg RGB diff = " + formattedRatio, 2); 
                
             // Recreate the appropriate street fragment for this good enough search result - which doesn't need tinting, but does need converting to B&W
-            testStreetFragment = thisStreetImage.get(foundStepX, foundStepY, thisItemImage.width, thisItemImage.height);
+            testStreetFragment = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
             testStreetFragment = convertImageToBW(testStreetFragment, false); 
 
             // Item images are good as they are - are the ones which have been used to do the searching with
-            info = "good enough fit (avgRGBDiff = " + formattedRatio + ") at " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
-            displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
-
-            return true;
+            info = "good enough fit (avgRGBDiff = " + formattedRatio + ") at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY);
+            displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);          
+            return searchResult;
         }
         else
         {
@@ -256,13 +252,11 @@ class SpiralSearch
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
             " ratio lowest:total avg RGB diff = " + formattedRatio +
             " for x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY), 2); 
-            
-            foundStepX = MISSING_COORDS;
-            foundStepY = MISSING_COORDS;
         }
              
         // If reached this stage - failed to find item
-        return false;
+        searchResult = NO_MATCH;
+        return searchResult;
     }
     
     void getNextStepInSpiral()
@@ -678,27 +672,14 @@ class SpiralSearch
        
     public int convertToJSONX(int pixelX)
     {
-        // converts the foundStepX = pixel X co-ord from 0-width, into JSON equivalent X co-ord
-        if (pixelX != MISSING_COORDS)
-        {
-            return pixelX - thisStreetImage.width/2 - fragOffsetX;
-        }
-        else
-        {
-            return MISSING_COORDS;
-        }
+        // converts the pixel X co-ord from 0-width, into JSON equivalent X co-ord
+        return pixelX - thisStreetImage.width/2 - fragOffsetX;
     }
+    
     public int convertToJSONY(int pixelY)
     {
-        // converts the foundStepY = pixel Y co-ord from 0-width, into JSON equivalent Y co-ord
-        if (pixelY != MISSING_COORDS)
-        {
-            return pixelY - thisStreetImage.height - fragOffsetY;
-        }
-        else
-        {
-            return MISSING_COORDS;
-        }
+        // converts the pixel Y co-ord from 0-width, into JSON equivalent Y co-ord
+        return pixelY - thisStreetImage.height - fragOffsetY;
     }
 
     // Used for debugging only
@@ -725,28 +706,18 @@ class SpiralSearch
         String s = " avg lowest RGB diff/pixel/avg RGB total diff/pixel = " + int (lowestAvgRGBDiffPerPixel) +
                     " /" + int (avgTotalRGBDiffPerPixel) +
                     " = " + formattedRatio +
-                    " at x,y " + convertToJSONX(foundStepX) + "," + convertToJSONY(foundStepY);
+                    " at x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY);
 
         return s;
     }
     
     public MatchInfo readSearchMatchInfo()
     {       
-        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height); 
         int x;
         int y;
-        // If not found item, then return the x,y associated with the lowest RGBDiff
-        if (foundStepX == MISSING_COORDS)
-        {
-            x = convertToJSONX(lowestAvgRGBDiffStepX);
-            y = convertToJSONY(lowestAvgRGBDiffStepY);
-        }
-        else
-        {
-            x = convertToJSONX(foundStepX);
-            y = convertToJSONY(foundStepY);
-        }
-        
+        x = convertToJSONX(lowestAvgRGBDiffStepX);
+        y = convertToJSONY(lowestAvgRGBDiffStepY);
+               
         PImage BWfragmentDiffImage = null;
         PImage BWItemFragImage = null;
         PImage BWStreetFragImage = null;
@@ -755,35 +726,37 @@ class SpiralSearch
         PImage colourfragmentDiffRImage = null;
         PImage colourfragmentDiffGImage = null;
         PImage colourfragmentDiffBImage = null;
-        MatchInfo RGBInfo = null;
+        MatchInfo searchMatchInfo = null;
         
-        // Generate both colour and black/white images as might be useful if being dumped out in cases where not sure why matches are not being found
-            
+        // Generate both colour and black/white images as might be useful if being dumped out in cases where not sure why matches are not being found          
         // Generate the colour images, and re-tint the item image to match the street
-        colourStreetFragImage = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
-        colourItemFragImage = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
-        if (configInfo.readDebugUseTintedFragment())
+        // But only need to do this if the flag is set - otherwise will simply pass in null 
+        if (configInfo.readDebugDumpDiffImages())
         {
-            colourItemFragImage = applyGeoSettingsToItemImage(colourItemFragImage);
-        }
-        colourfragmentDiffRImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "red");
-        colourfragmentDiffGImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "green");
-        colourfragmentDiffBImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "blue");
+            colourStreetFragImage = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
+            colourItemFragImage = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
+            if (configInfo.readDebugUseTintedFragment())
+            {
+                colourItemFragImage = applyGeoSettingsToItemImage(colourItemFragImage);
+            }
+            colourfragmentDiffRImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "red");
+            colourfragmentDiffGImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "green");
+            colourfragmentDiffBImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "blue");
             
-        // generate the black & white images and obtain the diff image
-        // Can use copies of the ones above - will then have correct tinting etc
-        PImage tempStreetImage = colourStreetFragImage.get(0, 0, colourStreetFragImage.width, colourStreetFragImage.height);
-        PImage tempItemImage = colourItemFragImage.get(0, 0, colourItemFragImage.width, colourItemFragImage.height);
-        BWStreetFragImage = convertImageToBW(tempStreetImage, false);
-        BWItemFragImage = convertImageToBW(tempItemImage, true);
-        BWfragmentDiffImage = diffBWImages(BWStreetFragImage, BWItemFragImage);
+            // generate the black & white images and obtain the diff image
+            // Can use copies of the ones above - will then have correct tinting etc
+            PImage tempStreetImage = colourStreetFragImage.get(0, 0, colourStreetFragImage.width, colourStreetFragImage.height);
+            PImage tempItemImage = colourItemFragImage.get(0, 0, colourItemFragImage.width, colourItemFragImage.height);
+            BWStreetFragImage = convertImageToBW(tempStreetImage, false);
+            BWItemFragImage = convertImageToBW(tempItemImage, true);
+            BWfragmentDiffImage = diffBWImages(BWStreetFragImage, BWItemFragImage);
+        }
 
-        RGBInfo = new MatchInfo(lowestAvgRGBDiffPerPixel, avgTotalRGBDiffPerPixel, x, y, 
-                                itemRGBMedian, streetRGBMedian,
+        searchMatchInfo = new MatchInfo(readPercentageMatchInfo(), x, y, searchResult,
                                 itemTSID, itemImageName, streetImageName,
                                 colourStreetFragImage, BWStreetFragImage, colourItemFragImage, BWItemFragImage, BWfragmentDiffImage, colourfragmentDiffRImage, colourfragmentDiffGImage, colourfragmentDiffBImage);
         
-        return RGBInfo;
+        return searchMatchInfo;
     }
 
     public float readPercentageMatchInfo()
@@ -804,17 +777,7 @@ class SpiralSearch
         
         return percentageMatch;
     }
-    
-    public int readFoundStepX()
-    {
-        return foundStepX;
-    }
-    
-    public int readFoundStepY()
-    {
-        return foundStepY;
-    }
-    
+        
     public boolean readOkFlag()
     {
         return okFlag;

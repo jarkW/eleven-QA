@@ -181,6 +181,7 @@ class OutputFile
                     break;    
                         
                 case SummaryChanges.MISSING:
+                case SummaryChanges.MISSING_DUPLICATE:
                     if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
                     {
                         s = s + "MISSING quoin " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
@@ -314,7 +315,7 @@ class OutputFile
                 // Now add some information about the efficiency of the match
                 if (itemResults.get(i).readResult() != SummaryChanges.SKIPPED)
                 {
-                    bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfoFromList();
+                    bestMatchInfo = itemResults.get(i).itemInfo.readBestMatchInfo();
                     if (!bestMatchInfo.saveBestDiffImageFiles())
                     {
                         // Error has been logged by the function - just return failure case
@@ -322,102 +323,29 @@ class OutputFile
                         failNow = true;
                         return false;  
                     }
-            
-                    // Dump out RGB info to file
-                    printToFile.printDebugLine(this, bestMatchInfo.dumpRGBInfo(), 1);
-
-                    switch (itemResults.get(i).readResult())
+                    
+                    // Print out the match information including the matching image information if relevant
+                    s = s + " (match = " + printMatchPercentageInfo(bestMatchInfo);
+                    if (itemResults.get(i).readResult() == SummaryChanges.MISSING)
                     {
-                        case SummaryChanges.COORDS_ONLY:
-                        case SummaryChanges.VARIANT_AND_COORDS_CHANGED:
-                            // Just print out the match information - as the new co-ordinates have already been given
-                            if (configInfo.readDebugShowPercentMatchAsFloat())
-                            {
-                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString();
-                            }
-                            else
-                            {
-                                s = s + " (match = " + bestMatchInfo.matchPercentString();
-                            }
-                            
-                            if (configInfo.readDebugRun()) 
-                            {
-                                s = s + " from " + bestMatchInfo.readBestMatchItemImageName() + ")";
-                            }
-                            else
-                            {
-                                s = s + ")";
-                            }
-                            s = s + " (" + bestMatchInfo.furthestCoOrdDistance(itemResults.get(i).itemInfo.readOrigItemX(), itemResults.get(i).itemInfo.readOrigItemY()) + "px from original x,y)";
-                            break;
+                        s = s + " for x,y " + bestMatchInfo.matchXYString() + ",";
+                        s = s + printMatchInfo(bestMatchInfo.readBestMatchItemImageName(), itemResults.get(i).itemInfo.readItemClassTSID(), itemResults.get(i).readResult());
+                        s = s + ")";
+                    }
+                    else if (itemResults.get(i).readResult() == SummaryChanges.MISSING_DUPLICATE)
+                    {
+                        s = s + " for duplicate quoin x,y " + bestMatchInfo.matchXYString() + ")";
+                    }
+                    else
+                    {
+                        s = s + printMatchInfo(bestMatchInfo.readBestMatchItemImageName(), itemResults.get(i).itemInfo.readItemClassTSID(), itemResults.get(i).readResult());
+                        s = s + ")";
+                    }
                     
-                        case SummaryChanges.VARIANT_ONLY:
-                        case SummaryChanges.UNCHANGED:
-                            // Just print out the match information - as the new co-ordinates have already been given
-                            if (configInfo.readDebugShowPercentMatchAsFloat())
-                            {
-                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString();
-                            }
-                            else
-                            {
-                                s = s + " (match = " + bestMatchInfo.matchPercentString();
-                            }
-                            if (configInfo.readDebugRun()) 
-                            {
-                                s = s + " from " + bestMatchInfo.readBestMatchItemImageName() + ")";
-                            }
-                            else
-                            {
-                                s = s + ")";
-                            }
-                            break;
-                    
-                        case SummaryChanges.MISSING:
-                            // Give the match data and the x,y this pertains to.
-                            String variant = bestMatchInfo.bestMatchVariant(itemResults.get(i).itemInfo.readItemClassTSID());
-                            if (configInfo.readDebugShowPercentMatchAsFloat())
-                            {
-                                s = s + " (match = " + bestMatchInfo.matchPercentAsFloatString() + " for x,y " + bestMatchInfo.matchXYString();
-                            }
-                            else
-                            {
-                                s = s + " (match = " + bestMatchInfo.matchPercentString() + " for x,y " + bestMatchInfo.matchXYString();
-                            }
-                            // Only give the type of tree for my uses as confusing otherwise - but is probably useful to indicate the variant
-                            switch (itemResults.get(i).itemInfo.readItemClassTSID())
-                            {
-                                case "wood_tree":
-                                case "trant_bean":
-                                case "trant_fruit":
-                                case "trant_bubble":
-                                case "trant_spice":
-                                case "trant_gas":
-                                case "trant_egg":
-                                    // Only give the information in debug mode
-                                    if (configInfo.readDebugRun()) 
-                                    {
-                                        // Only indicate the variant of this match for my uses - is confusing otherwise
-                                        if (variant.length() > 0)
-                                        {
-                                            s = s + ", variant " + variant;
-                                        }
-                                    }
-                                    break;
-                                    
-                                default:
-                                    // Always give this information as it might be useful 
-                                    if (variant.length() > 0)
-                                    {
-                                        s = s + ", variant " + variant;
-                                    }   
-                                    break;
-                            }
-                            s = s + ")";
-                            break;
-                            
-                        case SummaryChanges.SKIPPED:
-                            break;
-                    }// end switch
+                    if (configInfo.readShowDistFromOrigXY() && ((itemResults.get(i).readResult() == SummaryChanges.COORDS_ONLY) || (itemResults.get(i).readResult() == SummaryChanges.VARIANT_AND_COORDS_CHANGED)))
+                    {
+                        s = s + " (" + bestMatchInfo.furthestCoOrdDistance(itemResults.get(i).itemInfo.readOrigItemX(), itemResults.get(i).itemInfo.readOrigItemY()) + "px from original x,y)";
+                    }
                 }// end if !skipped
             }
             // Only print the line for the summary validation file if something was actually changed
@@ -433,6 +361,7 @@ class OutputFile
                         
                     case SummaryChanges.UNCHANGED:
                     case SummaryChanges.MISSING:
+                    case SummaryChanges.MISSING_DUPLICATE:
                     case SummaryChanges.SKIPPED:
                         // Nothing to print
                         break;
@@ -506,6 +435,80 @@ class OutputFile
         s = s + "\n";
         printLine(s);   
         return true;
+    }
+    
+    String printMatchPercentageInfo(MatchInfo matchInfo)
+    {
+        String s;
+        
+        if (configInfo.readDebugShowPercentMatchAsFloat())
+        {
+            s = matchInfo.matchPercentAsFloatString();
+        }
+        else
+        {
+            s = matchInfo.matchPercentString();
+        }
+        return s;
+    }
+    
+    String printMatchInfo(String imageName, String classTSID, int result)
+    {
+        // Need to do comparison of the item class TSID and what the match was in order to return sensible information
+        // to the user
+        String info = "";
+        
+        if (result == SummaryChanges.MISSING || result == SummaryChanges.MISSING_DUPLICATE)
+        {
+            // Always want to dump out what was nearest in case it is useful information. Attempt to break down the image name into useful parts
+            if (imageName.indexOf(classTSID + "_", 0) == 0)
+            {
+                // We have a variant that can be extracted
+                info = " from " + classTSID + " (" + imageName.replace(classTSID + "_", "") + ")";
+            }
+            else
+            {
+                info = " from " + imageName;
+            }
+        }
+        else if (configInfo.readDebugRun()) 
+        {
+            // Will only dump out information for my purposes as it just makes things complicated for the user and they probably don't care about this information
+            // Especially when dealing with tree matches
+ 
+            if (imageName.equals(classTSID))
+            {
+                // If the class TSID matches the image name, then there is nothing to return as this is an item with no variant, that matches
+                // Although for my purposes, dump out the information anyhow
+                info = " from " + imageName;
+            }
+            else if (imageName.indexOf(classTSID + "_", 0) == 0)
+            {
+                // matching image has a variant of some sort - always dump out the info for my purposes 
+                info = " from " + classTSID + " (" + imageName.replace(classTSID + "_", "") + ")";
+            }
+            else
+            {
+                // Matching image is a different class to the JSON item - only happens when dealing with trees
+                if ((imageName.indexOf("trant_", 0) == 0) || (imageName.indexOf("patch", 0) == 0))
+                {
+                    // No variant is present, so just return the complete image name to print out.
+                    // As this could be confusing to users, only do this for my purposes
+                    info = " from " + imageName;
+                }
+                else if (imageName.indexOf("wood_tree_", 0) == 0)
+                {
+                    // Wood tree present - return wood_tree and variant (if both image and original were wood trees, then would be caught further up)
+                    info = " from wood_tree (" + imageName.replace("wood_tree_", "") + ")";
+                }
+                else
+                {
+                    // Should never be reached - so just return the image name
+                    info = " from " + imageName;
+                }
+            }
+        }
+        return info;
     }
     
     public void closeFile()

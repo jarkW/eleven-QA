@@ -646,9 +646,9 @@ class StreetInfo
         }       
 
         // Read in street data - list of item TSIDs 
-        if (!readStreetData()) //<>//
+        if (!readStreetData()) //<>// //<>//
         {
-            // error - need to stop //<>//
+            // error - need to stop //<>// //<>//
             printToFile.printDebugLine(this, "Error in readStreetData", 3);
             okFlag = false;
             return false;
@@ -857,8 +857,8 @@ class StreetInfo
                         failNow = true;
                         return false;
                     }
-                    // Add info to the results array for subsequent printing out
-                    itemResults.add(new SummaryChanges(itemInfo.get(i)));
+                    // Add info to the results array for subsequent printing out - as this is the first time through, the 'duplicateQuoin' flag will be false
+                    itemResults.add(new SummaryChanges(itemInfo.get(i), false));
                 }
                 // Write output header info for this street so that any warnings produced when cleaning up duplicate quoin locations
                 // are recorded below the street title
@@ -943,7 +943,8 @@ class StreetInfo
             // then delete the entry from the itemResults array, redo the item JSON, save it and then recreate the new 
             // itemResults entry with this mystery quoin.
             // Doing it in reverse order means that entries can be safely deleted as process the array
-            boolean checkForDuplicates = false;
+            boolean checkForDuplicates = false;          
+            
             for (int i = itemResults.size(); i > 0; i--)
             {
                 if (itemResults.get(i-1).readMisplacedQuoin())
@@ -954,15 +955,15 @@ class StreetInfo
                         // Should never happen
                         return false;
                     }
+                    
+                    // OK to add the new entry - will not interfere with deleting the 'bad' entry - indicate this this change is because we have a duplicate quoin problem
+                    itemResults.add(new SummaryChanges(itemResults.get(i-1).readItemInfo(), true));
                        
-                    // Now save the new mystery quoin JSON file
+                    // Now save the new mystery quoin JSON file - have to do this after add the new entry, otherwise itemResults sets things up as 'VARIANT_CHANGED' instead of 'MISSING'
                     if (!itemResults.get(i-1).readItemInfo().saveItemChanges(true))
                     {
                         return false;
                     }
-                     
-                    // OK to add the new entry - will not interfere with deleting the 'bad' entry
-                    itemResults.add(new SummaryChanges(itemResults.get(i-1).readItemInfo()));
                         
                     // Now delete this bad array entry 
                     itemResults.remove(i-1);
@@ -1005,7 +1006,7 @@ class StreetInfo
         }
         else if (itemInfo.get(n).readItemFound())
         {
-            // Item has been found - for non quoins/QQ, the search ends once it has been found
+            // Item has been found - for non quoins/QQ, the search ends once a perfect match has been found
             if (!itemInfo.get(n).readItemClassTSID().equals("quoin") &&
                     !itemInfo.get(n).readItemClassTSID().equals("marker_qurazy"))
             {

@@ -30,7 +30,7 @@ class ItemInfo
     FragmentFind fragFind;
     
     // Information about the x,y which relate to the lowest RGB averages, which may/may not be considered a match
-    ArrayList<MatchInfo> bestMatchInfoList;
+    MatchInfo bestMatchInfo;
     
     // Contains the item fragments used to search the snap
     ArrayList<PNGFile> itemImages;
@@ -63,7 +63,7 @@ class ItemInfo
         itemYValues = new IntList();
         validationInfo = "";
         
-        bestMatchInfoList = new ArrayList<MatchInfo>();
+        bestMatchInfo = null;
         
         initItemVars();
 
@@ -248,7 +248,7 @@ class ItemInfo
         // Using the item class_tsid, get the pointer to the images for this item
         // Depending on the item might need to tweak the order of items - TO DO???? 
         
-        if ((itemClassTSID.indexOf("trant", 0) == 0) || (itemClassTSID.equals("wood_tree")) || (itemClassTSID.indexOf("patch", 0) == 0))
+        if (itemIsATree())
         {
             itemImages = allItemImages.getItemImages("trees");
         }
@@ -726,24 +726,139 @@ class ItemInfo
         saveChangedJSONfile = true;
         return true;
     }
+    
+    boolean findValidVariant()
+    {
+        // This function takes the name of the matching fragment and works out what variant information this provides if any.
+                
+       // Need to be careful of using the variant field deduced from the image name - trees/patches must not have a variant field set (because matched a wood tree), 
+       // For wood trees, keep the existing variant? Or could reset from street if also a wood tree
+       // When reading in the variant, need to do check here that do get that information from the image name if expecting this
+       
+        newItemVariant = "";
+        String name = bestMatchInfo.readBestMatchItemImageName();
+        String s;
         
+        s = "What is this? " + itemClassTSID;
+        if (origItemVariant.length() > 0)
+        {
+            s = s + "(" + origItemVariant + ")";
+        }
+        s = s + " for matching image name " + name;
+        printToFile.printDebugLine(this, s, 1);
+        
+        // Some items never have a variant field e.g. rock_metal_1, QQ, so image name = class TSID
+        if (itemClassTSID.equals(name))
+        {
+            newItemVariant = "";
+            return true;
+        }
+        else if ((itemClassTSID.indexOf("trant_") == 0) || (itemClassTSID.indexOf("patch") == 0))
+        {
+            // Quite often might have a bean tree on our QA street, but the snap has a fruit tree. Therefore the itemClassTSID (bean)
+            // in the JSON file doesn't reflect the found fruit tree on the snap. 
+            // Unlike quoins, we are not changing tree JSONs to match snaps, therefore quite feasible that the itemClassTSID won't match the snap name. 
+            // So just return a clean empty variant field if not appropriate - i.e. because have non-wood tree/patch present.  
+            printToFile.printDebugLine(this, " tree or patch " + itemClassTSID, 1);
+            newItemVariant = "";
+            return true;
+        }
+        else if (itemClassTSID.equals("wood_tree"))
+        {            
+            // Note that if the JSON file is set up to be a wood tree, then we do want to know what variant was found which constituted a match.
+            // But have 2 possible scenarios - might have a wood_tree matching snap, or some other tree. Need to handle these two scenarios separately
+            if (name.indexOf("wood_tree") != 0)
+            {
+                // The match for this wood tree JSON file has been found with a non-wood tree image on the street snap
+                // So return the variant which was set in the original JSON file
+                printToFile.printDebugLine(this, " default wood tree variant to original value of " + origItemVariant, 1);
+                newItemVariant = origItemVariant;
+                return true;
+            }
+            
+            // else - continue on to extract the variant information below.
+        }
+        
+        // Extract the variant information from the item file name
+        // Just do a sanity check that the class TSID is correct for the image we are matching to ...
+        if (name.indexOf(itemClassTSID) == 0)
+        {
+            if (name.length() > (itemClassTSID.length() + 1))
+            {
+                // Means there is an _info field to extract - so strip off the classTSID_ part and _
+                newItemVariant = name.replace(itemClassTSID + "_", "");
+                printToFile.printDebugLine(this, " image name "  + name + " for item class tsid " + itemClassTSID + " returns variant + " + newItemVariant, 1);
+                return true;
+            }
+            else
+            {
+                // Should never reach this point - but if we do, just default the variant to nothing
+                newItemVariant = "";
+                printToFile.printDebugLine(this, " ERROR - missing variant in image name "  + name + " for item class tsid " + itemClassTSID, 3);
+                return false;
+            }
+        }
+        else
+        {
+            // error - the matched name does not start with the item classTSID 
+            printToFile.printDebugLine(this, " image name "  + name + " is incorrect for (does not match) item class tsid " + itemClassTSID, 3);
+            return false;
+        }
+    }
+      
     public boolean saveItemChanges(boolean secondTimeThrough)
     {
         // Called once all the street snaps have been searched for this item
         String s = "";
+
+        if (skipThisItem)
+        {
+            s = "No changes written - ";
+            s = s + "SKIPPED item (";
+            s = s + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
+            if (origItemVariant.length() > 0)
+            {
+                s = s + " " + itemVariantKey + " = " + origItemVariant;
+            }
+            printToFile.printDebugLine(this, s, 2);         
+
+            // nothing else to do for these skipped items - do not save
+            return true;
+        }
+ 
+        // At this stage we only have the information for the changes saved in bestMatchInfo. So therefore need to convert the information there
+        // into useful information to save to JSON files
+        if (!secondTimeThrough && bestMatchInfo.readBestMatchResult() > NO_MATCH)
+        {
+            newItemX = bestMatchInfo.readBestMatchX();
+            newItemY = bestMatchInfo.readBestMatchY();
+            if (!findValidVariant())
+            {
+                return false;
+            }
+            s = "Extracting information for " + itemTSID + " " + itemClassTSID;
+            if (origItemVariant.length() > 0)
+            {
+                s = s + " (" + origItemVariant + ")";
+            }
+            s = s + " x,y = " + origItemX + "," + origItemY + " has been found to be ";
+            if (newItemVariant.length() > 0)
+            {
+                s = s + " (" + newItemVariant + ")";
+            }            
+            s = s + "with new x,y = " + newItemX + "," + newItemY + "(" + bestMatchInfo.readPercentageMatch() + "%)";
+            printToFile.printDebugLine(this, s, 1);
+        }
 
         // Need to handle the missing items first
         if (newItemX == MISSING_COORDS)
         {
             if (!itemClassTSID.equals("quoin"))
             {
-                // For all non-quoins, items that are not found/skipped will not cause any file changes - so clean up and return here
+                // For all non-quoins, items that are not found will not cause any file changes - so clean up and return here
                 s = "No changes written - ";
-                if (skipThisItem)
-                {
-                    s = s + "SKIPPED item (";
-                }
-                else if (!itemFound)
+                // Already handled the case where an item is skipped
+                if (!itemFound)
                 {
                     s = s + "MISSING item (";
                 }
@@ -1034,121 +1149,128 @@ class ItemInfo
        
     public boolean searchSnapForImage()
     { 
+        int prevSearchY;
+        int newSearchY;
+        String s;
+        // This function is the entry point into FragmentFind - which may be to start a new search, or to move on to the next image
+        // Once all images have been searched, bestMatchInfo will be returned which contains the 'best' result for the item.
+        // This class needs to validate the results in order to avoid assigning a variant field to a gas tree because the result was found 
+        // from a wood tree on a snap for example.         
         if (fragFind.readSearchDone())
         {
-            String s;
-            
-            // Search has completed - for this item on this street
+            // Search has completed - for this item on this street. All images searched OR item was actually found. 
             if (fragFind.readItemFound())
-            {
-                if (itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy"))
-                {
-                    // debug only
-                    s = "quoin/QQ (" + itemTSID + ") orig type <" + origItemVariant + "> new type <" + newItemVariant + " found on street snap " + streetInfo.streetSnapBeingUsed + " with new item X " + newItemX;
-                    printToFile.printDebugLine(this, s, 1);
-                }
-                
-                
-                // Item was successfully found on the street
-                if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("marker_qurazy")) && newItemX != MISSING_COORDS)
-                {                   
-                    // This is the 2nd time or more that we've found this quoin/QQ - because only save the newItemX in the next few lines, so if not missing_coords, then been here already
-                    // Only save the Y-cord if lower than the one we already have i.e. less negative
-                    if (collectItemYValues)
-                    {
-                        itemYValues.append(fragFind.readNewItemY());
-                        printToFile.printDebugLine(this, "adding Y value 2 " + fragFind.readNewItemY() + " for item " + itemTSID + " itemClassTSID " + itemClassTSID, 1);
-                    }
-                    if (newItemY < fragFind.readNewItemY())
-                    {
-                        s = "SEARCH DONE Resetting y-value for " + itemTSID + " " + itemClassTSID + " " + newItemVariant + " from " + newItemY + " to " + fragFind.readNewItemY();
-                        printToFile.printDebugLine(this, s, 2);
-                        
-                        newItemY = fragFind.readNewItemY();
-                    }
-                    else
-                    {
-                        s = "SEARCH DONE Ignoring y-value for " + itemTSID + " " + itemClassTSID + " " + newItemVariant + " remains at " + newItemY + " (new = " + fragFind.readNewItemY() + ")";
-                        printToFile.printDebugLine(this, s, 1);
-                    }
-                    // continue on to next snap for quoins/QQ
-                }
-                else
-                {
-                    // Enter here for non quoins/QQ or for quoins/QQ when first found
-                    // Save the information
-                    newItemX = fragFind.readNewItemX();
-                    newItemY = fragFind.readNewItemY();
-                    newItemVariant = fragFind.readNewItemVariant();
-                    itemFound = true;
-                    
-                    // For all non-quoins/QQ, we only need to do the search once, so on future street snaps, skip this item
-                    if (!itemClassTSID.equals("quoin") && !itemClassTSID.equals("marker_qurazy"))
-                    {
-                        s = "SEARCH FOUND (skip in future) (";
-                    }
-                    else
-                    {
-                        s = "SEARCH FOUND (but keep looking) (";
-                        if (collectItemYValues)
-                        {
-                            printToFile.printDebugLine(this, "adding Y value " + fragFind.readNewItemY() + " for item " + itemTSID + " itemClassTSID " + itemClassTSID, 1);
-                            itemYValues.append(fragFind.readNewItemY());
-                        }
-                    }
-                    
-                    s = s + itemTSID + ") " + itemClassTSID + " x,y = " + newItemX + "," + newItemY;             
-                    if (newItemVariant.length() > 0)
-                    {
-                        s = s + " " + itemVariantKey + " = " + newItemVariant;
-                        if (itemClassTSID.equals("quoin"))
-                        {
-                            s = s + " (" + newItemClassName + ")";
-                        }
-                    }
-                    s = s + " was x,y = " + origItemX + "," + origItemY;;             
-                    if (origItemVariant.length() > 0)
-                    {
-                        s = s + " " + itemVariantKey + " = " + origItemVariant;
-                        if (itemClassTSID.equals("quoin"))
-                        {
-                            s = s + " (" + origItemClassName + ")";
-                        }
-                    }
-                    //printToFile.printOutputLine(s);
-                    printToFile.printDebugLine(this, s, 2);
-                }
+            {                
+                // Item was successfully found on the street with a PERFECT match - this leg is never entered for QQ/quoins 
+                bestMatchInfo = fragFind.readBestMatchInfo();
+                itemFound = true;
+                s = "SEARCH DONE, Item found as perfect match " + itemTSID + " " + itemClassTSID + " with " + bestMatchInfo.readBestMatchItemImageName();
+                s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                printToFile.printDebugLine(this, s, 2);
             }
             else
             {
-                // Item was not found on the street
-                // So need to go on to the next item on this street
-                s = "SEARCH FAILED " + itemTSID + ") " + itemClassTSID + " x,y = " + origItemX + "," + origItemY;             
-                if (origItemVariant.length() > 0)
+                // Search is done for the street, but need to carry on searching on future streets
+                // For most items, only save the matchInfo, if better than what we've already got for this item, from previous searches
+                // For quoins, we need to prioritise saving information for quoins that are nearer the original x,y, over the match result
+                // However need to be able to differentiate 'nearer' quoins from finding the same quoin on a second snap, which just happens to be higher/lower than on the previous snap
+                if (bestMatchInfo == null)
                 {
-                    s = s + " " + itemVariantKey + " = " + origItemVariant;
-                    if (itemClassTSID.equals("quoin"))
+                    // First street for this item
+                    bestMatchInfo = fragFind.readBestMatchInfo();
+                    s = "SEARCH DONE, First street, 'best' match for " + itemTSID + " " + itemClassTSID + " with " + bestMatchInfo.readBestMatchItemImageName();
+                    s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                    printToFile.printDebugLine(this, s, 2);
+                } 
+                else if (itemClassTSID.equals("quoin"))
+                {
+                    prevSearchY = MISSING_COORDS;
+                    newSearchY = MISSING_COORDS;
+                    if ((bestMatchInfo.readBestMatchResult() > NO_MATCH) &&  (fragFind.readBestMatchInfo().readBestMatchResult() > NO_MATCH))
                     {
-                        s = s + " (" + origItemClassName + ")";
+                        // Record the y-values for the cases where we actually have a match of some sort recorded
+                        prevSearchY = bestMatchInfo.readBestMatchY();
+                        newSearchY = fragFind.readBestMatchInfo().readBestMatchY();
+                       
+                        if (!fragFind.readBestMatchInfo().readBestMatchItemImageName().equals(bestMatchInfo.readBestMatchItemImageName()) ||
+                            fragFind.readBestMatchInfo().readBestMatchX() != bestMatchInfo.readBestMatchX() ||
+                            abs(prevSearchY - newSearchY) > 12)
+                        {
+                            // This quoin has a different type, a different x-value or is further away in the y direction (allowing for +/- 6px bounce)
+                            // So assume this is a different quoin and so save it if it is nearer to the origin x,y. And if it is the same distance away, then save
+                            // if the match is better
+                            float prevSearchDistFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(origItemX, origItemY, bestMatchInfo.readBestMatchX(), bestMatchInfo.readBestMatchY());
+                            float newSearchDistFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(origItemX, origItemY, fragFind.readBestMatchInfo().readBestMatchX(), fragFind.readBestMatchInfo().readBestMatchY());
+                            if (newSearchDistFromOrigXY <= prevSearchDistFromOrigXY)
+                            {
+                                // The new search result references a quoin which is nearer the starting point than anything found on a previous street - so save this one without question
+                                // For simplicity sake, also do this if the quoin is the same distance away as the previous one - should rarely happen?
+                                bestMatchInfo = fragFind.readBestMatchInfo();
+                                if (newSearchDistFromOrigXY < prevSearchDistFromOrigXY)
+                                {
+                                    s = "SEARCH DONE, found closer quoin for " + itemTSID + " " + itemClassTSID + " with " + bestMatchInfo.readBestMatchItemImageName();
+                                    s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                                    printToFile.printDebugLine(this, s, 2);
+                                }
+                                else
+                                {
+                                    s = "SEARCH DONE, WARNING found different quoin exactly same distance away as prevous one (" + newSearchDistFromOrigXY + ") ";
+                                    s = s + itemTSID + " " + itemClassTSID + " with " + bestMatchInfo.readBestMatchItemImageName();
+                                    s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                                    printToFile.printDebugLine(this, s, 3);
+                                }
+                            }
+                            else
+                            {
+                                // new quoin is further away, so ignore this data
+                                s = "SEARCH DONE, 'worse' match found for " + itemTSID + " " + itemClassTSID + " with " + fragFind.readBestMatchInfo().readBestMatchItemImageName();
+                                s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + fragFind.readBestMatchInfo().matchPercentAsFloatString() + "% compared to existing " + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                                printToFile.printDebugLine(this, s, 2);     
+                            }                           
+                        }
+                        else
+                        {
+                            // We've found the same quoin again - it has the same found quoin type and x value, and the y value is within theoretical range (+/- 6 px bounce)
+                            // So just save the lowest y value
+                            saveLowerYVal(prevSearchY, newSearchY);
+                        }
+                    }    
+                    else
+                    {
+                        // At least one of these is a no match case - so only copy across the match information if it is better. No y-values to adjust as these results are referring to different quoins/objects
+                        saveBestMatchInfo();
+                    } 
+                } // end quoin
+                else if (itemClassTSID.equals("marker_qurazy"))
+                {
+                    prevSearchY = MISSING_COORDS;
+                    newSearchY = MISSING_COORDS;
+                    // Record the y-values for the cases where we actually have a match of some sort recorded
+                    if (bestMatchInfo.readBestMatchResult() > NO_MATCH)
+                    {
+                        prevSearchY = bestMatchInfo.readBestMatchY();
                     }
+                    if (fragFind.readBestMatchInfo().readBestMatchResult() > NO_MATCH)
+                    {
+                        newSearchY = fragFind.readBestMatchInfo().readBestMatchY();
+                    }
+                    // Update the bestMatchInfo structure if a better match has been found
+                    saveBestMatchInfo();
+                    
+                    // Update the y-values 
+                    saveLowerYVal(prevSearchY, newSearchY);
+ 
+                } // end QQ
+                else
+                {
+                    // All other items can simply copy across the better search result
+                    saveBestMatchInfo();
                 }
-                printToFile.printDebugLine(this, s, 1);
-                
-
-                
-            }
-            itemFinished = true;
+            }// end if else ! itemFound
             
-            // Save the debug information for this street snap
-            MatchInfo bestMatchInfo = fragFind.readBestMatchInfo();         
-            bestMatchInfoList.add(bestMatchInfo);
-            
-            // If an item was found, then delay the image for a second before continuing - for debug onl
-            if (doDelay && newItemX != MISSING_COORDS)
-            {
-                delay(1000);
-            }
-        }
+            // As we've finished on this street - due to searchDone flag - then mark appropriately so can move on to next item
+            itemFinished = true; 
+        }// end if search done
         else
         {
             // Kick off the seach using the current street snap and set of item images
@@ -1156,14 +1278,57 @@ class ItemInfo
             {
                 return false;
             }
-            if (doDelay)
-            {
-                delay(1000);
-                //delay(5000);
-            }
-
         }
         return true;
+    }
+    
+    void saveBestMatchInfo()
+    {
+        String s;
+        if (bestMatchInfo.readPercentageMatch() < fragFind.readBestMatchInfo().readPercentageMatch())
+        {
+            // This street has returned a better match than any previous streets
+            s = "SEARCH DONE, 'better' match found for " + itemTSID + " " + itemClassTSID + " with " + fragFind.readBestMatchInfo().readBestMatchItemImageName();
+            s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + fragFind.readBestMatchInfo().matchPercentAsFloatString() + "% compared to " + bestMatchInfo.matchPercentAsFloatString() + "%)";
+            printToFile.printDebugLine(this, s, 2);                  
+            bestMatchInfo = fragFind.readBestMatchInfo();
+        }
+        else
+        {
+            // else - ignore the results of the last street search as it was worse than the best we have so far
+            s = "SEARCH DONE, 'worse' match found for " + itemTSID + " " + itemClassTSID + " with " + fragFind.readBestMatchInfo().readBestMatchItemImageName();
+            s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + fragFind.readBestMatchInfo().matchPercentAsFloatString() + "% compared to existing " + bestMatchInfo.matchPercentAsFloatString() + "%)";
+            printToFile.printDebugLine(this, s, 2);     
+        }
+    }  
+    
+    void saveLowerYVal(int savedY, int newY)
+    {
+        String s;
+        // For quoins and QQ, need to make sure the y-values are always the lowest ones measured for this item
+        // However, assuming that a search was partially successful, it is still OK to correct the Y values if they exist
+        if ((savedY != MISSING_COORDS) && (newY != MISSING_COORDS))
+        {
+            if (collectItemYValues)
+            {
+                itemYValues.append(newY);
+                printToFile.printDebugLine(this, "adding Y value 2 " + newY + " for item " + itemTSID + " itemClassTSID " + itemClassTSID, 1);
+            }
+            if (savedY < newY)
+            {
+                // The new Y-value is lower (less negative) than the old one - so save this in bestMatchInfo
+                bestMatchInfo.setBestMatchY(newY);
+                s = "SEARCH DONE, Resetting y-value for " + itemTSID + " " + itemClassTSID + " with " + bestMatchInfo.readBestMatchItemImageName();
+                s = s + " from " + savedY + " to " + newY;
+                printToFile.printDebugLine(this, s, 2);                          
+            }
+            else
+            {
+                s = "SEARCH DONE Ignoring y-value for " + itemTSID + " " + itemClassTSID + " with " + bestMatchInfo.readBestMatchItemImageName();
+                s = s + " remains at " + savedY + " (new = " + newY + ")";
+                printToFile.printDebugLine(this, s, 1);
+            }
+        }
     }
     
     public boolean resetReadyForNewItemSearch()
@@ -1197,8 +1362,9 @@ class ItemInfo
             return false;
         }
         itemFound = false;
+        bestMatchInfo.setBestMatchResult(NO_MATCH);  
         newItemX = MISSING_COORDS;
-        newItemY = MISSING_COORDS;        
+        newItemY = MISSING_COORDS;
         return true;
         
     }
@@ -1356,38 +1522,18 @@ class ItemInfo
         return validationInfo;
     }
     
-    public MatchInfo readBestMatchInfoFromList()
+    public boolean itemIsATree()
     {
-        if (bestMatchInfoList.size() < 1)
+        if ((itemClassTSID.indexOf("trant", 0) == 0) || (itemClassTSID.equals("wood_tree")) || (itemClassTSID.indexOf("patch", 0) == 0))
         {
-            // This should never happen - no RGB info has been added
-            printToFile.printDebugLine(this, "MatchInfo array is empty - no data has been added for snap searches for item " + itemTSID, 3);
-            return null;
+            return true;
         }
-        
-        printToFile.printDebugLine(this, "Item + " + itemTSID + " Size of debugRGBInfo is " + bestMatchInfoList.size(), 1);
-        // Need to walk through the array and return the lowest value of RGB
-        MatchInfo info;
-        info = bestMatchInfoList.get(0);
-        for (int i = 0; i < bestMatchInfoList.size(); i++)
-        {
-            printToFile.printDebugLine(this, "Item + " + itemTSID + " Debug RGB info is " + bestMatchInfoList.get(i).matchDebugInfoString(), 1);
-            if (bestMatchInfoList.get(i).bestMatchAvgRGB < info.bestMatchAvgRGB)
-            {
-                info = bestMatchInfoList.get(i);
-            }
-            else if ((itemClassTSID.equals("quoin") || itemClassTSID.equals("qurazy_marker")) && (bestMatchInfoList.get(i).bestMatchAvgRGB == info.bestMatchAvgRGB))
-            {
-                // If the RGB values are the same, if this one has a lower y value (i.e. more positive), then copy across
-                if (bestMatchInfoList.get(i).bestMatchY > info.bestMatchY)
-                {
-                    info = bestMatchInfoList.get(i);
-                }
-            }
-        }
-        
-        printToFile.printDebugLine(this, "Item + " + itemTSID + " Best debug RGB info is " + info.matchDebugInfoString(), 1);
-        return info;
+        return false;
+    }
+    
+    public MatchInfo readBestMatchInfo()
+    {
+        return bestMatchInfo;
     }
     
 

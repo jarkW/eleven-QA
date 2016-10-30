@@ -17,20 +17,16 @@ class FragmentFind
     SpiralSearch spiralSearch;
     ItemInfo thisItemInfo;
     
-    // x,y on street where need to start the item search - might be the original x,y or new x,y for a quoin (as have to keep searching snaps for quoins)
+    // x,y on street where need to start the item search - might be the original x,y or new x,y for a QQ (as have to keep searching snaps for QQ)
+    // For quoins, just stick to original x,y to make sure we always find any quoins on subsequent street snaps that are missing from the first streets.
     int startItemX;
     int startItemY;
     
-    int newItemX;
-    int newItemY;
-    String newItemVariant;
-    String foundVariant;
     boolean itemFound;
     
     ArrayList<QuoinMatchData> quoinMatches;
     
     int itemImageBeingUsed;
-    //int streetImageBeingUsed;
     
     // Saved item information we need here - easier to read
     ArrayList<PNGFile> itemImages;
@@ -39,21 +35,16 @@ class FragmentFind
     // Information saved from the search before it is nulled ready for the next search/image
     // Keeps a running version of the 'best' match in
     MatchInfo bestMatchInfo;
-  
-    // constructor
+    
+        // constructor
     public FragmentFind(ItemInfo itemInfo)
     {
-        //printToFile.printDebugLine(this, "Create New FragmentFind", 1);
         okFlag = true;
         
         quoinMatches = new ArrayList<QuoinMatchData>();
         
         searchDone = false;
-        //streetImageBeingUsed = 0;
-        newItemX = MISSING_COORDS;
-        newItemY = MISSING_COORDS;
-        newItemVariant = "";
-        foundVariant = "";
+        
         itemFound = false;
         
         thisItemInfo = itemInfo;
@@ -68,25 +59,18 @@ class FragmentFind
             okFlag = false;
             return;
         }
-                        
-        if (thisItemInfo.readItemClassTSID().equals("quoin") && (configInfo.readChangeXYOnly() || thisItemInfo.readNewItemX() != MISSING_COORDS))
+        
+        // When only making x/y changes only, then assume that the JSON file contains the correct information for the variant type (except for wood trees which 
+        // need be checked against all tree types because they may have been replanted relative to street snaps
+        if (configInfo.readChangeXYOnly() && thisItemInfo.readOrigItemVariant().length() > 0 && !thisItemInfo.readItemClassTSID().equals("wood_tree"))
         {
-            // If we are only searching for x,y changes, or if the quoin has already been found, then we know what image to be searching for.
-            // So can just set itemImageBeingUsed to the correct number which will force it to just use that image to check with
-            // If this is an x,y change only, then search for the quoin type from the original JSON file, otherwise use the newly found quoin type
-            String quoinType;
-            if (configInfo.readChangeXYOnly())
-            {
-                quoinType = thisItemInfo.readOrigItemVariant();
-            }
-            else
-            {
-                quoinType = thisItemInfo.readNewItemVariant();
-            }
+            // If we are only searching for x,y changes so can just set itemImageBeingUsed to the correct number which will force it to just use that image to check with
+            String variantType;
+            variantType = thisItemInfo.readOrigItemVariant();
 
             for (int i = 0; i < itemImages.size(); i++)
             {
-                if (itemImages.get(i).readPNGImageName().indexOf(quoinType) != -1)
+                if (itemImages.get(i).readPNGImageName().indexOf(variantType) != -1)
                 {
                     printToFile.printDebugLine(this, " setting image number to be " + i, 1);
                     itemImageBeingUsed = i;
@@ -99,7 +83,7 @@ class FragmentFind
             printToFile.printDebugLine(this, " image number starting at 0" , 1);
             itemImageBeingUsed = 0;
         }
-        printToFile.printDebugLine(this, " init FragmentFind - " + thisItemInfo.readItemClassTSID() + " change x/y only = " + configInfo.readChangeXYOnly() + " new item X = " + thisItemInfo.readNewItemX() + " using image " + itemImageBeingUsed, 1);
+        printToFile.printDebugLine(this, " init FragmentFind - " + thisItemInfo.readItemClassTSID() + " change x/y only = " + configInfo.readChangeXYOnly() + " using image " + itemImageBeingUsed, 1);
                 
         streetSnapImage = streetInfo.readCurrentStreetSnap();
         if (streetSnapImage.readPNGImage() == null)
@@ -113,22 +97,21 @@ class FragmentFind
                                     " with street snap " + streetSnapImage.readPNGImageName(), 1);        
         
         // For most items, the search will only be done once so the starting point is the JSON x,y. And the search box will be the default
-        // 20x20 size. But for quoins/QQ the search is done on all streets even if a match is found - to find the y variation. In this case
+        // 20x20 size. But for QQ the search is done on all streets even if a match is found - to find the y variation. In this case
         // is more efficient to start the search with the latest x,y co-ords.  
 
-        if ((thisItemInfo.readItemClassTSID().equals("quoin") || thisItemInfo.readItemClassTSID().equals("marker_qurazy")) && thisItemInfo.readNewItemX() != MISSING_COORDS)
+        if (thisItemInfo.readItemClassTSID().equals("marker_qurazy") && thisItemInfo.bestMatchInfo != null &&  thisItemInfo.bestMatchInfo.readBestMatchResult() > NO_MATCH)
         {
-            // Already have the co-ordinates for a matching quoin/QQ - so use those to start this search
-            startItemX = thisItemInfo.readNewItemX();
-            startItemY = thisItemInfo.readNewItemY();
+            // Already have the co-ordinates for a matching QQ - so use those to start this search
+            startItemX = thisItemInfo.bestMatchInfo.readBestMatchX();
+            startItemY = thisItemInfo.bestMatchInfo.readBestMatchY();
             searchBoxWidth = NARROW_SEARCH_WIDTH_BOX;
             searchBoxHeight = DEF_SEARCH_BOX;
-            if (thisItemInfo.readItemClassTSID().equals("quoin"))
-            printToFile.printDebugLine(this, "Continuing search for quoin/QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + startItemX + "," + startItemY, 1);
+            printToFile.printDebugLine(this, "Continuing search for QQ  " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + startItemX + "," + startItemY, 1);
         }
         else
         {
-            // First time through for QQ/quoins and for all other items - use default 20x20 box and start at JSON x,y
+            // First time through for QQ and for all other items - use default 20x20 box and start at JSON x,y
             startItemX = thisItemInfo.readOrigItemX();
             startItemY = thisItemInfo.readOrigItemY();
             searchBoxWidth = DEF_SEARCH_BOX;
@@ -172,7 +155,7 @@ class FragmentFind
 
         //printHashCodes(this);
     }
-        
+    
     public boolean searchForFragment()
     {
         String debugInfo = "";
@@ -188,143 +171,66 @@ class FragmentFind
         // Carry out the search for the item and depending on the result might then move on to look at the next image
         printToFile.printDebugLine(this, "Search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " using item image " + itemImages.get(itemImageBeingUsed).readPNGImageName() , 2);
         
-        boolean searchSuccess = spiralSearch.searchForItem();
-         
-        if (searchSuccess)
-        {
-            // NB This can be because a perfect match has been found, or a good-enough that fits within the % match required criteria
+        int searchResult = spiralSearch.searchForItem();
         
-            // Need to treat quoins different to other non-moving items
-            // When searching for x,y updates only we expect the quoin type to have already been set correctly - therefore goes to next else leg rather
-            // than being handled here
-            if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS && !configInfo.readChangeXYOnly())
-            {
-                // have yet to scan through all images to find the best/closest quoin image 
-                // So save this information before dropping down below to search with the next image available
+        // What happens next depends on the result of this search
+        switch (searchResult)
+        {
+            case PERFECT_MATCH:
+                // Quoins still need to be searched for using the next image (unless this is an x/y only search). QQ still need to be searched for on future snaps also
+                // All other items can be marked as found and not searched on future snaps
+                
+                // The match info for non-quoins will be the best so far because perfect - for quoins, it will be rewritten from the saved quoinData structure before returning the search result
                 bestMatchInfo = spiralSearch.readSearchMatchInfo();
-                if (!extractItemInfoFromItemImageFilename())
+                if (thisItemInfo.readItemClassTSID().equals("quoin") && !configInfo.readChangeXYOnly())
                 {
-                    // Error found - logged by called function
-                    return false;
-                }
-                quoinMatches.add(new QuoinMatchData(spiralSearch.convertToJSONX(spiralSearch.readFoundStepX()),
-                                 spiralSearch.convertToJSONY(spiralSearch.readFoundStepY()),
-                                 foundVariant,
-                                 bestMatchInfo));                          
-
-                debugInfo = spiralSearch.debugRGBInfo();
-                printToFile.printDebugLine(this, "searchForFragment - full quoin search found " + extractItemInfoFromItemImageFilename() + " found at x,y " + newItemX + "," + newItemY, 2);
-            }
-            else
-            {
-                // Valid found item so save the new x,y and other information
-                itemFound = true;
-                // Match has been found - might be perfect or good enough - so save the information    
-                // For all non-quoin items it is assumed that once a match has been found, x,y are valid because these items do not move
-                // Trees are a bit more complicated - if the JSON file is a trant_* tree then we only need a valid x,y which we can get from
-                // any match between fragment/snap. However for wood trees, also want the variant type if at all possible from the snap.
-                // As a cludge for now, make sure extractItemInfoFromItemImageFilename() returns the same variant type if a non-wood tree match
-                // has been found.
-                newItemX = spiralSearch.convertToJSONX(spiralSearch.readFoundStepX());
-                newItemY = spiralSearch.convertToJSONY(spiralSearch.readFoundStepY());
-            
-                // As matched item image is the current one, extract the extra information from the item image filename
-                if (!extractItemInfoFromItemImageFilename())
-                {
-                    // Error found - logged by called function
-                    return false;
-                }
-                newItemVariant = foundVariant;
-                debugInfo = spiralSearch.debugRGBInfo();
-                // OK to overwrite bestMatchInfo - as we know we've found a valid item at last
-                bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
-                searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - Item found at x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentAsFloatString() + ")", 2);
-            }
-        }
-        
-        if (!searchDone)
-        {
-            // Item was not found on this image
-            
-            // Several options are available at this point.
-            // If have multiple possible images to use to search with on this snap, then can cycle to the next one e.g. quoins, barnacles, trees
-            // However there is no point in doing this in the case for quoins - where the quoin type has already been determined from a previous
-            // street snap, and so no need to check all the other quoin images.
-            // Similarly in the case where the change_xy_only option has been set, as we don't change the type of an item, then have to assume that
-            // the type field in the JSON file is the only image that needs checking for. Any failure is due to the user in this case.
-                        
-            if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() != MISSING_COORDS)
-            {
-                // We only ever search on one image in this case - the quoin type was determined on a previous street snap
-                // So if the item didn't match, and we enter this leg of code - then consider the search done for this item.
-                bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
-                searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - searched for 1 quoin image only deduced from previous street snap, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentAsFloatString() + ")", 2);
-            }
-            else if (configInfo.readChangeXYOnly() && thisItemInfo.readItemVariantKey() != "" && !thisItemInfo.readItemClassTSID().equals("wood_tree"))
-            {
-                // We only ever search on one image in this case - using the type that has been specified in the JSON file.
-                // So if the item didn't match, and we enter this leg of code - then consider the search done for this item.
-                // NB Wood trees need to be handled separately - as probably that although JSON file is a wood tree, that the street snap will have a different
-                // tree on - so still need to search all tree images to find best x,y.
-                bestMatchInfo = spiralSearch.readSearchMatchInfo(); 
-                searchDone = true;
-                printToFile.printDebugLine(this, "searchForFragment - searched for 1 image only, no more images to search - x,y " + newItemX + "," + newItemY + "(match=" + bestMatchInfo.matchPercentAsFloatString() + ")", 2);
-            }
-
-            // If we reach here, then this is the default use of the tool to determine types as well as co-ordinates, so move on to the next fragment image, if it exists
-            // Still need to search all tree images for change_xy_only option. 
-            else
-            {
-                // Move on to search with the next image in the set
-                itemImageBeingUsed++;
-                if (itemImageBeingUsed >= itemImages.size())
-                {
-                    // Have searched using all the item images
-                    // This will include the case of the QQ - as only has one image (but will be searched for as special case on next street snap)
-                    printToFile.printDebugLine(this, "searchForFragment - no more images to search", 2);
-                    
-                    // In the case of quoins - need to save the details of the image that was closest to the original co-ordinates
-                    if (thisItemInfo.readItemClassTSID().equals("quoin") && thisItemInfo.readNewItemX() == MISSING_COORDS)
+                    // Only need to do this when collecting search results for all quoin images - otherwise can just use the data for the single search done
+                    QuoinMatchData quoinData = new QuoinMatchData(bestMatchInfo);
+                    if (!okFlag)
                     {
-                        // Also copies across the associated debugRGB info
-                        saveClosestQuoin();
+                        // Error - logged by called function
+                        return false;
                     }
-                    else
-                    {
-                        // NB Need to save the 'best' fit found - needed for trees where search multiple very different images, so don't
-                        // just want to see the search info for a wood tree if the 2nd fruit tree search was close to the specified accuracy requested.
-                        // Otherwise the output report implies a terrible match, when actually seeing the result of the last tree image, which could
-                        // well be hopeless.
-                        if (bestMatchInfo == null)
-                        {
-                            // Returned from first search, so OK to overwrite with the information for this search
-                            printToFile.printDebugLine(this, "First search - so save the bestmatchInfo for this item", 1);
-                            bestMatchInfo = spiralSearch.readSearchMatchInfo();
-                        }
-                        else if (bestMatchInfo.readPercentageMatch() < spiralSearch.readPercentageMatchInfo())
-                        {
-                            // Last search returned a better percentage match - so save this information 
-                            printToFile.printDebugLine(this, "Found better % match (" + spiralSearch.readPercentageMatchInfo() + "% > " + bestMatchInfo.readPercentageMatch() + "%) so save this better match", 1);
-                            bestMatchInfo = spiralSearch.readSearchMatchInfo();
-                        }
-                        // else - ignore the results of the last search as it was worse than the best we have so far
-                        else
-                        {
-                            printToFile.printDebugLine(this, "Keep existing best % match (" + spiralSearch.readPercentageMatchInfo() + "% < " + bestMatchInfo.readPercentageMatch() + "%)", 1);
-                        }
-                    }                             
-                    searchDone = true;
+                    quoinMatches.add(quoinData); 
+                    // Don't set the searchDone flag as need to continue on searching for the other quoin images on this street
                 }
                 else
                 {
-                    // Carry out search using the new image
-                    
-                    // Before starting new search, save information from the previous search
-                    // Again, only save the bestMatchInfo if it is better than that obtained in previous searches
-                    debugInfo = spiralSearch.debugRGBInfo();
-                    if (bestMatchInfo == null)
+                    // Quoins being searched for using the x/y only option, and all other items - search is done for this street. 
+                    // And for all non-QQ/quoins, item has also been found, and does not need searching on future street snaps
+                    searchDone = true;
+                    if (!thisItemInfo.readItemClassTSID().equals("marker_qurazy") && !thisItemInfo.readItemClassTSID().equals("quoin"))
+                    {
+                        // For trees/items a perfect match means we've definitely found our item x,y. And so don't need to bother searching for this item on any further street snaps
+                        itemFound = true;
+                    }
+                }
+                debugInfo = spiralSearch.debugRGBInfo();
+                printToFile.printDebugLine(this, "searchForFragment - PERFECT match found for " + thisItemInfo.readItemClassTSID() + " with " + 
+                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
+                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.readPercentageMatch() + "%)", 2);
+                break;
+                
+            case GOOD_MATCH:
+                // Quoins still need to be searched for using the next image (unless this is an x/y only search). 
+                // Check other images for items on this street in the hope that a perfect match might be found
+                if (thisItemInfo.readItemClassTSID().equals("quoin") && !configInfo.readChangeXYOnly())
+                {
+                    // Only need to do this when collecting search results for all quoin images - otherwise can just use the data for the single search done
+                    bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                    QuoinMatchData quoinData = new QuoinMatchData(bestMatchInfo);
+                    if (!okFlag)
+                    {
+                        // Error - logged by called function
+                        return false;
+                    }
+                    quoinMatches.add(quoinData); 
+                    // Don't set the searchDone flag as need to continue on searching for the other quoin images on this street
+                }
+                else
+                {
+                    // Case of single quoin search (x/y only) and all other items - only save the bestMatchInfo if better than what we've already got
+                     if (bestMatchInfo == null)
                     {
                         // Returned from first search, so OK to overwrite with the information for this search
                         bestMatchInfo = spiralSearch.readSearchMatchInfo();
@@ -334,43 +240,104 @@ class FragmentFind
                         // Last search returned a better percentage match - so save this information 
                         bestMatchInfo = spiralSearch.readSearchMatchInfo();
                     }
-                    // else - ignore the results of the last search as it was worse than the best we have so far
-                    //printToFile.printDebugLine(this, " For reference before start search with next image - " + debugRGBMatchInfo, 2);
-                    
-                    printToFile.printDebugLine(this, "searchForFragment - with new image " + itemImages.get(itemImageBeingUsed).readPNGImageName() + " and street " + streetSnapImage.readPNGImageName(), 2);
-                    spiralSearch = null; 
-                    System.gc();
-
-                    spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
-                        streetSnapImage.readPNGImage(), 
-                        thisItemInfo.readItemClassTSID(),
-                        startItemX,
-                        startItemY,
-                        itemImages.get(itemImageBeingUsed).readFragOffsetX(),
-                        itemImages.get(itemImageBeingUsed).readFragOffsetY(),
-                        searchBoxWidth, searchBoxHeight, searchRadius, adjustment,
-                        thisItemInfo.readItemTSID(),
-                        itemImages.get(itemImageBeingUsed).readPNGImageName().replace(".png", ""),
-                        streetSnapImage.readPNGImageName().replace(".png", ""));                    
-
-                    if (!spiralSearch.readOkFlag()) 
+                    else
                     {
-                        // error
-                        return false;
-                    }
+                        // else - ignore the results of the last search as it was worse than the best we have so far
+                    }                                     
+                }
+
+                debugInfo = spiralSearch.debugRGBInfo();
+                printToFile.printDebugLine(this, "searchForFragment - GOOD match found for " + thisItemInfo.readItemClassTSID() + ": best match is with " + 
+                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
+                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.readPercentageMatch() + "%)", 2);
+                break;
+                
+            case NO_MATCH:
+                // For quoins in the non-x/y search case, there is nothing to add to the quoinData structure
+                // Only save the bestMatchInfo if better than what we've already got
+                if (bestMatchInfo == null)
+                {
+                    // Returned from first search, so OK to overwrite with the information for this search
+                    bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                }
+                else if (bestMatchInfo.readPercentageMatch() < spiralSearch.readPercentageMatchInfo())
+                {
+                    // Last search returned a better percentage match - so save this information 
+                    bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                }
+                else
+                {
+                    // else - ignore the results of the last search as it was worse than the best we have so far
+                }     
+                debugInfo = spiralSearch.debugRGBInfo();
+                                printToFile.printDebugLine(this, "searchForFragment - NO match found for " + thisItemInfo.readItemClassTSID() + ": best match is with " + 
+                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
+                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.readPercentageMatch() + "%)", 2);               
+                break;
+        }
+               
+        // If this is an x,y search only, then we only search for one image on the street anyhow because we know the class/variant from the JSON file
+        // - except for trees which still have to search for all images regardless
+        if (configInfo.readChangeXYOnly() && !thisItemInfo.itemIsATree())
+        {
+            searchDone = true;    
+        }
+        
+        // So at this stage we have updated the quoin structure if necessary and bestMatchInfo contains the best match so far on this street with the item images
+        if (!searchDone)
+        {
+            // Need to move on to process the next image on the street
+            itemImageBeingUsed++;
+            if (itemImageBeingUsed >= itemImages.size())
+            {
+                // Have searched using all the item images
+                // This will include the case of the QQ - as only has one image (but will be searched for as special case on next street snap)
+                printToFile.printDebugLine(this, "searchForFragment - no more images to search on this street", 2);
+                    
+                // In the case of quoins - need to save the details of the image that was closest to the original co-ordinates
+                if (thisItemInfo.readItemClassTSID().equals("quoin"))
+                {
+                    // Finds the closest quoin to the original x,y and saves it into bestMatchInfo
+                    saveClosestQuoin();
+                }
+                
+                // Mark as search done as we've run out of images to search with
+                searchDone = true;
+            }
+            else
+            {
+                // Carry out search using the new image                  
+                printToFile.printDebugLine(this, "searchForFragment - with new image " + itemImages.get(itemImageBeingUsed).readPNGImageName() + " and street " + streetSnapImage.readPNGImageName(), 2);
+                spiralSearch = null; 
+                System.gc();
+
+                spiralSearch = new SpiralSearch(itemImages.get(itemImageBeingUsed).readPNGImage(), 
+                    streetSnapImage.readPNGImage(), 
+                    thisItemInfo.readItemClassTSID(),
+                    startItemX,
+                    startItemY,
+                    itemImages.get(itemImageBeingUsed).readFragOffsetX(),
+                    itemImages.get(itemImageBeingUsed).readFragOffsetY(),
+                    searchBoxWidth, searchBoxHeight, searchRadius, adjustment,
+                    thisItemInfo.readItemTSID(),
+                    itemImages.get(itemImageBeingUsed).readPNGImageName().replace(".png", ""),
+                    streetSnapImage.readPNGImageName().replace(".png", ""));                    
+
+                if (!spiralSearch.readOkFlag()) 
+                {
+                    // error
+                    return false;
                 }
             }
         }
         
+        // If we're finished on this street then just dump out the current state of play        
         if (searchDone)
         {
             // Dump out debug info to give me some idea of whether I've gotten the searchbox the right size or not
-            String s = bestMatchInfo.bestMatchVariant(thisItemInfo.readItemClassTSID());
-            printToFile.printDebugLine(this, " Returning from FragmentFound item  found = " + itemFound + " " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") info <" + newItemVariant + 
-                                        "> old x,y = " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " new x,y " + newItemX + "," + newItemY, 2);
-            printToFile.printDebugLine(this, " and best match is " + bestMatchInfo.matchPercentAsFloatString() + " (RGB info is " + bestMatchInfo.bestMatchAvgRGB + "/" + bestMatchInfo.bestMatchAvgTotalRGB + 
-                                        ") for " + s + " - try " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 2);
-            
+            printToFile.printDebugLine(this, " Returning from FragmentFound: item found? = " + itemFound + " " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") old x,y = " + 
+                                               thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY(), 2);
+            printToFile.printDebugLine(this, " Best match is " + bestMatchInfo.matchPercentAsFloatString() + " for " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY + " for " + bestMatchInfo.readBestMatchItemImageName(), 2);            
             if (debugInfo.length() > 0)
             {
                 printToFile.printDebugLine(this, " For reference - " + debugInfo, 2);
@@ -381,82 +348,12 @@ class FragmentFind
         return true;
     }
     
-    boolean extractItemInfoFromItemImageFilename()
-    {
-        // Extract the information which describes the quoin type or dir/variant fields for different items
-        // Just need to strip out the item class_tsid from the front of the file name - if anything left, then
-        // this is the value needed for the JSON file if the street item is to match the archive snaps. 
-        String imageName = itemImages.get(itemImageBeingUsed).readPNGImageName();
-        String name = imageName.replace(".png", "");
-        printToFile.printDebugLine(this, "What is this? " + thisItemInfo.readItemClassTSID() + " for image name " + name, 1);
-        
-        // Some items never have a variant field e.g. rock_metal_1, QQ, so image name = class TSID
-        if (thisItemInfo.readItemClassTSID().equals(name))
-        {
-            foundVariant = "";
-            return true;
-        }
-        else if ((thisItemInfo.readItemClassTSID().indexOf("trant_") == 0) || (thisItemInfo.readItemClassTSID().indexOf("patch") == 0))
-        {
-            // Quite often might have a bean tree on our QA street, but the snap has a fruit tree. Therefore the itemClassTSID (bean)
-            // in the JSON file doesn't reflect the found fruit tree on the snap. 
-            // Unlike quoins, we are not changing tree JSONs to match snaps, therefore quite feasible that the itemClassTSID won't match the snap name. 
-            // So just return a clean empty variant field if not appropriate - i.e. because have non-wood tree/patch present.  
-            printToFile.printDebugLine(this, " tree or patch " + thisItemInfo.readItemClassTSID(), 1);
-            foundVariant = "";
-            return true;
-        }
-        else if (thisItemInfo.readItemClassTSID().equals("wood_tree"))
-        {            
-            // Note that if the JSON file is set up to be a wood tree, then we do want to know what variant was found which constituted a match.
-            // But have 2 possible scenarios - might have a wood_tree matching snap, or some other tree. Need to handle these two scenarios separately
-            if (name.indexOf("wood_tree") != 0)
-            {
-                // The match for this wood tree JSON file has been found with a non-wood tree image on the street snap
-                // So return the variant which was set in the original JSON file
-                printToFile.printDebugLine(this, " default wood tree variant to original value of " + thisItemInfo.readOrigItemVariant(), 1);
-                foundVariant = thisItemInfo.readOrigItemVariant();
-                return true;
-            }
-            
-            // else - continue on to extract the variant information below.
-        }
-        
-        // Extract the variant information from the item file name
-        // Just do a sanity check that the class TSID is correct for the image we are matching to ...
-        if (name.indexOf(thisItemInfo.readItemClassTSID()) == 0)
-        {
-            if (name.length() > (thisItemInfo.readItemClassTSID().length() + 1))
-            {
-                // Means there is an _info field to extract - so strip off the classTSID_ part and _
-                foundVariant = name.replace(thisItemInfo.readItemClassTSID() + "_", "");
-                printToFile.printDebugLine(this, " image name "  + imageName + " for item class tsid " + thisItemInfo.readItemClassTSID() + " returns variant + " + foundVariant, 1);
-            }
-            else
-            {
-                // Should never reach this point - but if we do, just default the variant to nothing
-                foundVariant = "";
-                printToFile.printDebugLine(this, " WARNING - missing variant in image name "  + imageName + " for item class tsid " + thisItemInfo.readItemClassTSID(), 3);
-            }
-            return true;
-        }
-        else
-        {
-            // error - the matched name does not start with the item classTSID 
-            printToFile.printDebugLine(this, " image name "  + imageName + " is incorrect for (does not match) item class tsid " + thisItemInfo.readItemClassTSID(), 3);
-            return false;
-        }
-
-    }
-    
     void saveClosestQuoin()
     {
         // Go through the array of results and save the new x,y and type field with the quoin found nearest to the original x,y
         if (quoinMatches.size() == 0)
         {
-            // Nothing was found that matched well enough - so mark as not found 
-            itemFound = false;  
-            newItemVariant = "";
+            // Nothing was found that matched well enough - so don't overwrite bestMatchInfo - which will already contain the best 'missing' search results to date
             printToFile.printDebugLine(this, "No quoin images matched", 2);
         }
         else
@@ -465,52 +362,24 @@ class FragmentFind
             // So first of all save the first entry, and then go through the remaining ones, if any
             int i = 0;
             float nearestQuoinDist = quoinMatches.get(i).distFromOrigXY;
-            newItemX = quoinMatches.get(i).itemX;
-            newItemY = quoinMatches.get(i).itemY;
-            newItemVariant = quoinMatches.get(i).quoinType;
-            bestMatchInfo = quoinMatches.get(i).bestMatchInfo;
-            
+            bestMatchInfo = quoinMatches.get(i).bestMatchInfo;            
             for (i = 1; i < quoinMatches.size(); i++)
             {
                 if (quoinMatches.get(i).distFromOrigXY < nearestQuoinDist)
                 {
                     // Found quoin that is even nearer to original x,y than one that is saved
                     // Overwrite the values
-                    nearestQuoinDist = quoinMatches.get(i).distFromOrigXY;
-                    newItemX = quoinMatches.get(i).itemX;
-                    newItemY = quoinMatches.get(i).itemY;
-                    newItemVariant = quoinMatches.get(i).quoinType;
-                    
+                    nearestQuoinDist = quoinMatches.get(i).distFromOrigXY;            
                     bestMatchInfo = quoinMatches.get(i).bestMatchInfo;
                 }
                 else
                 {
-                    printToFile.printDebugLine(this, "ignoring quoin image found for type " + quoinMatches.get(i).quoinType + " at x,y " + quoinMatches.get(i).itemX + "," + quoinMatches.get(i).itemY, 1);
+                    printToFile.printDebugLine(this, "Skip quoin image found for type " + quoinMatches.get(i).quoinType + " at x,y " + quoinMatches.get(i).itemX + "," + quoinMatches.get(i).itemY, 1);
                 }
             }
-            printToFile.printDebugLine(this, "closest quoin image found for type " + newItemVariant + " at x,y " + newItemX + "," + newItemY, 2);
-            itemFound = true;
+            printToFile.printDebugLine(this, "Closest quoin image found for type " + bestMatchInfo.readBestMatchItemImageName().replace("quoin_", "") + 
+                                             " at x,y " + bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY(), 2);
         }
-    }
-       
-    public boolean readSearchDone()
-    {
-        return searchDone;
-    }
-        
-    public int readNewItemX()
-    {
-        return newItemX;
-    }
-    
-    public int readNewItemY()
-    {
-        return newItemY;
-    }
-    
-    public String readNewItemVariant()
-    {
-        return newItemVariant;
     }
     
     public boolean readItemFound()
@@ -521,6 +390,11 @@ class FragmentFind
     public boolean readOkFlag()
     {
         return okFlag;
+    }
+    
+    public boolean readSearchDone()
+    {
+        return searchDone;
     }
     
     public MatchInfo readBestMatchInfo()
@@ -536,15 +410,20 @@ class FragmentFind
         String quoinType;
         MatchInfo bestMatchInfo;
         
-        QuoinMatchData(int foundX, int foundY, String variant, MatchInfo RGBInfo)
+        QuoinMatchData(MatchInfo matchInfo)
         {
-            itemX = foundX;
-            itemY = foundY;
-            quoinType = variant;
-            distFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(thisItemInfo.readOrigItemX(), thisItemInfo.readOrigItemY(), foundX, foundY); 
-            bestMatchInfo = RGBInfo;
-            printToFile.printDebugLine(this, "Saving quoin data for " + variant + " with avg RGB " + bestMatchInfo.bestMatchAvgRGB + " at x,y " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 1);
+            okFlag = true;
+            bestMatchInfo = matchInfo;
+            itemX = bestMatchInfo.readBestMatchX();
+            itemY = bestMatchInfo.readBestMatchY();
+            quoinType = bestMatchInfo.readBestMatchItemImageName().replace("quoin_", "");
+            if (quoinType.length() == 0)
+            {
+                okFlag = false;
+                printToFile.printDebugLine(this, "Error - missing variant for quoin ", 3);
+            }
+            distFromOrigXY = Utils.distanceBetweenX1Y1_X2Y2(thisItemInfo.readOrigItemX(), thisItemInfo.readOrigItemY(), itemX, itemY); 
+            printToFile.printDebugLine(this, "Saving quoin data for " + quoinType + " with match of " + bestMatchInfo.matchPercentAsFloatString() + "% at x,y " + bestMatchInfo.bestMatchX + "," + bestMatchInfo.bestMatchY, 1);
         }
     }
-    
 }

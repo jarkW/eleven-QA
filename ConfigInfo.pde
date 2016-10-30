@@ -16,6 +16,7 @@ class ConfigInfo {
     String serverPassword;
     int serverPort;
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
+    boolean showDistFromOrigXY;
     
     boolean debugShowFragments;
     boolean debugDumpDiffImages;
@@ -348,6 +349,12 @@ class ConfigInfo {
             return false;
         }
         
+        showDistFromOrigXY = Utils.readJSONBool(json, "show_distance_from_original_xy", false);
+        if (!Utils.readOkFlag())
+        {
+            showDistFromOrigXY = false;
+        }
+        
         // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
         debugShowFragments = Utils.readJSONBool(json, "debug_show_fragments", false);
         if (!Utils.readOkFlag())
@@ -607,5 +614,10 @@ class ConfigInfo {
     public boolean readDebugRun()
     {
         return debugRun;
-    }    
+    }   
+    
+    public boolean readShowDistFromOrigXY()
+    {    
+        return showDistFromOrigXY;
+    }
 }

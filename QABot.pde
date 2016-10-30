@@ -86,6 +86,11 @@ OutputFile validationSummaryOutput;
 // missing item co-ordinates - if set to this, know not found
 final static int MISSING_COORDS = 32700;
 
+// search result for fragment
+final static int PERFECT_MATCH = 300;
+final static int GOOD_MATCH = 200;
+final static int NO_MATCH = 100;
+
 // States - used to determine next actions
 int nextAction;
 final static int USER_INPUT_CONFIG_FOLDER = 10;
@@ -113,7 +118,6 @@ PrintToFile printToFile;
 // This will be reset when the config.json is read
 int debugLevel = 3;
 boolean debugToConsole = true;
-boolean doDelay = false;
 
 Memory memory = new Memory();
 
