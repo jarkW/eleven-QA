@@ -211,8 +211,8 @@
   },
   {
     "class_tsid": "trant_bean",
-    "offset_x": -27,
-    "offset_y": -103,
+    "offset_x": -26,
+    "offset_y": -104,
     "info": ""
   },
   {
@@ -271,8 +271,8 @@
   },
   {
     "class_tsid": "trant_fruit",
-    "offset_x": 0,
-    "offset_y": -55,
+    "offset_x": -3,
+    "offset_y": -70,
     "info": ""
   },
   {
