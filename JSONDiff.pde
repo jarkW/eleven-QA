@@ -18,8 +18,6 @@ class JSONDiff
     JSONObject newJSON;
     String origFileName;
     String newFileName;
-    // Set by the function that works out what type of object we have - so that I can return a boolean to handle success/failure
-    Object extractedObject;
 
     public JSONDiff(String iTSID, String iClassTSID, String origJSONFileName, String newJSONFileName)
     {
@@ -31,7 +29,6 @@ class JSONDiff
         newJSON = null;
         origFileName = origJSONFileName;
         newFileName = newJSONFileName;
-        extractedObject = null;
     }
 
     public boolean compareJSONFiles()
@@ -110,6 +107,9 @@ class JSONDiff
     boolean compareJSONObjects(JSONObject origVersion, JSONObject newVersion, String level)
     {
         String s;
+        Object newObj;
+        Object origObj;
+        
         // Sort the keys in both objects
         List<String> newList = new ArrayList(newVersion.keys());
         Collections.sort(newList);
@@ -126,29 +126,19 @@ class JSONDiff
         int i;
         int j;
         for (i = 0, j = 0; i < newList.size() || j < origList.size(); i++, j++)
-        {
-            // These don't work in Processing - so have to use exception handling to extract the object type
-            //Object newObj = newVersion.get(newList.get(i));
-            //Object origObj = origVersion.get(origList.get(i));
-            
+        {            
             // Search for matching keys in file - trying to find a match in origList for the new key
             while (!newList.get(i).equals(origList.get(j)) && (i < newList.size()))
             {
-                if (!extractObjectFromJSONObject(newVersion, newList, i))
-                {
-                   // Unexpected type of object in JSON
-                   s = "ERROR - unexpected type of object in JSON file" + newFileName;
-                   infoMsgList.append(s);
-                   return false;
-                }                
-                // extractedObject is set by extractObjectFromJSONObject ()
-                if (!(extractedObject == null) && !(extractedObject instanceof JSONObject) && !(extractedObject instanceof JSONArray))
+                newObj = newVersion.get(newList.get(i));
+                
+                if (!(newObj == null) && !(newObj instanceof JSONObject) && !(newObj instanceof JSONArray))
                 {
                     // Means we have a bool/int/String we can dump out
-                    s = "New key in new JSON file is " + newList.get(i) + " set to " + extractedObject;
+                    s = "New key in new JSON file is " + newList.get(i) + " set to " + newObj;
                     if (configInfo.readDebugValidationRun())
                     {
-                        validationInfo = validationInfo + newList.get(i) + " (new->" + extractedObject + "); ";
+                        validationInfo = validationInfo + newList.get(i) + " (new->" + newObj + "); ";
                     }
                 }
                 else
@@ -184,22 +174,16 @@ class JSONDiff
                         return false;
                     }
                     else
-                    {                       
-                        if (!extractObjectFromJSONObject(newVersion, newList, j))
-                        {
-                            // Unexpected type of object in JSON
-                            s = "ERROR - unexpected type of object in JSON file" + newFileName;
-                            infoMsgList.append(s);
-                            return false;
-                        }
-                        // extractedObject is set by extractObjectFromJSONObject ()
-                        if (!(extractedObject == null) && !(extractedObject instanceof JSONObject) && !(extractedObject instanceof JSONArray))
+                    { 
+                        newObj = newVersion.get(newList.get(j));
+
+                        if (!(newObj == null) && !(newObj instanceof JSONObject) && !(newObj instanceof JSONArray))
                         {
                             // Means we have a bool/int/String we can dump out
-                            s = "Valid new key at end of file - " +  newList.get(j) + " set to " + extractedObject;
+                            s = "Valid new key at end of file - " +  newList.get(j) + " set to " + newObj;
                             if (configInfo.readDebugValidationRun())
                             {
-                                validationInfo = validationInfo + newList.get(j) + " (new (end file)->" + extractedObject + "); ";
+                                validationInfo = validationInfo + newList.get(j) + " (new (end file)->" + newObj + "); ";
                             }
                         }
                         else
@@ -217,23 +201,8 @@ class JSONDiff
             }
 
             // If we get here then we have two keys with the same name
-            if (!extractObjectFromJSONObject(origVersion, origList, j))
-            {
-                // Unexpected type of object in JSON
-                s = "ERROR - unexpected type of object in JSON file" + origFileName;
-                infoMsgList.append(s);
-                return false;
-            }
-            Object origObj = extractedObject; // set by extractObjectFromJSONObject
-            if (!extractObjectFromJSONObject(newVersion, newList, i))
-            {
-                // Unexpected type of object in JSON
-                s = "ERROR - unexpected type of object in JSON file" + newFileName;
-                infoMsgList.append(s);
-                return false;
-            }
-            Object newObj = extractedObject;  // set by extractObjectFromJSONObject  
-            
+            origObj = origVersion.get(origList.get(j));
+            newObj = newVersion.get(newList.get(i));           
 
             // Handle the null cases first to avoid null pointer errors
             if ((newObj == null) && (origObj == null))
@@ -337,6 +306,8 @@ class JSONDiff
     boolean compareJSONArrays(JSONArray origVersion, JSONArray newVersion, String level)
     {
         String s;
+        Object origObj;
+        Object newObj;
         
         // Will just go through the arrays, entry by entry.
         if (origVersion.size() != newVersion.size())
@@ -345,30 +316,12 @@ class JSONDiff
             infoMsgList.append(s);
             return false;
         }
-    
-    
+       
         int i;
         for (i = 0; i < newVersion.size(); i++)
-        {
-            // These don't work in Processing - so have to use exception handling to extract the object type
-            //Object newObj = newVersion.get(newList.get(i));
-            //Object origObj = origVersion.get(origList.get(i)); 
-            if (!extractObjectFromJSONArray(origVersion, i))
-            {
-                // unexpected object in array
-                s = "ERROR - unexpected type of object in array in JSON file" + origFileName;
-                infoMsgList.append(s);
-                return false;
-            }
-            Object origObj = extractedObject; // set by extractObjectFromJSONarray
-            if (!extractObjectFromJSONArray(newVersion, i))
-            {
-                // unexpected object in array
-                s = "ERROR - unexpected type of object in array in JSON file" + newFileName;
-                infoMsgList.append(s);
-                return false;
-            }
-            Object newObj = extractedObject; // set by extractObjectFromJSONarray  
+        {            
+            origObj = origVersion.get(i);
+            newObj = newVersion.get(i);
             
             // Handle the null cases first to avoid null pointer errors
             if ((newObj == null) && (origObj == null))
@@ -451,168 +404,6 @@ class JSONDiff
             }       
 
         }
-        return true;
-    }
-
-    // This is very hokey code which simply helps determing what kind of object we are dealing with
-    // Couldn't find any other way of doing this given that we could not use the Object.get() method
-    // in Processing - see https://github.com/processing/processing/issues/4334
-    
-    // As I need to return an error status from this function, a global variable is used to store the successfully 
-    // returned object, and then used by the calling function.
-    
-    boolean extractObjectFromJSONObject(JSONObject thisJSON, List<String> thisList, int i)
-    {
-        JSONObject jsonObj = null;
-        String strObj = "";
-        JSONArray arrayObj = null;
-        boolean boolObj = false;
-        int intObj = -9999;
-        String s;
-
-        extractedObject = null;
-        
-        // First check to see if this is a null object - i.e. has the value null
-        if (thisJSON.isNull(thisList.get(i)))
-        {
-            // Null value for key, so return null
-            return true;
-        }
-        
-        //Object newObj = thisJSON.get(thisList.get(i));
-        try 
-        {
-            jsonObj = thisJSON.getJSONObject(thisList.get(i));
-        }
-        catch(Exception e)
-        {   
-            // So this is not a JSONObject ... so try to see if it is an array
-            try 
-            {
-                arrayObj = thisJSON.getJSONArray(thisList.get(i));
-            }
-            catch(Exception e1)
-            {               
-                // Is not JSONObject or JSONArray - so just read as String (which will safely convert an int/bool for our purposes)
-                try
-                {
-                    strObj = thisJSON.getString(thisList.get(i));
-                }
-                catch(Exception e2)
-                {
-                    try
-                    {
-                        // Is not JSONObject or JSONArray or String
-                        boolObj = thisJSON.getBoolean(thisList.get(i));
-                    }
-                    catch(Exception e3)
-                    {
-                        try
-                        {
-                            // Is not JSONObject or JSONArray or String, or boolean - so try the final type of Int
-                            intObj = thisJSON.getInt(thisList.get(i));
-                        }
-                        catch (Exception e4)
-                        {
-                            println(e4);
-                            s = "Unexpected field type for key " + thisList.get(i);
-                            infoMsgList.append(s);
-                            return false;
-                        }
-                        extractedObject = intObj;
-                        return true;
-                    }
-                    extractedObject = boolObj;
-                    return true;
-                }
-                extractedObject = strObj;
-                return true;
-            }
-            extractedObject = arrayObj;
-            return true;
-        }
-        extractedObject = jsonObj;
-        return true;
-    }
-
-    // This is very hokey code which simply helps determing what kind of object we are dealing with
-    // Couldn't find any other way of doing this given that we could not use the Object.get() method
-    // in Processing - see https://github.com/processing/processing/issues/4334
-    
-    // As I need to return an error status from this function, a global variable is used to store the successfully 
-    // returned object, and then used by the calling function.
-    
-    boolean extractObjectFromJSONArray(JSONArray thisJSON, int i)
-    {
-        JSONObject jsonObj = null;
-        String strObj = "";
-        JSONArray arrayObj = null;
-        boolean boolObj = false;
-        int intObj = -9999;
-        String s;
-        
-        extractedObject = null;
-        
-        // First check to see if this is a null object - i.e. has the value null
-        if (thisJSON.isNull(i))
-        {
-            // Null value for key, so return null object
-            return true;
-        }
-
-        //Object newObj = thisJSON.get(thisList.get(i));
-        try 
-        {
-            jsonObj = thisJSON.getJSONObject(i);
-        }
-        catch(Exception e)
-        {   
-            // So this is not a JSONObject ... so try to see if it is an array
-            try 
-            {
-                arrayObj = thisJSON.getJSONArray(i);
-            }
-            catch(Exception e1)
-            {               
-                // Is not JSONObject or JSONArray - so just read as String (which will safely convert an int/bool for our purposes)
-                try
-                {
-                    strObj = thisJSON.getString(i);
-                }
-                catch(Exception e2)
-                {
-                    try
-                    {
-                        // Is not JSONObject or JSONArray or String
-                        boolObj = thisJSON.getBoolean(i);
-                    }
-                    catch(Exception e3)
-                    {
-                        try
-                        {
-                            // Is not JSONObject or JSONArray or String, or boolean - so try the final type of Int
-                            intObj = thisJSON.getInt(i);
-                        }
-                        catch (Exception e4)
-                        {
-                            println(e4);
-                            s = "Unexpected field type for index " + i;
-                            infoMsgList.append(s);
-                            return false;
-                        }
-                        extractedObject = intObj;
-                        return true;
-                    }
-                    extractedObject = boolObj;
-                    return true;
-                }
-                extractedObject = strObj;
-                return true;
-            }
-            extractedObject = arrayObj;
-            return true;
-        }
-        extractedObject = jsonObj;
         return true;
     }
 
