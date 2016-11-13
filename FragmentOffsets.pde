@@ -65,6 +65,13 @@ class FragmentOffsets
                 return false;
             }
             
+            String state = Utils.readJSONString(fragment, "state", false);
+            if (!Utils.readOkFlag())
+            {
+                // The state field may not exist - only used for items which need to have the maturity recorded for the image e.g. trees
+                state = "";
+            }            
+            
             // Now read in the offsets for this classTSID/info combination
             fragOffsetX = Utils.readJSONInt(fragment, "offset_x", true);
             if (!okFlag)
@@ -133,16 +140,18 @@ class FragmentOffsets
             }
              */            
              
-            // Now add into the hashmap - using classTSID/info as the key
+            // Now add into the hashmap - using classTSID/info as the key           
             Offsets itemOffsets = new Offsets(fragOffsetX, fragOffsetY);
+            String keyString = tsid;
             if (info.length() > 0)
             {
-                itemOffsetHashMap.put(tsid + "_" + info, itemOffsets);
+                keyString = keyString + "_" + info;
             }
-            else
+            if (state.length() > 0)
             {
-                itemOffsetHashMap.put(tsid, itemOffsets);
+                keyString = keyString + "_" + state;
             }
+            itemOffsetHashMap.put(keyString, itemOffsets);
         }
         
         printToFile.printDebugLine(this, "Number of offsets recorded is " + itemOffsetHashMap.size(), 1);
@@ -150,10 +159,10 @@ class FragmentOffsets
     }
     
         
-    public Offsets getFragmentOffsets(String itemClassAndInfo)
+    public Offsets getFragmentOffsets(String itemClassAndInfoAndState)
     {
         // Up to the calling function to make sure this is not null 
-        return itemOffsetHashMap.get(itemClassAndInfo);
+        return itemOffsetHashMap.get(itemClassAndInfoAndState);
     }
     
     public int sizeOf()

@@ -410,10 +410,9 @@ class OutputFile
                     break;
                     
                 default:
-                    printToFile.printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemVariant(), 3);
-                    displayMgr.showErrMsg("Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemVariant(), true);
-                    failNow = true;
-                    return false;
+                    // Should never be hit - so just report the error and continue
+                    printToFile.printDebugLine(this, "Unexpected quoin type " + itemResults.get(i).itemInfo.readNewItemVariant(), 2);
+                    break;
                 }
             }
         }

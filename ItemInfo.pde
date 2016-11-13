@@ -191,7 +191,14 @@ class ItemInfo
     } 
     
     boolean validItemToCheckFor()
-    {           
+    {   
+        // USED FOR DEBUGGING SO ONLY HANDLE TREES _ REMOVE JARK
+        //if (!itemIsATree())
+        //{
+        //    return false;
+        //}
+        // START NORMAL CODE
+        
         // Returns true if this an item we expect to be scanning for on a snap
         if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
             (itemClassTSID.indexOf("trant_", 0) == 0) ||
@@ -733,8 +740,7 @@ class ItemInfo
                 
        // Need to be careful of using the variant field deduced from the image name - trees/patches must not have a variant field set (because matched a wood tree), 
        // For wood trees, keep the existing variant? Or could reset from street if also a wood tree
-       // When reading in the variant, need to do check here that do get that information from the image name if expecting this
-       
+       // When reading in the variant, need to do check here that do get that information from the image name if expecting this      
         newItemVariant = "";
         String name = bestMatchInfo.readBestMatchItemImageName();
         String s;
@@ -759,6 +765,7 @@ class ItemInfo
             // in the JSON file doesn't reflect the found fruit tree on the snap. 
             // Unlike quoins, we are not changing tree JSONs to match snaps, therefore quite feasible that the itemClassTSID won't match the snap name. 
             // So just return a clean empty variant field if not appropriate - i.e. because have non-wood tree/patch present.  
+            // Also means the maturity information in the matched file name will also be ignored
             printToFile.printDebugLine(this, " tree or patch " + itemClassTSID, 1);
             newItemVariant = "";
             return true;
@@ -783,12 +790,32 @@ class ItemInfo
         // Just do a sanity check that the class TSID is correct for the image we are matching to ...
         if (name.indexOf(itemClassTSID) == 0)
         {
+            // The class TSID is correctly reflected in the name of the matching snap.
             if (name.length() > (itemClassTSID.length() + 1))
-            {
-                // Means there is an _info field to extract - so strip off the classTSID_ part and _
-                newItemVariant = name.replace(itemClassTSID + "_", "");
+            {          
+                // The matching image contains variant information, and possibly maturity information which needs to be ignored
+                // The variant will be the next character in the string - as either had classTSID_variant or classTSID_variant_maturity 
+                switch (itemClassTSID)
+                {
+                    // These items have a variant and state part of the matching file name
+                    case "wood_tree":
+                    //case "dirt_pile": 
+                    case "mortar_barnacle":
+                    case "jellisac":
+                    // rock_*? - will need to be handled differentle - just use the class tsid if searching multiple states of each rock
+                    // peat  will need to be handled differentle - just use the class tsid - as for rock
+                        // The variant is the next digit - ignore the maturity information which comes after that
+                        newItemVariant = (name.replace(itemClassTSID + "_", "")).substring(0,1);
+                        break;
+            
+                    // These items only have a variant that needs to be extracted
+                    case "ice_knob": // the maturity images are unusable, so only search on the healthiest images (state 4)
+                    default:
+                        newItemVariant = name.replace(itemClassTSID + "_", "");    
+                        break;
+                }               
                 printToFile.printDebugLine(this, " image name "  + name + " for item class tsid " + itemClassTSID + " returns variant + " + newItemVariant, 1);
-                return true;
+                return true;                          
             }
             else
             {

@@ -1,722 +1,1918 @@
 {"fragments": [
   {
     "class_tsid": "marker_qurazy",
+    "width": 15,
     "offset_x": -4,
     "offset_y": -19,
-    "info": ""
+    "info": "",
+    "height": 16
   },
   {
     "class_tsid": "quoin",
+    "width": 12,
     "offset_x": -5,
     "offset_y": -13,
-    "info": "currants"
+    "info": "currants",
+    "height": 12
   },
   {
     "class_tsid": "quoin",
+    "width": 12,
     "offset_x": -5,
     "offset_y": -18,
-    "info": "mood"
+    "info": "mood",
+    "height": 12
   },
   {
     "class_tsid": "quoin",
+    "width": 12,
     "offset_x": -4,
     "offset_y": -19,
-    "info": "xp"
+    "info": "xp",
+    "height": 14
   },
   {
     "class_tsid": "quoin",
+    "width": 11,
     "offset_x": -4,
     "offset_y": -20,
-    "info": "time"
+    "info": "time",
+    "height": 11
   },
   {
     "class_tsid": "quoin",
+    "width": 10,
     "offset_x": -4,
     "offset_y": -21,
-    "info": "mystery"
+    "info": "mystery",
+    "height": 12
   },
   {
     "class_tsid": "quoin",
+    "width": 10,
     "offset_x": -4,
     "offset_y": -14,
-    "info": "energy"
+    "info": "energy",
+    "height": 11
   },
   {
     "class_tsid": "quoin",
+    "width": 10,
     "offset_x": -3,
     "offset_y": -16,
-    "info": "favor"
+    "info": "favor",
+    "height": 10
   },
   {
     "class_tsid": "rock_beryl_1",
+    "width": 21,
     "offset_x": -21,
     "offset_y": -67,
-    "info": ""
+    "info": "",
+    "height": 20
   },
   {
     "class_tsid": "rock_beryl_2",
+    "width": 24,
     "offset_x": -15,
     "offset_y": -87,
-    "info": ""
+    "info": "",
+    "height": 29
   },
   {
     "class_tsid": "rock_beryl_3",
+    "width": 32,
     "offset_x": -55,
     "offset_y": -66,
-    "info": ""
+    "info": "",
+    "height": 20
   },
   {
     "class_tsid": "rock_dullite_1",
+    "width": 18,
     "offset_x": 10,
     "offset_y": -59,
-    "info": ""
+    "info": "",
+    "height": 23
   },
   {
     "class_tsid": "rock_dullite_2",
+    "width": 28,
     "offset_x": -8,
     "offset_y": -53,
-    "info": ""
+    "info": "",
+    "height": 25
   },
   {
     "class_tsid": "rock_dullite_3",
+    "width": 29,
     "offset_x": -15,
     "offset_y": -61,
-    "info": ""
+    "info": "",
+    "height": 21
   },
   {
     "class_tsid": "rock_sparkly_1",
+    "width": 21,
     "offset_x": 0,
     "offset_y": -38,
-    "info": ""
+    "info": "",
+    "height": 19
   },
   {
     "class_tsid": "rock_sparkly_2",
+    "width": 19,
     "offset_x": 0,
     "offset_y": -58,
-    "info": ""
+    "info": "",
+    "height": 20
   },
   {
     "class_tsid": "rock_sparkly_3",
+    "width": 29,
     "offset_x": -8,
     "offset_y": -48,
-    "info": ""
+    "info": "",
+    "height": 17
   },
   {
     "class_tsid": "rock_metal_1",
+    "width": 20,
     "offset_x": 0,
     "offset_y": -50,
-    "info": ""
+    "info": "",
+    "height": 20
   },
   {
     "class_tsid": "rock_metal_2",
+    "width": 21,
     "offset_x": -30,
     "offset_y": -67,
-    "info": ""
+    "info": "",
+    "height": 18
   },
   {
     "class_tsid": "rock_metal_3",
+    "width": 22,
     "offset_x": 14,
     "offset_y": -65,
-    "info": ""
+    "info": "",
+    "height": 12
   },
   {
     "class_tsid": "npc_mailbox",
+    "width": 17,
     "offset_x": -11,
     "offset_y": -120,
-    "info": "mailboxRight"
+    "info": "mailboxRight",
+    "height": 11
   },
   {
     "class_tsid": "npc_mailbox",
+    "width": 18,
     "offset_x": -6,
     "offset_y": -120,
-    "info": "mailboxLeft"
+    "info": "mailboxLeft",
+    "height": 10
   },
   {
     "class_tsid": "visiting_stone",
+    "width": 35,
     "offset_x": 6,
     "offset_y": -140,
-    "info": "right"
+    "info": "right",
+    "height": 41
   },
   {
     "class_tsid": "visiting_stone",
+    "width": 31,
     "offset_x": -42,
     "offset_y": -140,
-    "info": "left"
+    "info": "left",
+    "height": 35
   },
   {
     "class_tsid": "npc_shrine_alph",
+    "width": 21,
     "offset_x": -10,
     "offset_y": -41,
-    "info": "right"
+    "info": "right",
+    "height": 18
   },
   {
     "class_tsid": "npc_shrine_cosma",
+    "width": 24,
     "offset_x": -8,
     "offset_y": -39,
-    "info": "right"
+    "info": "right",
+    "height": 14
   },
   {
     "class_tsid": "npc_shrine_friendly",
+    "width": 16,
     "offset_x": -3,
     "offset_y": -36,
-    "info": "right"
+    "info": "right",
+    "height": 15
   },
   {
     "class_tsid": "npc_shrine_grendaline",
+    "width": 20,
     "offset_x": -7,
     "offset_y": -40,
-    "info": "right"
+    "info": "right",
+    "height": 17
   },
   {
     "class_tsid": "npc_shrine_humbaba",
+    "width": 26,
     "offset_x": -10,
     "offset_y": -38,
-    "info": "right"
+    "info": "right",
+    "height": 18
   },
   {
     "class_tsid": "npc_shrine_lem",
+    "width": 24,
     "offset_x": -12,
     "offset_y": -40,
-    "info": "right"
+    "info": "right",
+    "height": 17
   },
   {
     "class_tsid": "npc_shrine_mab",
+    "width": 24,
     "offset_x": -5,
     "offset_y": -41,
-    "info": "right"
+    "info": "right",
+    "height": 19
   },
   {
     "class_tsid": "npc_shrine_pot",
+    "width": 18,
     "offset_x": -6,
     "offset_y": -44,
-    "info": "right"
+    "info": "right",
+    "height": 19
   },
   {
     "class_tsid": "npc_shrine_spriggan",
+    "width": 24,
     "offset_x": -9,
     "offset_y": -44,
-    "info": "right"
+    "info": "right",
+    "height": 22
   },
   {
     "class_tsid": "npc_shrine_ti",
+    "width": 29,
     "offset_x": -9,
     "offset_y": -38,
-    "info": "right"
+    "info": "right",
+    "height": 15
   },
   {
     "class_tsid": "npc_shrine_zille",
+    "width": 29,
     "offset_x": -10,
     "offset_y": -38,
-    "info": "right"
-  },
-  {
-    "class_tsid": "trant_bean",
-    "offset_x": -26,
-    "offset_y": -104,
-    "info": ""
-  },
-  {
-    "class_tsid": "trant_egg",
-    "offset_x": -34,
-    "offset_y": -121,
-    "info": ""
-  },
-  {
-    "class_tsid": "trant_bubble",
-    "offset_x": -9,
-    "offset_y": -85,
-    "info": ""
-  },
-  {
-    "class_tsid": "wood_tree",
-    "offset_x": -10,
-    "offset_y": -98,
-    "info": "1"
-  },
-  {
-    "class_tsid": "wood_tree",
-    "offset_x": -11,
-    "offset_y": -72,
-    "info": "2"
-  },
-  {
-    "class_tsid": "wood_tree",
-    "offset_x": -9,
-    "offset_y": -93,
-    "info": "3"
-  },
-  {
-    "class_tsid": "wood_tree",
-    "offset_x": -2,
-    "offset_y": -84,
-    "info": "4"
-  },
-  {
-    "class_tsid": "trant_gas",
-    "offset_x": -12,
-    "offset_y": -49,
-    "info": ""
-  },
-  {
-    "class_tsid": "trant_spice",
-    "offset_x": -26,
-    "offset_y": -65,
-    "info": ""
+    "info": "right",
+    "height": 17
   },
   {
     "class_tsid": "paper_tree",
+    "width": 14,
     "offset_x": 1,
     "offset_y": -99,
-    "info": ""
-  },
-  {
-    "class_tsid": "trant_fruit",
-    "offset_x": -3,
-    "offset_y": -70,
-    "info": ""
+    "info": "",
+    "height": 44
   },
   {
     "class_tsid": "npc_sloth",
+    "width": 21,
     "offset_x": -24,
     "offset_y": -106,
-    "info": "left"
+    "info": "left",
+    "height": 8
   },
   {
     "class_tsid": "npc_sloth",
+    "width": 23,
     "offset_x": 9,
     "offset_y": -103,
-    "info": "right"
+    "info": "right",
+    "height": 7
   },
   {
     "class_tsid": "sloth_knocker",
+    "width": 14,
     "offset_x": -9,
     "offset_y": -37,
-    "info": ""
+    "info": "",
+    "height": 13
   },
   {
     "class_tsid": "npc_shrine_firebog_alph",
+    "width": 24,
     "offset_x": -14,
     "offset_y": -183,
-    "info": "right"
+    "info": "right",
+    "height": 26
   },
   {
     "class_tsid": "npc_shrine_ix_alph",
+    "width": 19,
     "offset_x": -11,
     "offset_y": -171,
-    "info": "right"
+    "info": "right",
+    "height": 26
   },
   {
     "class_tsid": "npc_shrine_uralia_alph",
+    "width": 18,
     "offset_x": -9,
     "offset_y": -66,
-    "info": "right"
+    "info": "right",
+    "height": 27
   },
   {
     "class_tsid": "npc_shrine_firebog_cosma",
+    "width": 28,
     "offset_x": -13,
     "offset_y": -178,
-    "info": "right"
+    "info": "right",
+    "height": 20
   },
   {
     "class_tsid": "npc_shrine_uralia_cosma",
+    "width": 27,
     "offset_x": -12,
     "offset_y": -65,
-    "info": "right"
+    "info": "right",
+    "height": 20
   },
   {
     "class_tsid": "npc_shrine_ix_cosma",
+    "width": 25,
     "offset_x": -12,
     "offset_y": -172,
-    "info": "right"
+    "info": "right",
+    "height": 21
   },
   {
     "class_tsid": "npc_shrine_firebog_friendly",
+    "width": 28,
     "offset_x": -14,
     "offset_y": -177,
-    "info": "right"
+    "info": "right",
+    "height": 23
   },
   {
     "class_tsid": "npc_shrine_ix_friendly",
+    "width": 19,
     "offset_x": -9,
     "offset_y": -169,
-    "info": "right"
+    "info": "right",
+    "height": 22
   },
   {
     "class_tsid": "npc_shrine_uralia_friendly",
+    "width": 25,
     "offset_x": -12,
     "offset_y": -63,
-    "info": "right"
+    "info": "right",
+    "height": 21
   },
   {
     "class_tsid": "npc_shrine_ix_grendaline",
+    "width": 18,
     "offset_x": -9,
     "offset_y": -172,
-    "info": "right"
+    "info": "right",
+    "height": 23
   },
   {
     "class_tsid": "npc_shrine_firebog_grendaline",
+    "width": 21,
     "offset_x": -11,
     "offset_y": -183,
-    "info": "right"
+    "info": "right",
+    "height": 25
   },
   {
     "class_tsid": "npc_shrine_uralia_grendaline",
+    "width": 22,
     "offset_x": -11,
     "offset_y": -69,
-    "info": "right"
+    "info": "right",
+    "height": 25
   },
   {
     "class_tsid": "npc_shrine_firebog_humbaba",
+    "width": 28,
     "offset_x": -12,
     "offset_y": -174,
-    "info": "right"
+    "info": "right",
+    "height": 18
   },
   {
     "class_tsid": "npc_shrine_uralia_humbaba",
+    "width": 24,
     "offset_x": -11,
     "offset_y": -60,
-    "info": "right"
+    "info": "right",
+    "height": 19
   },
   {
     "class_tsid": "npc_shrine_ix_humbaba",
+    "width": 24,
     "offset_x": -13,
     "offset_y": -169,
-    "info": "right"
+    "info": "right",
+    "height": 17
   },
   {
     "class_tsid": "npc_shrine_firebog_lem",
+    "width": 25,
     "offset_x": -15,
     "offset_y": -179,
-    "info": "right"
+    "info": "right",
+    "height": 23
   },
   {
     "class_tsid": "npc_shrine_ix_lem",
+    "width": 22,
     "offset_x": -12,
     "offset_y": -167,
-    "info": "right"
+    "info": "right",
+    "height": 19
   },
   {
     "class_tsid": "npc_shrine_uralia_lem",
+    "width": 23,
     "offset_x": -14,
     "offset_y": -65,
-    "info": "right"
+    "info": "right",
+    "height": 21
   },
   {
     "class_tsid": "npc_shrine_ix_mab",
+    "width": 20,
     "offset_x": -11,
     "offset_y": -169,
-    "info": "right"
+    "info": "right",
+    "height": 22
   },
   {
     "class_tsid": "npc_shrine_uralia_mab",
+    "width": 23,
     "offset_x": -10,
     "offset_y": -67,
-    "info": "right"
+    "info": "right",
+    "height": 20
   },
   {
     "class_tsid": "npc_shrine_firebog_mab",
+    "width": 26,
     "offset_x": -12,
     "offset_y": -181,
-    "info": "right"
+    "info": "right",
+    "height": 17
   },
   {
     "class_tsid": "npc_shrine_uralia_pot",
+    "width": 23,
     "offset_x": -12,
     "offset_y": -67,
-    "info": "right"
+    "info": "right",
+    "height": 26
   },
   {
     "class_tsid": "npc_shrine_firebog_pot",
+    "width": 22,
     "offset_x": -13,
     "offset_y": -180,
-    "info": "right"
+    "info": "right",
+    "height": 22
   },
   {
     "class_tsid": "npc_shrine_ix_pot",
+    "width": 17,
     "offset_x": -9,
     "offset_y": -168,
-    "info": "right"
+    "info": "right",
+    "height": 21
   },
   {
     "class_tsid": "npc_shrine_ix_spriggan",
+    "width": 17,
     "offset_x": -10,
     "offset_y": -173,
-    "info": "right"
+    "info": "right",
+    "height": 22
   },
   {
     "class_tsid": "npc_shrine_firebog_spriggan",
+    "width": 22,
     "offset_x": -13,
     "offset_y": -182,
-    "info": "right"
+    "info": "right",
+    "height": 25
   },
   {
     "class_tsid": "npc_shrine_uralia_spriggan",
+    "width": 19,
     "offset_x": -9,
     "offset_y": -69,
-    "info": "right"
+    "info": "right",
+    "height": 20
   },
   {
     "class_tsid": "npc_shrine_firebog_tii",
+    "width": 32,
     "offset_x": -17,
     "offset_y": -178,
-    "info": "right"
+    "info": "right",
+    "height": 19
   },
   {
     "class_tsid": "npc_shrine_uralia_ti",
+    "width": 27,
     "offset_x": -15,
     "offset_y": -62,
-    "info": "right"
+    "info": "right",
+    "height": 15
   },
   {
     "class_tsid": "npc_shrine_ix_ti",
+    "width": 24,
     "offset_x": -13,
     "offset_y": -171,
-    "info": "right"
+    "info": "right",
+    "height": 11
   },
   {
     "class_tsid": "npc_shrine_uralia_zille",
+    "width": 25,
     "offset_x": -14,
     "offset_y": -64,
-    "info": "right"
+    "info": "right",
+    "height": 18
   },
   {
     "class_tsid": "npc_shrine_firebog_zille",
+    "width": 30,
     "offset_x": -17,
     "offset_y": -178,
-    "info": "right"
+    "info": "right",
+    "height": 18
   },
   {
     "class_tsid": "npc_shrine_ix_zille",
+    "width": 23,
     "offset_x": -13,
     "offset_y": -173,
-    "info": "right"
+    "info": "right",
+    "height": 18
   },
   {
     "class_tsid": "peat_1",
+    "width": 64,
     "offset_x": 3,
     "offset_y": -25,
-    "info": ""
+    "info": "",
+    "height": 10
   },
   {
     "class_tsid": "peat_2",
+    "width": 39,
     "offset_x": -41,
     "offset_y": -29,
-    "info": ""
+    "info": "",
+    "height": 15
   },
   {
     "class_tsid": "peat_3",
+    "width": 38,
     "offset_x": 26,
     "offset_y": -35,
-    "info": ""
-  },
-  {
-    "class_tsid": "jellisac",
-    "offset_x": -6,
-    "offset_y": -35,
-    "info": "1"
-  },
-  {
-    "class_tsid": "jellisac",
-    "offset_x": -14,
-    "offset_y": -27,
-    "info": "2"
-  },
-  {
-    "class_tsid": "jellisac",
-    "offset_x": -14,
-    "offset_y": -31,
-    "info": "3"
-  },
-  {
-    "class_tsid": "jellisac",
-    "offset_x": 1,
-    "offset_y": -31,
-    "info": "4"
-  },
-  {
-    "class_tsid": "mortar_barnacle",
-    "offset_x": -12,
-    "offset_y": -35,
-    "info": "1"
-  },
-  {
-    "class_tsid": "mortar_barnacle",
-    "offset_x": -18,
-    "offset_y": -30,
-    "info": "2"
-  },
-  {
-    "class_tsid": "mortar_barnacle",
-    "offset_x": -10,
-    "offset_y": -32,
-    "info": "3"
-  },
-  {
-    "class_tsid": "mortar_barnacle",
-    "offset_x": -18,
-    "offset_y": -31,
-    "info": "4"
-  },
-  {
-    "class_tsid": "mortar_barnacle",
-    "offset_x": -10,
-    "offset_y": -35,
-    "info": "5"
-  },
-  {
-    "class_tsid": "mortar_barnacle",
-    "offset_x": -15,
-    "offset_y": -39,
-    "info": "6"
+    "info": "",
+    "height": 19
   },
   {
     "class_tsid": "ice_knob",
+    "width": 15,
     "offset_x": -3,
     "offset_y": -30,
-    "info": "1"
+    "info": "1",
+    "height": 24
   },
   {
     "class_tsid": "ice_knob",
+    "width": 16,
     "offset_x": -15,
     "offset_y": -29,
-    "info": "2"
+    "info": "2",
+    "height": 14
   },
   {
     "class_tsid": "ice_knob",
+    "width": 15,
     "offset_x": -11,
     "offset_y": -20,
-    "info": "3"
+    "info": "3",
+    "height": 13
   },
   {
     "class_tsid": "ice_knob",
+    "width": 21,
     "offset_x": -7,
     "offset_y": -29,
-    "info": "4"
+    "info": "4",
+    "height": 10
   },
   {
     "class_tsid": "dirt_pile",
+    "width": 47,
     "offset_x": -28,
     "offset_y": -49,
-    "info": "dirt1"
+    "info": "dirt1",
+    "height": 30
   },
   {
     "class_tsid": "dirt_pile",
+    "width": 37,
     "offset_x": -17,
     "offset_y": -49,
-    "info": "dirt2"
+    "info": "dirt2",
+    "height": 23
   },
   {
     "class_tsid": "patch_dark",
+    "width": 33,
     "offset_x": -18,
     "offset_y": -21,
-    "info": ""
+    "info": "",
+    "height": 15
   },
   {
     "class_tsid": "patch",
+    "width": 32,
     "offset_x": -18,
     "offset_y": -22,
-    "info": ""
+    "info": "",
+    "height": 10
   },
   {
     "class_tsid": "dust_trap",
+    "width": 15,
     "offset_x": -2,
     "offset_y": -100,
-    "info": "A"
+    "info": "A",
+    "height": 18
   },
   {
     "class_tsid": "party_atm",
+    "width": 35,
     "offset_x": -7,
     "offset_y": -95,
-    "info": ""
+    "info": "",
+    "height": 24
   },
   {
     "class_tsid": "race_ticket_dispenser",
+    "width": 18,
     "offset_x": -15,
     "offset_y": -33,
-    "info": ""
+    "info": "",
+    "height": 27
   },
   {
     "class_tsid": "wall_button",
+    "width": 16,
     "offset_x": -7,
     "offset_y": -27,
-    "info": ""
+    "info": "",
+    "height": 16
   },
   {
     "class_tsid": "subway_map",
+    "width": 27,
     "offset_x": -13,
     "offset_y": -145,
-    "info": ""
+    "info": "",
+    "height": 37
   },
   {
     "class_tsid": "subway_gate",
+    "width": 12,
     "offset_x": -6,
     "offset_y": -35,
-    "info": "left"
+    "info": "left",
+    "height": 23
   },
   {
     "class_tsid": "subway_gate",
+    "width": 15,
     "offset_x": -9,
     "offset_y": -29,
-    "info": "right"
+    "info": "right",
+    "height": 16
   },
   {
     "class_tsid": "bag_notice_board",
+    "width": 203,
     "offset_x": -102,
     "offset_y": -91,
-    "info": ""
+    "info": "",
+    "height": 60
   },
   {
     "class_tsid": "wood_tree_enchanted",
+    "width": 17,
     "offset_x": -11,
     "offset_y": -66,
-    "info": "1"
+    "info": "1",
+    "height": 32
   },
   {
     "class_tsid": "npc_gardening_vendor",
+    "width": 8,
     "offset_x": -13,
     "offset_y": -70,
-    "info": ""
+    "info": "",
+    "height": 40
   },
   {
     "class_tsid": "wood_tree_enchanted",
+    "width": 17,
     "offset_x": -9,
     "offset_y": -68,
-    "info": "3"
+    "info": "3",
+    "height": 45
   },
   {
     "class_tsid": "wood_tree_enchanted",
+    "width": 18,
     "offset_x": -13,
     "offset_y": -50,
-    "info": "2"
+    "info": "2",
+    "height": 31
   },
   {
     "class_tsid": "wood_tree_enchanted",
+    "width": 14,
     "offset_x": -11,
     "offset_y": -54,
-    "info": "4"
+    "info": "4",
+    "height": 34
   },
   {
     "class_tsid": "street_spirit_zutto",
+    "width": 43,
     "offset_x": -23,
     "offset_y": -82,
-    "info": "capPurple"
+    "info": "capPurple",
+    "height": 33
   },
   {
     "class_tsid": "street_spirit_zutto",
+    "width": 43,
     "offset_x": -25,
     "offset_y": -82,
-    "info": "capAqua"
+    "info": "capAqua",
+    "height": 33
   },
   {
     "class_tsid": "street_spirit_zutto",
+    "width": 43,
     "offset_x": -27,
     "offset_y": -80,
-    "info": "capOrange"
+    "info": "capOrange",
+    "height": 33
   },
   {
     "class_tsid": "street_spirit_zutto",
+    "width": 43,
     "offset_x": -24,
     "offset_y": -78,
-    "info": "capGreen"
+    "info": "capGreen",
+    "height": 33
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 28,
+    "state": "10",
+    "offset_x": -23,
+    "offset_y": -90,
+    "info": "",
+    "height": 35
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 23,
+    "state": "9",
+    "offset_x": -22,
+    "offset_y": -100,
+    "info": "",
+    "height": 45
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 23,
+    "state": "8",
+    "offset_x": -22,
+    "offset_y": -89,
+    "info": "",
+    "height": 34
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 25,
+    "state": "7",
+    "offset_x": -21,
+    "offset_y": -87,
+    "info": "",
+    "height": 33
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 23,
+    "state": "6",
+    "offset_x": -19,
+    "offset_y": -78,
+    "info": "",
+    "height": 27
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 19,
+    "state": "5",
+    "offset_x": -16,
+    "offset_y": -78,
+    "info": "",
+    "height": 36
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 16,
+    "state": "4",
+    "offset_x": -16,
+    "offset_y": -61,
+    "info": "",
+    "height": 16
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 16,
+    "state": "3",
+    "offset_x": -15,
+    "offset_y": -70,
+    "info": "",
+    "height": 31
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 17,
+    "state": "2",
+    "offset_x": -15,
+    "offset_y": -59,
+    "info": "",
+    "height": 42
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 25,
+    "state": "1",
+    "offset_x": -19,
+    "offset_y": -57,
+    "info": "",
+    "height": 41
+  },
+  {
+    "class_tsid": "trant_bean_dead",
+    "width": 16,
+    "state": "",
+    "offset_x": 0,
+    "offset_y": -89,
+    "info": "",
+    "height": 40
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 20,
+    "state": "10",
+    "offset_x": -3,
+    "offset_y": -57,
+    "info": "",
+    "height": 24
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 18,
+    "state": "9",
+    "offset_x": -4,
+    "offset_y": -72,
+    "info": "",
+    "height": 22
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 18,
+    "state": "8",
+    "offset_x": -5,
+    "offset_y": -71,
+    "info": "",
+    "height": 23
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 13,
+    "state": "7",
+    "offset_x": -3,
+    "offset_y": -79,
+    "info": "",
+    "height": 23
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 10,
+    "state": "6",
+    "offset_x": -8,
+    "offset_y": -68,
+    "info": "",
+    "height": 22
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 20,
+    "state": "5",
+    "offset_x": -10,
+    "offset_y": -63,
+    "info": "",
+    "height": 18
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 23,
+    "state": "4",
+    "offset_x": -12,
+    "offset_y": -65,
+    "info": "",
+    "height": 23
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 15,
+    "state": "3",
+    "offset_x": -5,
+    "offset_y": -61,
+    "info": "",
+    "height": 29
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 20,
+    "state": "2",
+    "offset_x": -5,
+    "offset_y": -62,
+    "info": "",
+    "height": 35
+  },
+  {
+    "class_tsid": "trant_fruit",
+    "width": 11,
+    "state": "1",
+    "offset_x": -5,
+    "offset_y": -58,
+    "info": "",
+    "height": 38
+  },
+  {
+    "class_tsid": "trant_fruit_dead",
+    "width": 19,
+    "state": "",
+    "offset_x": 0,
+    "offset_y": -82,
+    "info": "",
+    "height": 27
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 23,
+    "state": "1",
+    "offset_x": -12,
+    "offset_y": -69,
+    "info": "1",
+    "height": 14
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 27,
+    "state": "2",
+    "offset_x": -12,
+    "offset_y": -70,
+    "info": "1",
+    "height": 15
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 27,
+    "state": "3",
+    "offset_x": -16,
+    "offset_y": -112,
+    "info": "1",
+    "height": 62
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 27,
+    "state": "4",
+    "offset_x": -16,
+    "offset_y": -81,
+    "info": "1",
+    "height": 46
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 21,
+    "state": "5",
+    "offset_x": -16,
+    "offset_y": -97,
+    "info": "1",
+    "height": 55
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 15,
+    "state": "6",
+    "offset_x": -11,
+    "offset_y": -95,
+    "info": "1",
+    "height": 40
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 20,
+    "state": "1",
+    "offset_x": -13,
+    "offset_y": -71,
+    "info": "2",
+    "height": 34
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 36,
+    "state": "2",
+    "offset_x": -15,
+    "offset_y": -69,
+    "info": "2",
+    "height": 31
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 31,
+    "state": "3",
+    "offset_x": -17,
+    "offset_y": -67,
+    "info": "2",
+    "height": 26
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 15,
+    "state": "4",
+    "offset_x": -5,
+    "offset_y": -138,
+    "info": "2",
+    "height": 87
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 22,
+    "state": "5",
+    "offset_x": -11,
+    "offset_y": -138,
+    "info": "2",
+    "height": 47
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 10,
+    "state": "6",
+    "offset_x": -3,
+    "offset_y": -140,
+    "info": "2",
+    "height": 60
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 20,
+    "state": "1",
+    "offset_x": -10,
+    "offset_y": -70,
+    "info": "3",
+    "height": 36
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 10,
+    "state": "2",
+    "offset_x": -11,
+    "offset_y": -114,
+    "info": "3",
+    "height": 59
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 22,
+    "state": "3",
+    "offset_x": -16,
+    "offset_y": -115,
+    "info": "3",
+    "height": 71
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 32,
+    "state": "4",
+    "offset_x": -22,
+    "offset_y": -131,
+    "info": "3",
+    "height": 95
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 28,
+    "state": "5",
+    "offset_x": -18,
+    "offset_y": -109,
+    "info": "3",
+    "height": 57
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 24,
+    "state": "6",
+    "offset_x": -13,
+    "offset_y": -117,
+    "info": "3",
+    "height": 84
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 19,
+    "state": "1",
+    "offset_x": -9,
+    "offset_y": -66,
+    "info": "4",
+    "height": 22
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 19,
+    "state": "2",
+    "offset_x": -7,
+    "offset_y": -120,
+    "info": "4",
+    "height": 82
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 18,
+    "state": "3",
+    "offset_x": -6,
+    "offset_y": -110,
+    "info": "4",
+    "height": 48
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 22,
+    "state": "4",
+    "offset_x": -8,
+    "offset_y": -107,
+    "info": "4",
+    "height": 64
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 29,
+    "state": "5",
+    "offset_x": -11,
+    "offset_y": -114,
+    "info": "4",
+    "height": 72
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 10,
+    "state": "6",
+    "offset_x": 3,
+    "offset_y": -101,
+    "info": "4",
+    "height": 54
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 21,
+    "state": "2",
+    "offset_x": -12,
+    "offset_y": -33,
+    "info": "1",
+    "height": 24
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 20,
+    "state": "2",
+    "offset_x": -19,
+    "offset_y": -33,
+    "info": "2",
+    "height": 22
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 18,
+    "state": "2",
+    "offset_x": -8,
+    "offset_y": -31,
+    "info": "3",
+    "height": 22
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 20,
+    "state": "2",
+    "offset_x": -19,
+    "offset_y": -30,
+    "info": "4",
+    "height": 21
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 20,
+    "state": "2",
+    "offset_x": -10,
+    "offset_y": -33,
+    "info": "5",
+    "height": 21
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 24,
+    "state": "2",
+    "offset_x": -16,
+    "offset_y": -34,
+    "info": "6",
+    "height": 23
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 26,
+    "state": "3",
+    "offset_x": -13,
+    "offset_y": -37,
+    "info": "1",
+    "height": 30
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 24,
+    "state": "3",
+    "offset_x": -21,
+    "offset_y": -34,
+    "info": "2",
+    "height": 26
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 24,
+    "state": "3",
+    "offset_x": -8,
+    "offset_y": -34,
+    "info": "3",
+    "height": 28
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 26,
+    "state": "3",
+    "offset_x": -21,
+    "offset_y": -32,
+    "info": "4",
+    "height": 23
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 21,
+    "state": "3",
+    "offset_x": -11,
+    "offset_y": -35,
+    "info": "5",
+    "height": 28
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 27,
+    "state": "3",
+    "offset_x": -18,
+    "offset_y": -37,
+    "info": "6",
+    "height": 29
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 23,
+    "state": "4",
+    "offset_x": -15,
+    "offset_y": -37,
+    "info": "1",
+    "height": 30
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 26,
+    "state": "4",
+    "offset_x": -20,
+    "offset_y": -36,
+    "info": "2",
+    "height": 29
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 23,
+    "state": "4",
+    "offset_x": -13,
+    "offset_y": -35,
+    "info": "3",
+    "height": 30
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 26,
+    "state": "4",
+    "offset_x": -19,
+    "offset_y": -37,
+    "info": "4",
+    "height": 28
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 24,
+    "state": "4",
+    "offset_x": -12,
+    "offset_y": -37,
+    "info": "5",
+    "height": 28
+  },
+  {
+    "class_tsid": "mortar_barnacle",
+    "width": 31,
+    "state": "4",
+    "offset_x": -20,
+    "offset_y": -40,
+    "info": "6",
+    "height": 32
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 13,
+    "state": "2",
+    "offset_x": -8,
+    "offset_y": -31,
+    "info": "1",
+    "height": 17
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 14,
+    "state": "2",
+    "offset_x": -7,
+    "offset_y": -31,
+    "info": "2",
+    "height": 17
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 15,
+    "state": "2",
+    "offset_x": -8,
+    "offset_y": -30,
+    "info": "3",
+    "height": 15
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 16,
+    "state": "2",
+    "offset_x": -6,
+    "offset_y": -31,
+    "info": "4",
+    "height": 17
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 19,
+    "state": "3",
+    "offset_x": -11,
+    "offset_y": -33,
+    "info": "1",
+    "height": 19
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 20,
+    "state": "3",
+    "offset_x": -10,
+    "offset_y": -33,
+    "info": "2",
+    "height": 21
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 22,
+    "state": "3",
+    "offset_x": -12,
+    "offset_y": -32,
+    "info": "3",
+    "height": 18
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 23,
+    "state": "3",
+    "offset_x": -10,
+    "offset_y": -34,
+    "info": "4",
+    "height": 21
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 25,
+    "state": "4",
+    "offset_x": -13,
+    "offset_y": -34,
+    "info": "1",
+    "height": 26
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 30,
+    "state": "4",
+    "offset_x": -15,
+    "offset_y": -36,
+    "info": "2",
+    "height": 28
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 31,
+    "state": "4",
+    "offset_x": -16,
+    "offset_y": -35,
+    "info": "3",
+    "height": 26
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 34,
+    "state": "4",
+    "offset_x": -17,
+    "offset_y": -38,
+    "info": "4",
+    "height": 32
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 38,
+    "state": "5",
+    "offset_x": -20,
+    "offset_y": -39,
+    "info": "1",
+    "height": 30
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 34,
+    "state": "5",
+    "offset_x": -16,
+    "offset_y": -39,
+    "info": "2",
+    "height": 33
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 34,
+    "state": "5",
+    "offset_x": -16,
+    "offset_y": -38,
+    "info": "3",
+    "height": 30
+  },
+  {
+    "class_tsid": "jellisac",
+    "width": 43,
+    "state": "5",
+    "offset_x": -21,
+    "offset_y": -41,
+    "info": "4",
+    "height": 28
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 33,
+    "state": "10",
+    "offset_x": -16,
+    "offset_y": -128,
+    "info": "",
+    "height": 28
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 28,
+    "state": "9",
+    "offset_x": -8,
+    "offset_y": -106,
+    "info": "",
+    "height": 41
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 27,
+    "state": "8",
+    "offset_x": -11,
+    "offset_y": -103,
+    "info": "",
+    "height": 31
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 24,
+    "state": "7",
+    "offset_x": -11,
+    "offset_y": -107,
+    "info": "",
+    "height": 27
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 24,
+    "state": "6",
+    "offset_x": -20,
+    "offset_y": -100,
+    "info": "",
+    "height": 34
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 22,
+    "state": "5",
+    "offset_x": -15,
+    "offset_y": -107,
+    "info": "",
+    "height": 33
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 27,
+    "state": "4",
+    "offset_x": -19,
+    "offset_y": -95,
+    "info": "",
+    "height": 24
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 18,
+    "state": "3",
+    "offset_x": -15,
+    "offset_y": -84,
+    "info": "",
+    "height": 28
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 29,
+    "state": "2",
+    "offset_x": -17,
+    "offset_y": -77,
+    "info": "",
+    "height": 16
+  },
+  {
+    "class_tsid": "trant_egg",
+    "width": 28,
+    "state": "1",
+    "offset_x": -21,
+    "offset_y": -75,
+    "info": "",
+    "height": 20
+  },
+  {
+    "class_tsid": "trant_egg_dead",
+    "width": 30,
+    "state": "",
+    "offset_x": -27,
+    "offset_y": -83,
+    "info": "",
+    "height": 20
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 63,
+    "state": "10",
+    "offset_x": -34,
+    "offset_y": -62,
+    "info": "",
+    "height": 23
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 47,
+    "state": "9",
+    "offset_x": -20,
+    "offset_y": -63,
+    "info": "",
+    "height": 35
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 55,
+    "state": "8",
+    "offset_x": -30,
+    "offset_y": -62,
+    "info": "",
+    "height": 21
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 53,
+    "state": "7",
+    "offset_x": -32,
+    "offset_y": -59,
+    "info": "",
+    "height": 25
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 32,
+    "state": "6",
+    "offset_x": -20,
+    "offset_y": -66,
+    "info": "",
+    "height": 40
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 43,
+    "state": "5",
+    "offset_x": -27,
+    "offset_y": -50,
+    "info": "",
+    "height": 22
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 40,
+    "state": "4",
+    "offset_x": -26,
+    "offset_y": -51,
+    "info": "",
+    "height": 27
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 39,
+    "state": "3",
+    "offset_x": -25,
+    "offset_y": -64,
+    "info": "",
+    "height": 26
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 31,
+    "state": "2",
+    "offset_x": -18,
+    "offset_y": -58,
+    "info": "",
+    "height": 25
+  },
+  {
+    "class_tsid": "trant_spice",
+    "width": 30,
+    "state": "1",
+    "offset_x": -19,
+    "offset_y": -49,
+    "info": "",
+    "height": 26
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 10,
+    "state": "10",
+    "offset_x": -12,
+    "offset_y": -91,
+    "info": "",
+    "height": 36
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 10,
+    "state": "9",
+    "offset_x": -10,
+    "offset_y": -82,
+    "info": "",
+    "height": 27
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 10,
+    "state": "8",
+    "offset_x": -9,
+    "offset_y": -78,
+    "info": "",
+    "height": 23
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 10,
+    "state": "7",
+    "offset_x": -9,
+    "offset_y": -78,
+    "info": "",
+    "height": 23
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 12,
+    "state": "6",
+    "offset_x": -6,
+    "offset_y": -71,
+    "info": "",
+    "height": 18
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 10,
+    "state": "5",
+    "offset_x": -5,
+    "offset_y": -70,
+    "info": "",
+    "height": 17
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 10,
+    "state": "4",
+    "offset_x": -7,
+    "offset_y": -73,
+    "info": "",
+    "height": 18
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 16,
+    "state": "3",
+    "offset_x": -8,
+    "offset_y": -68,
+    "info": "",
+    "height": 14
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 14,
+    "state": "2",
+    "offset_x": -4,
+    "offset_y": -60,
+    "info": "",
+    "height": 13
+  },
+  {
+    "class_tsid": "trant_bubble",
+    "width": 10,
+    "state": "1",
+    "offset_x": -10,
+    "offset_y": -68,
+    "info": "",
+    "height": 15
+  },
+  {
+    "class_tsid": "trant_bubble_dead",
+    "width": 16,
+    "state": "",
+    "offset_x": -15,
+    "offset_y": -111,
+    "info": "",
+    "height": 27
+  },
+  {
+    "class_tsid": "trant_spice_dead",
+    "width": 27,
+    "state": "",
+    "offset_x": -12,
+    "offset_y": -79,
+    "info": "",
+    "height": 24
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 44,
+    "state": "9",
+    "offset_x": -24,
+    "offset_y": -61,
+    "info": "",
+    "height": 10
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 43,
+    "state": "8",
+    "offset_x": -21,
+    "offset_y": -61,
+    "info": "",
+    "height": 14
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 36,
+    "state": "7",
+    "offset_x": -17,
+    "offset_y": -57,
+    "info": "",
+    "height": 10
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 44,
+    "state": "6",
+    "offset_x": -26,
+    "offset_y": -62,
+    "info": "",
+    "height": 10
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 25,
+    "state": "5",
+    "offset_x": -25,
+    "offset_y": -57,
+    "info": "",
+    "height": 15
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 16,
+    "state": "3",
+    "offset_x": -12,
+    "offset_y": -45,
+    "info": "",
+    "height": 15
+  },
+  {
+    "class_tsid": "trant_gas_dead",
+    "width": 29,
+    "state": "",
+    "offset_x": -16,
+    "offset_y": -71,
+    "info": "",
+    "height": 37
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 66,
+    "state": "10",
+    "offset_x": -36,
+    "offset_y": -66,
+    "info": "",
+    "height": 10
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 24,
+    "state": "4",
+    "offset_x": -19,
+    "offset_y": -45,
+    "info": "",
+    "height": 10
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 17,
+    "state": "2",
+    "offset_x": -11,
+    "offset_y": -32,
+    "info": "",
+    "height": 12
+  },
+  {
+    "class_tsid": "trant_gas",
+    "width": 13,
+    "state": "1",
+    "offset_x": -8,
+    "offset_y": -30,
+    "info": "",
+    "height": 13
   }
 ]}

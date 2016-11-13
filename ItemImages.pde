@@ -22,6 +22,8 @@ class ItemImages
   
     public boolean loadAllItemImages()
     { 
+        int i;
+        
         // This function initialises and then loads all images - done at start of program      
         itemImages.add(new PNGFile("quoin_xp.png", false));
         itemImages.add(new PNGFile("quoin_energy.png", false));
@@ -43,17 +45,35 @@ class ItemImages
             return false;
         }
 
+        // Load up the trees - most mature variants first as these are the most common
+        for (i = 10; i > 0; i--)
+        { 
+            // Some trees have maturity 1-10, wood trees are 1-6
+            addImageForItem("trant_bean", "", str(i));
+            addImageForItem("trant_fruit", "", str(i));
+            addImageForItem("trant_bubble", "", str(i));
+            addImageForItem("trant_spice", "", str(i));
+            addImageForItem("trant_gas", "", str(i));
+            addImageForItem("trant_egg", "", str(i));
+            // Wood trees - need to include state 6 at same level as state 10 for all other trees
+            // Wood trees have maturity 1-6 rather than 1-10
+            int j = i - 4;
+            if (j > 0)
+            {
+                addImageForItem("wood_tree", "1", str(j));
+                addImageForItem("wood_tree", "2", str(j));
+                addImageForItem("wood_tree", "3", str(j));
+                addImageForItem("wood_tree", "4", str(j));
+            }
+        }
+        // Add in images for dead trees
+        itemImages.add(new PNGFile("trant_bean_dead.png", false));
+        itemImages.add(new PNGFile("trant_fruit_dead.png", false));
+        itemImages.add(new PNGFile("trant_bubble_dead.png", false));
+        itemImages.add(new PNGFile("trant_spice_dead.png", false));
+        itemImages.add(new PNGFile("trant_gas_dead.png", false));
+        itemImages.add(new PNGFile("trant_egg_dead.png", false));
 
-        itemImages.add(new PNGFile("trant_bean.png", false));
-        itemImages.add(new PNGFile("trant_fruit.png", false));
-        itemImages.add(new PNGFile("trant_bubble.png", false));
-        itemImages.add(new PNGFile("trant_spice.png", false));
-        itemImages.add(new PNGFile("trant_gas.png", false));
-        itemImages.add(new PNGFile("trant_egg.png", false));
-        itemImages.add(new PNGFile("wood_tree_1.png", false));    
-        itemImages.add(new PNGFile("wood_tree_2.png", false));  
-        itemImages.add(new PNGFile("wood_tree_3.png", false));  
-        itemImages.add(new PNGFile("wood_tree_4.png", false));  
         // Also include dirt patches - as these might be what exists on snaps if trees had been killed
         itemImages.add(new PNGFile("patch_dark.png", false)); 
         itemImages.add(new PNGFile("patch.png", false)); 
@@ -96,7 +116,7 @@ class ItemImages
             printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for rock*.png", 3);
             return false;
         }
-        for (int i = 0; i < imageFilenames.length; i++) 
+        for (i = 0; i < imageFilenames.length; i++) 
         {
             itemImages.add(new PNGFile(imageFilenames[i], false)); 
             // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
@@ -114,7 +134,7 @@ class ItemImages
             printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for npc_shrine*.png", 3);
             return false;
         }
-        for (int i = 0; i < imageFilenames.length; i++) 
+        for (i = 0; i < imageFilenames.length; i++) 
         {
             itemImages.add(new PNGFile(imageFilenames[i], false)); 
             // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
@@ -125,12 +145,17 @@ class ItemImages
         } 
         
         // Now create an entry for barnacles
-        itemImages.add(new PNGFile("mortar_barnacle_1.png", false)); 
-        itemImages.add(new PNGFile("mortar_barnacle_2.png", false)); 
-        itemImages.add(new PNGFile("mortar_barnacle_3.png", false)); 
-        itemImages.add(new PNGFile("mortar_barnacle_4.png", false)); 
-        itemImages.add(new PNGFile("mortar_barnacle_5.png", false)); 
-        itemImages.add(new PNGFile("mortar_barnacle_6.png", false)); 
+        // Barnacles have a scrape state of 1-4, but state 1 is unusable for searching.
+        // Load up all the mature versions of the barnacles first
+        for (i = 4; i > 1; i--)
+        { 
+            addImageForItem("mortar_barnacle", "1", str(i));
+            addImageForItem("mortar_barnacle", "2", str(i));
+            addImageForItem("mortar_barnacle", "3", str(i));
+            addImageForItem("mortar_barnacle", "4", str(i));
+            addImageForItem("mortar_barnacle", "5", str(i));
+            addImageForItem("mortar_barnacle", "6", str(i));
+        }
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
         if (!addToHashMapAndLoadImages("mortar_barnacle"))
         {
@@ -145,7 +170,7 @@ class ItemImages
             printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for peat*.png", 3);
             return false;
         }
-        for (int i = 0; i < imageFilenames.length; i++) 
+        for (i = 0; i < imageFilenames.length; i++) 
         {
             itemImages.add(new PNGFile(imageFilenames[i], false)); 
             // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
@@ -156,10 +181,15 @@ class ItemImages
         } 
         
         // Now create an entry for jellisac
-        itemImages.add(new PNGFile("jellisac_1.png", false)); 
-        itemImages.add(new PNGFile("jellisac_2.png", false)); 
-        itemImages.add(new PNGFile("jellisac_3.png", false)); 
-        itemImages.add(new PNGFile("jellisac_4.png", false)); 
+        // Jellisacs have a scoop state of 1-5, but state 1 is unusable for searching.
+        // Load up all the mature versions of the jellisacs first
+        for (i = 5; i > 1; i--)
+        { 
+            addImageForItem("jellisac", "1", str(i));
+            addImageForItem("jellisac", "2", str(i));
+            addImageForItem("jellisac", "3", str(i));
+            addImageForItem("jellisac", "4", str(i));
+        }
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
         if (!addToHashMapAndLoadImages("jellisac"))
         {
@@ -177,23 +207,6 @@ class ItemImages
             return false;
         }
         
-        /*
-        // Now create an entry for dark dirt patch
-        itemImages.add(new PNGFile("patch_dark.png", false)); 
-        // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
-        if (!addToHashMapAndLoadImages("patch_dark"))
-        {
-            return false;
-        }
-        
-        // Now create an entry for dirt patch
-        itemImages.add(new PNGFile("patch.png", false)); 
-        // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
-        if (!addToHashMapAndLoadImages("patch"))
-        {
-            return false;
-        }
-        */
         // Now create an entry for dirt pile
         itemImages.add(new PNGFile("dirt_pile_dirt1.png", false)); 
         itemImages.add(new PNGFile("dirt_pile_dirt2.png", false)); 
@@ -314,6 +327,23 @@ class ItemImages
         // Now new the array ready for the next set of items
         itemImages = new ArrayList<PNGFile>();
         return true;
+    }
+    
+    void addImageForItem(String classTSID, String variant, String maturity)
+    {
+        String fname = classTSID;
+        
+        if (variant.length() > 0)
+        {
+            fname = fname + "_" + variant;
+        }
+        
+        if (maturity.length() > 0)
+        {
+            fname = fname + "_" + maturity;
+        }
+        fname = fname + ".png";
+        itemImages.add(new PNGFile(fname, false));
     }
     
     public ArrayList<PNGFile> getItemImages(String itemClassTSID)

@@ -272,12 +272,12 @@ class DisplayMgr
         // Displays search comparisons
         clearImage(650, 100, 50, 50);
         clearImage(750, 100, 50, 50);
-        clearTextBox(650, 200, 200, 50);        
+        clearTextBox(650, 200, 200, 100);        
             
         image(testStreetFragment, 650, 100, 50, 50);
         image(testItemFragment, 750, 100, 50, 50);
         fill(50);
-        text(infoText, 650, 200, 200, 50);
+        text(infoText, 650, 200, 200, 100);
     }
            
     public void clearDisplay()

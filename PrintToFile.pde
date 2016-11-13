@@ -188,19 +188,28 @@ class PrintToFile
     
     public void closeOutputFile()
     {
-        infoOutput.closeFile();
+        if (infoOutput != null)
+        {
+            infoOutput.closeFile();
+        }
         return;
     }
     
     public void closeDebugFile()
     {
-        debugOutput.closeFile();
+        if (debugOutput != null)
+        {
+            debugOutput.closeFile();
+        }
         return;
     }
     
     public void closevalidationSummaryOutputFile()
     {
-        validationSummaryOutput.closeFile();
+        if (validationSummaryOutput != null)
+        {
+            validationSummaryOutput.closeFile();
+        }
         return;
     }
         

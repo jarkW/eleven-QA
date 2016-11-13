@@ -159,6 +159,7 @@ class FragmentFind
     public boolean searchForFragment()
     {
         String debugInfo = "";
+        String s;
                 
         displayMgr.showItemImage(itemImages.get(itemImageBeingUsed).readPNGImage(), thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY());
         displayMgr.showStreetFragmentImage(streetSnapImage.readPNGImage(), 
@@ -174,6 +175,7 @@ class FragmentFind
         int searchResult = spiralSearch.searchForItem();
         
         // What happens next depends on the result of this search
+        String additionalInfo = "";
         switch (searchResult)
         {
             case PERFECT_MATCH:
@@ -206,18 +208,28 @@ class FragmentFind
                     }
                 }
                 debugInfo = spiralSearch.debugRGBInfo();
-                printToFile.printDebugLine(this, "searchForFragment - PERFECT match found for " + thisItemInfo.readItemClassTSID() + " with " + 
+                s = "searchForFragment - PERFECT match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + " (with " + 
                                             bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
-                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.readPercentageMatch() + "%)", 2);
+                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                                            
+                printToFile.printDebugLine(this, s, 2);
+                s = "JARK - " + s;
+                //printToFile.printDebugLine(this, s, 3);
                 break;
                 
             case GOOD_MATCH:
                 // Quoins still need to be searched for using the next image (unless this is an x/y only search). 
                 // Check other images for items on this street in the hope that a perfect match might be found
+                
+                // Need to add in check - if good enough match for a tree - do we call it done??? 
+                // So don't search 100 tree images??? Might need to test this out??? Or may be if more than 98% or something??? 
+                // not sure how the new fragments will work out. 
+                // Needs to be done for x,y search and usual search
                 if (thisItemInfo.readItemClassTSID().equals("quoin") && !configInfo.readChangeXYOnly())
                 {
                     // Only need to do this when collecting search results for all quoin images - otherwise can just use the data for the single search done
                     bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                    additionalInfo = " - quoin - ";
                     QuoinMatchData quoinData = new QuoinMatchData(bestMatchInfo);
                     if (!okFlag)
                     {
@@ -233,23 +245,35 @@ class FragmentFind
                      if (bestMatchInfo == null)
                     {
                         // Returned from first search, so OK to overwrite with the information for this search
+                        additionalInfo = " - overwrite null - ";
                         bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                        s = "JARK - GOOD (1st) match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + " (with " + 
+                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
+                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                        //printToFile.printDebugLine(this, s, 3);
                     }
                     else if (bestMatchInfo.readPercentageMatch() < spiralSearch.readPercentageMatchInfo())
                     {
-                        // Last search returned a better percentage match - so save this information 
+                        // Last search returned a better percentage match - so save this information
+                        additionalInfo = " - better match - ";
                         bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                        s = "JARK - GOOD (better) match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + " (with " + 
+                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
+                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                        //printToFile.printDebugLine(this, s, 3);
                     }
                     else
                     {
                         // else - ignore the results of the last search as it was worse than the best we have so far
+                        additionalInfo = " - worse match, stick with this one - ";
                     }                                     
                 }
 
                 debugInfo = spiralSearch.debugRGBInfo();
-                printToFile.printDebugLine(this, "searchForFragment - GOOD match found for " + thisItemInfo.readItemClassTSID() + ": best match is with " + 
-                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
-                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.readPercentageMatch() + "%)", 2);
+                s = "searchForFragment - " + additionalInfo + "GOOD match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + ": best match so far is (with " + 
+                                           bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
+                                           bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                printToFile.printDebugLine(this, s, 2);
                 break;
                 
             case NO_MATCH:
@@ -259,20 +283,24 @@ class FragmentFind
                 {
                     // Returned from first search, so OK to overwrite with the information for this search
                     bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                    additionalInfo = " - overwrite null - ";
                 }
                 else if (bestMatchInfo.readPercentageMatch() < spiralSearch.readPercentageMatchInfo())
                 {
                     // Last search returned a better percentage match - so save this information 
                     bestMatchInfo = spiralSearch.readSearchMatchInfo();
+                    additionalInfo = " - better match - ";
                 }
                 else
                 {
                     // else - ignore the results of the last search as it was worse than the best we have so far
+                    additionalInfo = " - worse match, stick with this one - ";
                 }     
                 debugInfo = spiralSearch.debugRGBInfo();
-                                printToFile.printDebugLine(this, "searchForFragment - NO match found for " + thisItemInfo.readItemClassTSID() + ": best match is with " + 
-                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
-                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.readPercentageMatch() + "%)", 2);               
+                s = "searchForFragment - " + additionalInfo + "NO match found for " + thisItemInfo.readItemClassTSID() + ": best match is with " + 
+                                           bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
+                                           bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                printToFile.printDebugLine(this, s, 2);               
                 break;
         }
                

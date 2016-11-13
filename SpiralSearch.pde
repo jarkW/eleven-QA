@@ -45,6 +45,7 @@ class SpiralSearch
     float sumTotalRGBDiff;
     float avgTotalRGBDiffPerPixel;
     float lowestAvgRGBDiffPerPixel;
+    int sumTransparentPixels;
 
     // Saving the x,y associated with the lowest average RGB difference found so far - which for a perfect match will be RGB diff = 0
     int lowestAvgRGBDiffStepX;
@@ -158,6 +159,7 @@ class SpiralSearch
         // snap co-ords for lowest rgb 
         lowestAvgRGBDiffStepX = 0;
         lowestAvgRGBDiffStepY = 0;
+        sumTransparentPixels = 0;
         
         // Set up the limit that the ratio between lowest average RGB diff divided by total average RGB diff is in order to count as a match
         // Some items e.g. ice knobs and QQ need some slightly more generous criteria.
@@ -191,11 +193,11 @@ class SpiralSearch
                            
                 if (!configInfo.readDebugUseTintedFragment())
                 {
-                    info = "Perfect fit/B&W at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY);
+                    info = "Perfect fit/B&W at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) + " with " + itemImageName;
                 }
                 else
                 {
-                    info = "Perfect fit/tinted at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY);
+                    info = "Perfect fit/tinted at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) + " with " + itemImageName;
                 }
                 displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
                 return searchResult;
@@ -208,24 +210,31 @@ class SpiralSearch
         }
         
         // Reached end of matching QA fragment against archive snap - need to see if the lowest RGB diff is good enough to be a match 
-        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height);
+                
+        // Need to take account of any pixels which were skipped because the item fragment pixel was transparent
+        int numMatchesPerformed = (RGBDiffCount*thisItemImage.height * thisItemImage.width) - sumTransparentPixels;          
+        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(numMatchesPerformed);
         float ratioRGBDiff;
+        float percentageMatch;
         
         // Need to avoid dividing by 0, or a very small number.
         if (avgTotalRGBDiffPerPixel < 0.01)
         {
             // Treat as 0, i.e. the first match was perfect, so the average total is the same as the average for the fragment
             ratioRGBDiff = 0;
+            percentageMatch = 100;
         }
         else
         {
             ratioRGBDiff = lowestAvgRGBDiffPerPixel/avgTotalRGBDiffPerPixel;
+            percentageMatch = 100 - (ratioRGBDiff * 100);
         }
 
         // See if the ratio of the best average RGB difference for a fragment, to the total average RGB differance over all searches is less than the cutoff limit
         // which has already been readjusted if dealing with a QQ rather than any other object.
         DecimalFormat df = new DecimalFormat("#.##"); 
         String formattedRatio = df.format(ratioRGBDiff); 
+        String formattedPercentage = df.format(percentageMatch);
         if (ratioRGBDiff < maxRGBDiffVariation)
         {
             searchResult = GOOD_MATCH;
@@ -233,14 +242,15 @@ class SpiralSearch
             " at x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) +
             " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
-            " ratio lowest:total avg RGB diff = " + formattedRatio, 2); 
-               
+            " ratio lowest:total avg RGB diff = " + formattedRatio +
+            " % match = " + formattedPercentage, 2); 
+   
             // Recreate the appropriate street fragment for this good enough search result - which doesn't need tinting, but does need converting to B&W
             testStreetFragment = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
-            testStreetFragment = convertImageToBW(testStreetFragment, false); 
+            testStreetFragment = convertImageToBW(testStreetFragment, thisItemImage); 
 
             // Item images are good as they are - are the ones which have been used to do the searching with
-            info = "good enough fit (avgRGBDiff = " + formattedRatio + ") at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY);
+            info = "good enough fit (avgRGBDiff = " + formattedRatio + ") at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) + " with " + itemImageName;
             displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);          
             return searchResult;
         }
@@ -251,6 +261,7 @@ class SpiralSearch
             " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
             " ratio lowest:total avg RGB diff = " + formattedRatio +
+            " % match = " + formattedPercentage +
             " for x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY), 2); 
         }
              
@@ -312,16 +323,20 @@ class SpiralSearch
     {
     
         float totalRGBDiff = 0;
-        int locItem;
-        int locStreet;
+        int loc;
         float rStreet;
         float gStreet;
         float bStreet;
         float rItem;
         float gItem;
         float bItem;
+        float aItem;
         
         String s;
+        
+        // Used to adjust the average RGB as if we skip the search result for these mismatches, should not affect the result
+        // E.g. if have 3 non-transparent pixels out of 100, and all match, this is 100% success, not 3% (3/100)
+        int skippedTransparentPixelsCount = 0;
         
         boolean debugRGB = false;
     
@@ -337,9 +352,9 @@ class SpiralSearch
              testItemFragment = applyGeoSettingsToItemImage(testItemFragment);
         }
         // Now convert both fragments to B&W ready for testing
-        testStreetFragment = convertImageToBW(testStreetFragment, false);
-        testItemFragment = convertImageToBW(testItemFragment, true);
-        
+        testItemFragment = convertImageToBW(null, testItemFragment);
+        testStreetFragment = convertImageToBW(testStreetFragment, testItemFragment);
+
         // Don't draw these out now - only want to show the closest match ones.
         //image(streetFragment, 650, 100, 50, 50);
         //image(itemFragment, 750, 100, 50, 50);
@@ -348,30 +363,42 @@ class SpiralSearch
         for (int pixelYPosition = 0; pixelYPosition < thisItemImage.height; pixelYPosition++) 
         {
             for (int pixelXPosition = 0; pixelXPosition < thisItemImage.width; pixelXPosition++) 
-            {
-               
-                //int loc = pixelXPosition + (pixelYPosition * streetItemInfo[streetItemCount].sampleWidth);
-                        
-                // For street snap
-                locStreet = pixelXPosition + (pixelYPosition * thisItemImage.width);
-                rStreet = red(testStreetFragment.pixels[locStreet]);
-                gStreet = green(testStreetFragment.pixels[locStreet]);
-                bStreet = blue(testStreetFragment.pixels[locStreet]);
-            
-                // for Item snap
-                locItem = pixelXPosition + (pixelYPosition * thisItemImage.width);
-                rItem = red(testItemFragment.pixels[locItem]);
-                gItem = green(testItemFragment.pixels[locItem]);
-                bItem = blue(testItemFragment.pixels[locItem]);
-                  
-                totalRGBDiff += abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
-            
-                if (debugRGB)
+            {  
+                loc = pixelXPosition + (pixelYPosition * thisItemImage.width);
+                
+                // Extract the transparency info first - as the comparison is skipped for transparent item pixels
+                aItem = alpha(testItemFragment.pixels[loc]);               
+                if (aItem != 255)
                 {
-                    s = "Frag Xpos,YPos = " + pixelXPosition + "," + pixelYPosition;
-                    s = s + "    RGB street = " + int(rStreet) + ":" + int(gStreet) + ":" + int(bStreet);
-                    s = s + "    RGB item = " + int(rItem) + ":" + int(gItem) + ":" + int(bItem);
-                    //printToFile.printDebugLine(this, s, 1);                    
+                    if (debugRGB)
+                    {
+                        s = "Frag Xpos,YPos = " + pixelXPosition + "," + pixelYPosition;
+                        s = s + " - transparent pixel";
+                        printToFile.printDebugLine(this, s, 1);    
+                    }
+                    skippedTransparentPixelsCount++;
+                }
+                else
+                {
+                     // For street snap
+                    rStreet = red(testStreetFragment.pixels[loc]);
+                    gStreet = green(testStreetFragment.pixels[loc]);
+                    bStreet = blue(testStreetFragment.pixels[loc]);
+            
+                    // for Item snap
+                    rItem = red(testItemFragment.pixels[loc]);
+                    gItem = green(testItemFragment.pixels[loc]);
+                    bItem = blue(testItemFragment.pixels[loc]);
+                    
+                    totalRGBDiff += abs(rStreet-rItem) + abs (bStreet-bItem) + abs(gStreet-gItem);
+                    
+                    if (debugRGB)
+                    {
+                        s = "Frag Xpos,YPos = " + pixelXPosition + "," + pixelYPosition;
+                        s = s + "    RGB street = " + int(rStreet) + ":" + int(gStreet) + ":" + int(bStreet);
+                        s = s + "    RGB item = " + int(rItem) + ":" + int(gItem) + ":" + int(bItem);
+                        printToFile.printDebugLine(this, s, 1);                    
+                    }
                 }
             }
         }
@@ -385,7 +412,12 @@ class SpiralSearch
             printToFile.printDebugLine(this, s, 1);
         }
         
-        float avgRGBFragmentDiff = totalRGBDiff/float(thisItemImage.height * thisItemImage.width);
+        // Keep track of number of skipped pixels
+        sumTransparentPixels += skippedTransparentPixelsCount;
+        
+        // Need to take account of any pixels which were skipped because the item fragment pixel was transparent
+        int numMatchesPerformed = (thisItemImage.height * thisItemImage.width) - skippedTransparentPixelsCount;
+        float avgRGBFragmentDiff = totalRGBDiff/float(numMatchesPerformed);
         
         if (avgRGBFragmentDiff < 0.01)
         {
@@ -422,9 +454,10 @@ class SpiralSearch
     PImage applyGeoSettingsToItemImage(PImage fragment)
     {
         // Converts the original item fragment to be coloured in the same way as the street is e.g. saturation, brightness etc
+        // But leaves any transparent pixels untouched - as these will be ignored when come to do the comparison
         int i;
         int j;
-        int locItem;
+        int loc;
         float r;
         float g;
         float b;
@@ -439,18 +472,19 @@ class SpiralSearch
         {
             for (j = 0; j < workingImage.width; j++)
             {
-                //int loc = pixelXPosition + (pixelYPosition * streetItemInfo[streetItemCount].sampleWidth);
-                locItem = j + (i * workingImage.width);
-                r = red(workingImage.pixels[locItem]);
-                g = green(workingImage.pixels[locItem]);
-                b = blue(workingImage.pixels[locItem]);
-                a = alpha(workingImage.pixels[locItem]);
+                loc = j + (i * workingImage.width);
+                a = alpha(workingImage.pixels[loc]);
                 
-                // Convert using the matrix
-                newColour = cm.calcNewRPGA(r, g, b, a);
-                
-                //Update the pixel
-                workingImage.pixels[locItem] = newColour;
+                // Convert using the matrix - if the pixel is not transparent
+                if (a == 255)
+                {
+                    r = red(workingImage.pixels[loc]);
+                    g = green(workingImage.pixels[loc]);
+                    b = blue(workingImage.pixels[loc]);
+                    newColour = cm.calcNewRPGA(r, g, b, a);
+                    //Update the pixel
+                    workingImage.pixels[loc] = newColour;
+                }
             }
         }
         workingImage.updatePixels();
@@ -458,30 +492,64 @@ class SpiralSearch
         return (workingImage);        
     }
    
-    PImage convertImageToBW(PImage fragment, boolean usingItem)
+    PImage convertImageToBW(PImage streetFragment, PImage itemFragment)
     {
-        // Convert image to be greyscale
-        PImage workingImage = fragment;
+        // When converting the street fragment, need to only convert the pixels which equate to non-transparent
+        // ones in the item fragment. When converting the item fragment, the street Fragment is set to null
+        PImage workingImage;
+        boolean usingItem = false;
+        if (streetFragment == null)
+        {
+            // Item is being converted
+            workingImage = itemFragment;
+            usingItem = true;
+        }
+        else
+        {
+            // street fragment being converted
+            workingImage = streetFragment;
+        }      
+        
+        // Convert image to be greyscale - this appears to preserve the alpha setting so should be safe to do
         workingImage.filter(GRAY);
-
+        
         //printToFile.printDebugLine(this, "Converting image to B&W", 1);
         // Now find what the rgb value is for the median bright pixel in the fragment
         // Now it is greyscale, r = g = b
         int[] brightCount = new int[256];
         int i;
         int j;
-        int locItem;
+        int loc;
         float r;
+        float a;
+        int numTransparentPixels = 0;
         for (i = 0; i < workingImage.height; i++) 
         {
             for (j = 0; j < workingImage.width; j++)
-            {
+            {                
                 //int loc = pixelXPosition + (pixelYPosition * streetItemInfo[streetItemCount].sampleWidth);
-                locItem = j + (i * workingImage.width);
-                r = red(workingImage.pixels[locItem]);
-                
-                //Increment the count for the array entry matching this rgb value
-                brightCount[int(r)]++;
+                loc = j + (i * workingImage.width);
+  
+                // Streets never have the alpha set, but fragments might. Therefore see if we need to skip over this
+                // pixel by looking up the alpha of the item                
+                a = alpha(itemFragment.pixels[loc]);
+
+                // Only update the array entry if the pixel is not transparent
+                if (a == 255)
+                {
+                    //Increment the count for the array entry matching this red value of the fragment
+                    r = red(workingImage.pixels[loc]);
+                    brightCount[int(r)]++;
+                }
+                else
+                {
+                    numTransparentPixels++;
+                    if (!usingItem)
+                    {
+                        // As there is a transparent pixel in the item fragment, update the street pixel in this position to also be transparent
+                        workingImage.pixels[loc] = color(0, 0, 0, 0);
+                    }
+                }
             }
         }
         
@@ -489,10 +557,12 @@ class SpiralSearch
         int medianRGB = 0;
         int count = 0;
         boolean found = false;
+        int numValidPixels = (workingImage.height * workingImage.width) - numTransparentPixels; 
+        
         for (i = 0; i < 256 && !found; i++) 
         {
            count = count + brightCount[i];
-           if (count > workingImage.width * workingImage.height / 2)
+           if (count > numValidPixels / 2)
            {
                medianRGB = i;
                found = true;
@@ -508,11 +578,10 @@ class SpiralSearch
             streetRGBMedian = medianRGB;
         }
         
-        // Now make the image black/white using this median RGB
-        workingImage.filter(THRESHOLD, map(medianRGB, 0, 255, 0, 1)); 
-        
+        // Now make the image black/white using this median RGB - does not mess up the transparent pixels 
+        workingImage.filter(THRESHOLD, map(medianRGB, 0, 255, 0, 1));
+       
         return (workingImage);
-        
     }
     
     PImage diffBWImages(PImage bestBWStreetFragment, PImage bestBWItemFragment)
@@ -521,6 +590,7 @@ class SpiralSearch
         int loc;
         float rStreet;
         float rItem;
+        float aItem;
         
         PImage diffImage = createImage(thisItemImage.width, thisItemImage.height, RGB);
                 
@@ -530,26 +600,35 @@ class SpiralSearch
             {                    
                 // For street snap
                 loc = pixelXPosition + (pixelYPosition * thisItemImage.width);
-                rStreet = red(bestBWStreetFragment.pixels[loc]);
-            
+
                 // for Item snap
-                rItem = red(bestBWItemFragment.pixels[loc]);
-                                
-                if (rStreet != rItem)
+                // Need to check for transparency
+                aItem = alpha(bestBWItemFragment.pixels[loc]);
+                if (aItem != 255)
                 {
-                    // If the two pixels are not both white or both black, then mark as red
-                    diffImage.pixels[loc] = RED_PIXEL_COLOUR;
+                    // transparent pixel - so mark as identical
+                    diffImage.pixels[loc] = bestBWItemFragment.pixels[loc];
                 }
                 else
                 {
-                    diffImage.pixels[loc] = bestBWItemFragment.pixels[loc];
+                    rItem = red(bestBWItemFragment.pixels[loc]);
+                    rStreet = red(bestBWStreetFragment.pixels[loc]);
+                                
+                    if (rStreet != rItem)
+                    {
+                        // If the two pixels are not both white or both black, then mark as red
+                        diffImage.pixels[loc] = RED_PIXEL_COLOUR;
+                    }
+                    else
+                    {
+                        diffImage.pixels[loc] = bestBWItemFragment.pixels[loc];
+                    }
                 }
             }
         }        
         
         // Update the pixel array for this fragment
         diffImage.updatePixels();
-        //image(diffImage, 750, 100, 50, 50);
 
         return diffImage;
     }
@@ -563,75 +642,86 @@ class SpiralSearch
         float diff;
         float deltaMultiplier;
         float rgbIncrement;
+        float aItem;
         
         float largestDeltaNeg = 0;
         float largestDeltaPos = 0;
         
         PImage diffImage = createImage(bestColItemFragment.width, bestColItemFragment.height, RGB);
-                
+                        
         for (int pixelYPosition = 0; pixelYPosition < bestColItemFragment.height; pixelYPosition++) 
         {
             for (int pixelXPosition = 0; pixelXPosition < bestColItemFragment.width; pixelXPosition++) 
             {                    
 
                 loc = pixelXPosition + (pixelYPosition * bestColItemFragment.width);
-                switch (rgbType)
+                aItem = alpha(bestColItemFragment.pixels[loc]);
+                if (aItem != 255)
                 {
-                    case "red":
-                        colStreet = red(bestColStreetFragment.pixels[loc]);
-                        colItem = red(bestColItemFragment.pixels[loc]);
-                        break;
-                    case "blue":
-                        colStreet = blue(bestColStreetFragment.pixels[loc]);
-                        colItem = blue(bestColItemFragment.pixels[loc]);
-                        break;
-                    case "green":
-                        colStreet = green(bestColStreetFragment.pixels[loc]);
-                        colItem = green(bestColItemFragment.pixels[loc]);
-                        break;
-                    default:
-                        printToFile.printDebugLine(this, "Received invalid parameter of " + rgbType, 3);
-                        return null;
-                }
-
-                diff = colStreet-colItem;
-                // Update the range - used for reporting for now
-                if (diff < largestDeltaNeg)
-                {
-                    largestDeltaNeg = diff;
-                }
-                else if (diff > largestDeltaPos)
-                {
-                    largestDeltaPos = diff;
-                }
-                
-                //printToFile.printDebugLine(this, "Delta for " + rgbType + " at " + pixelXPosition + "," + pixelYPosition + " = " + diff, 1);
-                
-                // Increase range of the diffs so easier to see subtle differences - but ensure is still 0-255
-                //diff = constrain(128 + (5 * diff), (float)0, (float)255);
-                // Now save this back using same value for r, g, b = grey                
-                //diffImage.pixels[loc] = color(diff, diff, diff);
-                
-                deltaMultiplier = 1;
-                rgbIncrement = 50;
-                // If there is no difference in pixels, set to black (0). Otherwise if positive difference, make more red, if negative difference, make bluer.
-                if (diff > 0)
-                {
-                    // make more red
-                    diffImage.pixels[loc] = color(constrain((128 + (diff * deltaMultiplier) + rgbIncrement), (float)0, (float)255), 
-                                                  constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255), 
-                                                  constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255));
-                }
-                else if (diff < 0)
-                {
-                    // make more blue
-                    diffImage.pixels[loc] = color(constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255),
-                                                  constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255), 
-                                                  constrain((128 + (diff * deltaMultiplier) + rgbIncrement), (float)0, (float)255));
+                    // transparent pixel in the item - so mark as transparent in the diff image
+                    diffImage.pixels[loc] = color(0, 0, 0, 0);
                 }
                 else
                 {
-                    diffImage.pixels[loc] = color(0, 0, 0);
+                    // Proceed with colour comparison
+                    switch (rgbType)
+                    {
+                        case "red":
+                            colStreet = red(bestColStreetFragment.pixels[loc]);
+                            colItem = red(bestColItemFragment.pixels[loc]);
+                            break;
+                        case "blue":
+                            colStreet = blue(bestColStreetFragment.pixels[loc]);
+                            colItem = blue(bestColItemFragment.pixels[loc]);
+                            break;
+                        case "green":
+                            colStreet = green(bestColStreetFragment.pixels[loc]);
+                            colItem = green(bestColItemFragment.pixels[loc]);
+                            break;
+                        default:
+                            printToFile.printDebugLine(this, "Received invalid parameter of " + rgbType, 3);
+                            return null;
+                    }
+    
+                    diff = colStreet-colItem;
+                    // Update the range - used for reporting for now
+                    if (diff < largestDeltaNeg)
+                    {
+                        largestDeltaNeg = diff;
+                    }
+                    else if (diff > largestDeltaPos)
+                    {
+                        largestDeltaPos = diff;
+                    }
+                    
+                    //printToFile.printDebugLine(this, "Delta for " + rgbType + " at " + pixelXPosition + "," + pixelYPosition + " = " + diff, 1);
+                    
+                    // Increase range of the diffs so easier to see subtle differences - but ensure is still 0-255
+                    //diff = constrain(128 + (5 * diff), (float)0, (float)255);
+                    // Now save this back using same value for r, g, b = grey                
+                    //diffImage.pixels[loc] = color(diff, diff, diff);
+                    
+                    deltaMultiplier = 1;
+                    rgbIncrement = 50;
+                    // If there is no difference in pixels, set to black (0). Otherwise if positive difference, make more red, if negative difference, make bluer.
+                    if (diff > 0)
+                    {
+                        // make more red
+                        diffImage.pixels[loc] = color(constrain((128 + (diff * deltaMultiplier) + rgbIncrement), (float)0, (float)255), 
+                                                      constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255), 
+                                                      constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255));
+                    }
+                    else if (diff < 0)
+                    {
+                        // make more blue
+                        diffImage.pixels[loc] = color(constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255),
+                                                      constrain((128 + (diff * deltaMultiplier)), (float)0, (float)255), 
+                                                      constrain((128 + (diff * deltaMultiplier) + rgbIncrement), (float)0, (float)255));
+                    }
+                    else
+                    {
+                        diffImage.pixels[loc] = color(0, 0, 0);
+                    }
                 }
             }
         }        
@@ -686,7 +776,10 @@ class SpiralSearch
     public String debugRGBInfo()
     {  
         float ratioRGBDiff;
-        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height); 
+        
+         // Need to take account of any pixels which were skipped because the item fragment pixel was transparent
+        int numMatchesPerformed = (RGBDiffCount*thisItemImage.height * thisItemImage.width) - sumTransparentPixels;          
+        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(numMatchesPerformed);       
         
         // Need to avoid dividing by 0, or a very small number.
         if (avgTotalRGBDiffPerPixel < 0.01)
@@ -747,8 +840,8 @@ class SpiralSearch
             // Can use copies of the ones above - will then have correct tinting etc
             PImage tempStreetImage = colourStreetFragImage.get(0, 0, colourStreetFragImage.width, colourStreetFragImage.height);
             PImage tempItemImage = colourItemFragImage.get(0, 0, colourItemFragImage.width, colourItemFragImage.height);
-            BWStreetFragImage = convertImageToBW(tempStreetImage, false);
-            BWItemFragImage = convertImageToBW(tempItemImage, true);
+            BWItemFragImage = convertImageToBW(null, tempItemImage);
+            BWStreetFragImage = convertImageToBW(tempStreetImage, tempItemImage);
             BWfragmentDiffImage = diffBWImages(BWStreetFragImage, BWItemFragImage);
         }
 
@@ -760,8 +853,11 @@ class SpiralSearch
     }
 
     public float readPercentageMatchInfo()
-    {
-        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(RGBDiffCount*thisItemImage.width*thisItemImage.height); 
+    {       
+        // Need to take account of any pixels which were skipped because the item fragment pixel was transparent
+        int numMatchesPerformed = (RGBDiffCount*thisItemImage.height * thisItemImage.width) - sumTransparentPixels;          
+        avgTotalRGBDiffPerPixel = sumTotalRGBDiff/float(numMatchesPerformed);
+               
         float percentageMatch;
           
         // Need to avoid dividing by 0, or a very small number.
