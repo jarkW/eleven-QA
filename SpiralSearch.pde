@@ -824,14 +824,18 @@ class SpiralSearch
         // Generate both colour and black/white images as might be useful if being dumped out in cases where not sure why matches are not being found          
         // Generate the colour images, and re-tint the item image to match the street
         // But only need to do this if the flag is set - otherwise will simply pass in null 
+        
+        // The item fragment will be used at the end of the street parsing in order to generate a street summary image which quickly shows matches/fails
+        colourItemFragImage = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
+        if (configInfo.readDebugUseTintedFragment())
+        {
+            colourItemFragImage = applyGeoSettingsToItemImage(colourItemFragImage);
+        }
+        
         if (configInfo.readDebugDumpDiffImages())
         {
             colourStreetFragImage = thisStreetImage.get(lowestAvgRGBDiffStepX, lowestAvgRGBDiffStepY, thisItemImage.width, thisItemImage.height);
-            colourItemFragImage = thisItemImage.get(0, 0, thisItemImage.width, thisItemImage.height);
-            if (configInfo.readDebugUseTintedFragment())
-            {
-                colourItemFragImage = applyGeoSettingsToItemImage(colourItemFragImage);
-            }
+
             colourfragmentDiffRImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "red");
             colourfragmentDiffGImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "green");
             colourfragmentDiffBImage = diffColourImages(colourStreetFragImage, colourItemFragImage, "blue");
@@ -844,9 +848,9 @@ class SpiralSearch
             BWStreetFragImage = convertImageToBW(tempStreetImage, tempItemImage);
             BWfragmentDiffImage = diffBWImages(BWStreetFragImage, BWItemFragImage);
         }
-
+        
         searchMatchInfo = new MatchInfo(readPercentageMatchInfo(), x, y, searchResult,
-                                itemTSID, itemImageName, streetImageName,
+                                itemTSID, itemImageName, fragOffsetX, fragOffsetY, streetImageName,
                                 colourStreetFragImage, BWStreetFragImage, colourItemFragImage, BWItemFragImage, BWfragmentDiffImage, colourfragmentDiffRImage, colourfragmentDiffGImage, colourfragmentDiffBImage);
         
         return searchMatchInfo;

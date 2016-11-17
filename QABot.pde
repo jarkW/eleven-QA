@@ -689,6 +689,12 @@ boolean setupWorkingDirectories()
         return false;
     }
     
+    if (!Utils.setupDir(workingDir + File.separatorChar +"StreetSummaries", false))
+    {
+        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+        return false;
+    }
+    
     if (configInfo.readDebugDumpDiffImages())
     {
         if (!Utils.setupDir(workingDir + File.separatorChar +"BestMatchImages", false))

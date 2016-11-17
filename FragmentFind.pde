@@ -264,8 +264,8 @@ class FragmentFind
                     }
                     else
                     {
-                        // else - ignore the results of the last search as it was worse than the best we have so far
-                        additionalInfo = " - worse match, stick with this one - ";
+                        // else - ignore the results of the last search as it was worse than/same as the best we have so far
+                        additionalInfo = " - worse/same match, stick with this one - ";
                     }                                     
                 }
 

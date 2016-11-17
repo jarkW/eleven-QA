@@ -2,8 +2,8 @@
   {
     "class_tsid": "marker_qurazy",
     "width": 15,
-    "offset_x": -4,
-    "offset_y": -19,
+    "offset_x": -5,
+    "offset_y": -15,
     "info": "",
     "height": 16
   },
@@ -11,7 +11,7 @@
     "class_tsid": "quoin",
     "width": 12,
     "offset_x": -5,
-    "offset_y": -13,
+    "offset_y": -18,
     "info": "currants",
     "height": 12
   },
@@ -19,23 +19,23 @@
     "class_tsid": "quoin",
     "width": 12,
     "offset_x": -5,
-    "offset_y": -18,
+    "offset_y": -17,
     "info": "mood",
     "height": 12
   },
   {
     "class_tsid": "quoin",
     "width": 12,
-    "offset_x": -4,
-    "offset_y": -19,
+    "offset_x": -5,
+    "offset_y": -13,
     "info": "xp",
     "height": 14
   },
   {
     "class_tsid": "quoin",
     "width": 11,
-    "offset_x": -4,
-    "offset_y": -20,
+    "offset_x": -5,
+    "offset_y": -19,
     "info": "time",
     "height": 11
   },
@@ -43,7 +43,7 @@
     "class_tsid": "quoin",
     "width": 10,
     "offset_x": -4,
-    "offset_y": -21,
+    "offset_y": -20,
     "info": "mystery",
     "height": 12
   },
@@ -51,15 +51,15 @@
     "class_tsid": "quoin",
     "width": 10,
     "offset_x": -4,
-    "offset_y": -14,
+    "offset_y": -13,
     "info": "energy",
     "height": 11
   },
   {
     "class_tsid": "quoin",
     "width": 10,
-    "offset_x": -3,
-    "offset_y": -16,
+    "offset_x": -4,
+    "offset_y": -14,
     "info": "favor",
     "height": 10
   },
@@ -837,55 +837,55 @@
   },
   {
     "class_tsid": "trant_bean",
-    "width": 23,
+    "width": 25,
     "state": "6",
-    "offset_x": -19,
+    "offset_x": -20,
     "offset_y": -78,
     "info": "",
     "height": 27
   },
   {
     "class_tsid": "trant_bean",
-    "width": 19,
+    "width": 26,
     "state": "5",
-    "offset_x": -16,
+    "offset_x": -20,
     "offset_y": -78,
     "info": "",
-    "height": 36
+    "height": 28
   },
   {
     "class_tsid": "trant_bean",
-    "width": 16,
+    "width": 26,
     "state": "4",
+    "offset_x": -21,
+    "offset_y": -64,
+    "info": "",
+    "height": 13
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 18,
+    "state": "3",
     "offset_x": -16,
+    "offset_y": -72,
+    "info": "",
+    "height": 32
+  },
+  {
+    "class_tsid": "trant_bean",
+    "width": 20,
+    "state": "2",
+    "offset_x": -17,
     "offset_y": -61,
     "info": "",
-    "height": 16
+    "height": 40
   },
   {
     "class_tsid": "trant_bean",
-    "width": 16,
-    "state": "3",
-    "offset_x": -15,
-    "offset_y": -70,
-    "info": "",
-    "height": 31
-  },
-  {
-    "class_tsid": "trant_bean",
-    "width": 17,
-    "state": "2",
-    "offset_x": -15,
-    "offset_y": -59,
-    "info": "",
-    "height": 42
-  },
-  {
-    "class_tsid": "trant_bean",
-    "width": 25,
+    "width": 20,
     "state": "1",
-    "offset_x": -19,
-    "offset_y": -57,
+    "offset_x": -17,
+    "offset_y": -56,
     "info": "",
     "height": 41
   },
@@ -900,28 +900,28 @@
   },
   {
     "class_tsid": "trant_fruit",
-    "width": 20,
+    "width": 23,
     "state": "10",
     "offset_x": -3,
-    "offset_y": -57,
+    "offset_y": -54,
     "info": "",
-    "height": 24
+    "height": 26
   },
   {
     "class_tsid": "trant_fruit",
-    "width": 18,
+    "width": 20,
     "state": "9",
-    "offset_x": -4,
-    "offset_y": -72,
+    "offset_x": -6,
+    "offset_y": -70,
     "info": "",
     "height": 22
   },
   {
     "class_tsid": "trant_fruit",
-    "width": 18,
+    "width": 23,
     "state": "8",
-    "offset_x": -5,
-    "offset_y": -71,
+    "offset_x": -7,
+    "offset_y": -73,
     "info": "",
     "height": 23
   },
@@ -954,7 +954,7 @@
   },
   {
     "class_tsid": "trant_fruit",
-    "width": 23,
+    "width": 20,
     "state": "4",
     "offset_x": -12,
     "offset_y": -65,
@@ -981,10 +981,10 @@
   },
   {
     "class_tsid": "trant_fruit",
-    "width": 11,
+    "width": 9,
     "state": "1",
-    "offset_x": -5,
-    "offset_y": -58,
+    "offset_x": -3,
+    "offset_y": -56,
     "info": "",
     "height": 38
   },
@@ -1017,30 +1017,30 @@
   },
   {
     "class_tsid": "wood_tree",
-    "width": 27,
+    "width": 25,
     "state": "3",
     "offset_x": -16,
-    "offset_y": -112,
+    "offset_y": -117,
     "info": "1",
     "height": 62
   },
   {
     "class_tsid": "wood_tree",
-    "width": 27,
+    "width": 30,
     "state": "4",
-    "offset_x": -16,
-    "offset_y": -81,
+    "offset_x": -19,
+    "offset_y": -100,
     "info": "1",
-    "height": 46
+    "height": 61
   },
   {
     "class_tsid": "wood_tree",
-    "width": 21,
+    "width": 26,
     "state": "5",
-    "offset_x": -16,
-    "offset_y": -97,
+    "offset_x": -18,
+    "offset_y": -99,
     "info": "1",
-    "height": 55
+    "height": 59
   },
   {
     "class_tsid": "wood_tree",
@@ -1062,7 +1062,7 @@
   },
   {
     "class_tsid": "wood_tree",
-    "width": 36,
+    "width": 25,
     "state": "2",
     "offset_x": -15,
     "offset_y": -69,
@@ -1089,9 +1089,9 @@
   },
   {
     "class_tsid": "wood_tree",
-    "width": 22,
+    "width": 26,
     "state": "5",
-    "offset_x": -11,
+    "offset_x": -14,
     "offset_y": -138,
     "info": "2",
     "height": 47
@@ -1116,19 +1116,19 @@
   },
   {
     "class_tsid": "wood_tree",
-    "width": 10,
+    "width": 34,
     "state": "2",
-    "offset_x": -11,
-    "offset_y": -114,
+    "offset_x": -16,
+    "offset_y": -104,
     "info": "3",
-    "height": 59
+    "height": 68
   },
   {
     "class_tsid": "wood_tree",
-    "width": 22,
+    "width": 30,
     "state": "3",
     "offset_x": -16,
-    "offset_y": -115,
+    "offset_y": -104,
     "info": "3",
     "height": 71
   },
@@ -1136,82 +1136,82 @@
     "class_tsid": "wood_tree",
     "width": 32,
     "state": "4",
-    "offset_x": -22,
-    "offset_y": -131,
+    "offset_x": -18,
+    "offset_y": -115,
     "info": "3",
-    "height": 95
+    "height": 82
   },
   {
     "class_tsid": "wood_tree",
     "width": 28,
     "state": "5",
-    "offset_x": -18,
+    "offset_x": -17,
     "offset_y": -109,
     "info": "3",
-    "height": 57
+    "height": 75
   },
   {
     "class_tsid": "wood_tree",
-    "width": 24,
+    "width": 26,
     "state": "6",
-    "offset_x": -13,
-    "offset_y": -117,
+    "offset_x": -15,
+    "offset_y": -109,
     "info": "3",
-    "height": 84
+    "height": 78
   },
   {
     "class_tsid": "wood_tree",
     "width": 19,
     "state": "1",
     "offset_x": -9,
-    "offset_y": -66,
+    "offset_y": -65,
     "info": "4",
     "height": 22
   },
   {
     "class_tsid": "wood_tree",
-    "width": 19,
+    "width": 24,
     "state": "2",
-    "offset_x": -7,
-    "offset_y": -120,
+    "offset_x": -11,
+    "offset_y": -87,
     "info": "4",
-    "height": 82
-  },
-  {
-    "class_tsid": "wood_tree",
-    "width": 18,
-    "state": "3",
-    "offset_x": -6,
-    "offset_y": -110,
-    "info": "4",
-    "height": 48
+    "height": 46
   },
   {
     "class_tsid": "wood_tree",
     "width": 22,
+    "state": "3",
+    "offset_x": -10,
+    "offset_y": -108,
+    "info": "4",
+    "height": 71
+  },
+  {
+    "class_tsid": "wood_tree",
+    "width": 29,
     "state": "4",
-    "offset_x": -8,
+    "offset_x": -13,
     "offset_y": -107,
     "info": "4",
-    "height": 64
+    "height": 70
   },
   {
     "class_tsid": "wood_tree",
     "width": 29,
     "state": "5",
-    "offset_x": -11,
-    "offset_y": -114,
+    "offset_x": -13,
+    "offset_y": -110,
     "info": "4",
     "height": 72
   },
   {
     "class_tsid": "wood_tree",
-    "width": 10,
+    "width": 26,
     "state": "6",
-    "offset_x": 3,
-    "offset_y": -101,
+    "offset_x": -10,
+    "offset_y": -108,
     "info": "4",
-    "height": 54
+    "height": 70
   },
   {
     "class_tsid": "mortar_barnacle",
@@ -1836,9 +1836,9 @@
   },
   {
     "class_tsid": "trant_gas",
-    "width": 36,
+    "width": 39,
     "state": "7",
-    "offset_x": -17,
+    "offset_x": -20,
     "offset_y": -57,
     "info": "",
     "height": 10
@@ -1899,20 +1899,20 @@
   },
   {
     "class_tsid": "trant_gas",
-    "width": 17,
+    "width": 19,
     "state": "2",
     "offset_x": -11,
-    "offset_y": -32,
+    "offset_y": -33,
     "info": "",
-    "height": 12
+    "height": 16
   },
   {
     "class_tsid": "trant_gas",
-    "width": 13,
+    "width": 15,
     "state": "1",
-    "offset_x": -8,
+    "offset_x": -9,
     "offset_y": -30,
     "info": "",
-    "height": 13
+    "height": 16
   }
 ]}

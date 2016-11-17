@@ -45,6 +45,9 @@ class StreetInfo
     // Info about special quoin settings e.g. because party space or Ancestral Lands
     String quoinDefaultingInfo; 
     String quoinDefaultingWarningMsg;
+    
+    final static int ITEM_FOUND_COLOUR = #0000FF;
+    final static int ITEM_MISSING_COLOUR = #FF0000;
        
     // constructor/initialise fields
     public StreetInfo(String tsid)
@@ -880,6 +883,14 @@ class StreetInfo
                     failNow = true;
                     return false;
                 }
+                
+                // Save an image of the street as a transparency - containing the fragments which matched and any missing items as a red square together with the 'best' match
+                // Allows the user to quickly see what was found/missing against a street snap
+                if (!saveStreetFoundSummaryAsPNG(itemResults))
+                {
+                    failNow = true;
+                    return false;
+                }
 
                 // Mark street as done
                 streetProcessingFinished = true;
@@ -1025,6 +1036,114 @@ class StreetInfo
         
         // Increase this counter - it is only the first sort which is clear of output errors to the user
         numberTimesResultsSortedSoFar++;
+    }
+    
+    boolean saveStreetFoundSummaryAsPNG(ArrayList<SummaryChanges> itemResults)
+    {
+        // Loops through the item results and draws in the matching fragments on a street PNG
+        // Skipped items are ignored
+        MatchInfo bestItemMatchInfo;
+        int i;
+        int j;
+        int locItem;
+        int locStreet;
+        
+        // At this stage the street snap might have been unloaded - so just reload the first street snap
+        if (!streetSnaps.get(0).loadPNGImage())
+        {
+            // Failed to load up street snap so return failure
+            printToFile.printDebugLine(this, "Unexpected error - failed to load first street snap " + streetSnaps.get(0).readPNGImageName() + " for street " + streetName, 3);
+            return false;
+        }
+        
+        if (streetSnaps.get(0).readPNGImage() == null)
+        {
+            // Failed to load up street snap so return failure
+            printToFile.printDebugLine(this, "Unexpected null error - failed to load first street snap " + streetSnaps.get(0).readPNGImageName() + " for street " + streetName, 3);
+            return false;
+        }
+        
+        PImage summaryStreetSnap = streetSnaps.get(0).readPNGImage().get(0, 0, geoWidth, geoHeight);
+        summaryStreetSnap.loadPixels();
+            
+        for (int n = 0; n < itemResults.size(); n++)
+        {   
+            if (itemResults.get(n).readResult() > SummaryChanges.SKIPPED)
+            {
+                // Pixels are only filled in for items which are found/missing
+                bestItemMatchInfo = itemResults.get(n).readItemInfo().readBestMatchInfo();
+                
+                PImage bestFragment = bestItemMatchInfo.readColourItemFragment();
+                
+                if (bestFragment == null)
+                {
+                    printToFile.printDebugLine(this, "Unexpected error - failed to load best match colour/tinted item fragment " + bestItemMatchInfo.readBestMatchItemImageName(), 3);
+                    return false;
+                }
+                // Need to account for the offset of the item image from item x,y in JSON
+                int startX = itemResults.get(n).readItemX() + geoWidth/2 + bestItemMatchInfo.readItemImageXOffset();
+                int startY = itemResults.get(n).readItemY() + geoHeight + bestItemMatchInfo.readItemImageYOffset();              
+                
+                // Now copy the pixels into the correct place 
+                float a;
+                for (i = 0; i < bestFragment.height; i++) 
+                {
+                    for (j = 0; j < bestFragment.width; j++)
+                    {
+                        locItem = j + (i * bestFragment.width);
+                        locStreet = (startX + j) + ((startY + i) * geoWidth);
+                        
+                        a = alpha(bestFragment.pixels[locItem]);
+                
+                        // Copy across the pixel to the street summary if it is not transparent
+                        if (a == 255)
+                        {
+                            // Copy across the pixel to the street summary image
+                            summaryStreetSnap.pixels[locStreet] = bestFragment.pixels[locItem];
+                        }
+                    }        
+                }
+                
+                // If this is a missing item - then draw a red box around the item to show unsure - print %match also?
+                // For all other items draw a black box to show found
+                int boxColour;
+                if (itemResults.get(n).readResult() == SummaryChanges.MISSING || itemResults.get(n).readResult() == SummaryChanges.MISSING_DUPLICATE)
+                {
+                    // Centre it on the original startX/StartY and have the size of the search radius
+                    boxColour = ITEM_MISSING_COLOUR;
+                }
+                else
+                {
+                    boxColour = ITEM_FOUND_COLOUR;
+                }
+                /*
+                // Box needs to run from +/- search radius centred on x,y
+                // Draw top/bottom horizontal lines
+                for (i = startX - configInfo.readSearchRadius(); i < (startX + configInfo.readSearchRadius()); i++)
+                {
+                    
+                    locStreet = (startX + j) + ((startY + i) * geoWidth);
+                    for (j = startY - configInfo.readSearchRadius(); i < (startX + configInfo.readSearchRadius()); i++)
+                }
+                */
+       
+            }
+            
+        } 
+        
+         summaryStreetSnap.updatePixels();
+     
+         // save in work directory
+         String fname = workingDir + File.separatorChar +"StreetSummaries" + File.separatorChar + streetName + "_summary.png";
+         printToFile.printDebugLine(this, "Saving summary image to " + fname, 1);
+         if (!summaryStreetSnap.save(fname))
+         {
+             printToFile.printDebugLine(this, "Unexpected error - failed to save street summary image to " + fname, 3);
+             return false;
+         }
+
+         return true;   
+        
     }
     
     boolean getJSONFile(String TSID)

@@ -193,10 +193,10 @@ class ItemInfo
     boolean validItemToCheckFor()
     {   
         // USED FOR DEBUGGING SO ONLY HANDLE TREES _ REMOVE JARK
-        //if (!itemIsATree())
-        //{
-        //    return false;
-        //}
+        if (!itemIsATree())
+        {
+            return false;
+        }
         // START NORMAL CODE
         
         // Returns true if this an item we expect to be scanning for on a snap

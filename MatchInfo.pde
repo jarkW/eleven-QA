@@ -6,6 +6,9 @@
         float percentageMatch;
         int bestMatchResult;
         String bestMatchItemImageName;
+        int itemImageXOffset;
+        int itemImageYOffset;
+        
         // Used to dump out a diff - so can see mismatched pixels in read - save the image and the useful filename to save it as, if this is the best match at the end
         PImage bestMatchBWDiffImage;
         PImage bestMatchColRDiffImage;
@@ -13,7 +16,7 @@
         PImage bestMatchColGDiffImage;
         
         PImage BWItemFragment;
-        PImage ColourItemFragment;
+        PImage ColourItemFragment; // Also used to generate a street summary image at the end
         PImage BWStreetFragment;
         PImage ColourStreetFragment;
         
@@ -29,7 +32,7 @@
         String itemTSID;
         
         public MatchInfo(float percentMatch, int x, int y, int matchResult,
-                         String TSID, String itemImageFname, String streetSnapFname, 
+                         String TSID, String itemImageFname, int xOffset, int yOffset, String streetSnapFname,
                          PImage colourStreetFragImage, PImage BWStreetFragImage, PImage colourItemImage, PImage BWItemImage, 
                          PImage BWDiffImage, PImage ColDiffRImage, PImage ColDiffGImage, PImage ColDiffBImage)    
         {           
@@ -39,6 +42,11 @@
             bestMatchY = y;
             itemTSID = TSID;
             bestMatchItemImageName = itemImageFname;
+            itemImageXOffset = xOffset;
+            itemImageYOffset = yOffset;
+            
+            // This image is always saved - as used to generate a street summary of the street items, showing successful/failed matches graphically
+            ColourItemFragment = colourItemImage;
              
             // Save the diff image passed to class - might be later saved
             if (configInfo.readDebugDumpDiffImages())
@@ -58,7 +66,6 @@
                 BWItemFragment = BWItemImage;
                 BWItemFragmentName = TSID  + "_BW_" + itemImageFname + "__" + round(percentageMatch) + ".png";
                 
-                ColourItemFragment = colourItemImage;
                 ColourItemFragmentName = TSID  + "_Col_" + itemImageFname + "__" + round(percentageMatch) + ".png";
                 
                 BWStreetFragment = BWStreetFragImage;
@@ -74,7 +81,6 @@
                 bestMatchColGDiffImage = null;
                 bestMatchColBDiffImage = null;
                 BWItemFragment = null;
-                ColourItemFragment = null;
                 BWStreetFragment = null;
                 ColourStreetFragment = null;
             }
@@ -234,5 +240,20 @@
         public void setBestMatchResult(int result)
         {
             bestMatchResult = result;
+        }
+        
+        public int readItemImageXOffset()
+        {
+            return itemImageXOffset;
+        }
+        
+        public int readItemImageYOffset()
+        {
+            return itemImageYOffset;
+        }
+        
+        public PImage readColourItemFragment()
+        {
+            return ColourItemFragment;
         }
  }
