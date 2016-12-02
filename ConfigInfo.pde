@@ -24,6 +24,9 @@ class ConfigInfo {
     boolean debugUseTintedFragment;
     boolean debugRun;
     String debugValidationPath;
+    boolean debugDumpAllMatches;
+    int debugDumpAllMatchesValue;
+    int debugGoodEnoughMatch;
     
     boolean debugShowPercentMatchAsFloat;
     
@@ -389,6 +392,33 @@ class ConfigInfo {
             debugShowPercentMatchAsFloat = false;
         }
         
+        // 
+        debugDumpAllMatchesValue = Utils.readJSONInt(json, "debug_dump_all_matches_level", false);
+        if (!Utils.readOkFlag())
+        {
+            debugDumpAllMatches = false;
+        }
+        else
+        {
+            if (debugDumpAllMatchesValue < 0 || debugDumpAllMatchesValue > 100)
+            {
+                debugDumpAllMatches = false;
+            }
+            else
+            {
+                debugDumpAllMatches = true;
+            }            
+        }
+        
+        // This is used for items such as trees so that we can stop searching when an almost perfect match is found.
+        // Otherwise searching 100s of tree images - and as usually it is a mature tree in a snap, 99% match may be as good
+        // as it gets. 
+        debugGoodEnoughMatch = Utils.readJSONInt(json, "debug_good_enough_match", false);
+        if (!Utils.readOkFlag())
+        {
+            debugGoodEnoughMatch = 99;
+        }
+        
         // Default different fields so that validation runs always do the same testing
         if (debugValidationRun)
         {
@@ -619,5 +649,20 @@ class ConfigInfo {
     public boolean readShowDistFromOrigXY()
     {    
         return showDistFromOrigXY;
+    }
+    
+    public boolean readDebugDumpAllMatches()
+    {
+        return debugDumpAllMatches;
+    }
+    
+    public int readDebugDumpAllMatchesValue()
+    {
+        return debugDumpAllMatchesValue;
+    }
+    
+    public int readDebugGoodEnoughMatch()
+    {
+        return debugGoodEnoughMatch;
     }
 }

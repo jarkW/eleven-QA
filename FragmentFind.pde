@@ -26,7 +26,7 @@ class FragmentFind
     
     ArrayList<QuoinMatchData> quoinMatches;
     
-    int itemImageBeingUsed;
+    int itemImageBeingUsed = -1;
     
     // Saved item information we need here - easier to read
     ArrayList<PNGFile> itemImages;
@@ -36,12 +36,16 @@ class FragmentFind
     // Keeps a running version of the 'best' match in
     MatchInfo bestMatchInfo;
     
+    ArrayList<MatchInfo> allMatchResultsForItem;
+    
         // constructor
     public FragmentFind(ItemInfo itemInfo)
     {
         okFlag = true;
         
         quoinMatches = new ArrayList<QuoinMatchData>();
+        
+        allMatchResultsForItem = new ArrayList<MatchInfo>();
         
         searchDone = false;
         
@@ -60,30 +64,15 @@ class FragmentFind
             return;
         }
         
-        // When only making x/y changes only, then assume that the JSON file contains the correct information for the variant type (except for wood trees which 
-        // need be checked against all tree types because they may have been replanted relative to street snaps
-        if (configInfo.readChangeXYOnly() && thisItemInfo.readOrigItemVariant().length() > 0 && !thisItemInfo.readItemClassTSID().equals("wood_tree"))
+        itemImageBeingUsed = nextImageToBeUsed(itemImageBeingUsed);
+        
+        if (itemImageBeingUsed >= itemImages.size())
         {
-            // If we are only searching for x,y changes so can just set itemImageBeingUsed to the correct number which will force it to just use that image to check with
-            String variantType;
-            variantType = thisItemInfo.readOrigItemVariant();
-
-            for (int i = 0; i < itemImages.size(); i++)
-            {
-                if (itemImages.get(i).readPNGImageName().indexOf(variantType) != -1)
-                {
-                    printToFile.printDebugLine(this, " setting image number to be " + i, 1);
-                    itemImageBeingUsed = i;
-                }
-            }
+            // Should never happen at this initialisation stage
+            printToFile.printDebugLine(this, "Failed to find first item image for " + thisItemInfo.readItemClassTSID() + "(" + thisItemInfo.readItemTSID() + ")", 3);
+            okFlag = false;
+            return;
         }
-        else
-        {
-            // start at the beginning
-            printToFile.printDebugLine(this, " image number starting at 0" , 1);
-            itemImageBeingUsed = 0;
-        }
-        printToFile.printDebugLine(this, " init FragmentFind - " + thisItemInfo.readItemClassTSID() + " change x/y only = " + configInfo.readChangeXYOnly() + " using image " + itemImageBeingUsed, 1);
                 
         streetSnapImage = streetInfo.readCurrentStreetSnap();
         if (streetSnapImage.readPNGImage() == null)
@@ -156,6 +145,43 @@ class FragmentFind
         //printHashCodes(this);
     }
     
+    int nextImageToBeUsed(int currentImageNumber)
+    {
+        // Returns the next image number to be used.
+        // If -1 is passed in to the function, then indicates first time here, so forces check of first fragment image
+        
+        // This code is only really needed to handle efficient stripping down of searches to only use the images of the correct variant for the case when we're 
+        // doing x,y changes only - when the variant is assumed to be correct.
+        // Seemed easier than making an object copy of the array list of images passed to this class - didn't want to risk breaking images for subsequent item searches
+        int nextImageNumber = currentImageNumber + 1;
+        if (!configInfo.readChangeXYOnly() || thisItemInfo.readOrigItemVariant().length() == 0 || thisItemInfo.readItemClassTSID().equals("wood_tree"))
+        {
+            // Need to search all the fragment images - as this is a normal search or there is no variant field (e.g. trant) or this is a wood tree - which could have a match
+            // on a snap for any other kind of tree, so need to search all tree images as per normal
+            return (nextImageNumber);
+        }
+               
+        // If we've reached here then we need to skip over anything which does not match the variant type specified in the JSON file
+        String itemVariant;
+        itemVariant = thisItemInfo.readItemClassTSID() + "_" + thisItemInfo.readOrigItemVariant();
+        // NB If incrementing the image number has pushed us past the end, then the for loop won't be entered
+        while (nextImageNumber < itemImages.size())
+        {
+            if (itemImages.get(nextImageNumber).readPNGImageName().indexOf(itemVariant) != -1)
+            {
+                //Image exists
+                printToFile.printDebugLine(this, " setting next item image number to be " + nextImageNumber, 1);
+                return nextImageNumber;
+            }
+            nextImageNumber++;
+        }
+
+        // Only get here is no more matching images found or already at end of image list
+        // Although nextImageNumber is set to be the size of the images array, explicitly set it for clarity
+        printToFile.printDebugLine(this, "No more item images to use", 1);
+        return itemImages.size();  
+    }
+    
     public boolean searchForFragment()
     {
         String debugInfo = "";
@@ -173,6 +199,12 @@ class FragmentFind
         printToFile.printDebugLine(this, "Search for item " + thisItemInfo.readItemClassTSID() + " (" + thisItemInfo.readItemTSID() + ") with x,y " + thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY() + " using item image " + itemImages.get(itemImageBeingUsed).readPNGImageName() , 2);
         
         int searchResult = spiralSearch.searchForItem();
+        
+        // Add in the search result even if useless so I can dump out later
+        if (configInfo.readDebugDumpAllMatches())
+        {
+            allMatchResultsForItem.add(spiralSearch.readSearchMatchInfo());
+        }
         
         // What happens next depends on the result of this search
         String additionalInfo = "";
@@ -208,23 +240,17 @@ class FragmentFind
                     }
                 }
                 debugInfo = spiralSearch.debugRGBInfo();
-                s = "searchForFragment - PERFECT match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + " (with " + 
+                s = "searchResult - PERFECT match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + " (with " + 
                                             bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
                                             bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
                                             
                 printToFile.printDebugLine(this, s, 2);
-                s = "JARK - " + s;
-                //printToFile.printDebugLine(this, s, 3);
                 break;
                 
             case GOOD_MATCH:
                 // Quoins still need to be searched for using the next image (unless this is an x/y only search). 
-                // Check other images for items on this street in the hope that a perfect match might be found
-                
-                // Need to add in check - if good enough match for a tree - do we call it done??? 
-                // So don't search 100 tree images??? Might need to test this out??? Or may be if more than 98% or something??? 
-                // not sure how the new fragments will work out. 
-                // Needs to be done for x,y search and usual search
+                // Check other images for items on this street in the hope that a perfect match might be found - except items with multiple maturity images such as trees when we call 99% a good enough match
+
                 if (thisItemInfo.readItemClassTSID().equals("quoin") && !configInfo.readChangeXYOnly())
                 {
                     // Only need to do this when collecting search results for all quoin images - otherwise can just use the data for the single search done
@@ -247,33 +273,39 @@ class FragmentFind
                         // Returned from first search, so OK to overwrite with the information for this search
                         additionalInfo = " - overwrite null - ";
                         bestMatchInfo = spiralSearch.readSearchMatchInfo();
-                        s = "JARK - GOOD (1st) match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + " (with " + 
-                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
-                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
-                        //printToFile.printDebugLine(this, s, 3);
                     }
                     else if (bestMatchInfo.readPercentageMatch() < spiralSearch.readPercentageMatchInfo())
                     {
                         // Last search returned a better percentage match - so save this information
                         additionalInfo = " - better match - ";
                         bestMatchInfo = spiralSearch.readSearchMatchInfo();
-                        s = "JARK - GOOD (better) match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + " (with " + 
-                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
-                                            bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
-                        //printToFile.printDebugLine(this, s, 3);
                     }
                     else
                     {
                         // else - ignore the results of the last search as it was worse than/same as the best we have so far
                         additionalInfo = " - worse/same match, stick with this one - ";
-                    }                                     
+                    }  
+                    
+                    // If this last search was 99% or better and the item has multiple states (images) e.g. trees, barnacles, then consider 99% 'perfect' and stop searching
+                    // Note that some wood trees give 98% results for the wrong maturity level of that variant - but as the x,y returned are not affected, I'll ignore this for now
+                    // Otherwise are having to search 100s of images unnecessarily
+                    // This is a configurable setting for my purposes only - 99 is the default
+                    if (thisItemInfo.itemHasMultipleImages() && spiralSearch.readPercentageMatchInfo() > configInfo.readDebugGoodEnoughMatch())
+                    {
+                        searchDone = true;
+                        if (!thisItemInfo.readItemClassTSID().equals("marker_qurazy") && !thisItemInfo.readItemClassTSID().equals("quoin"))
+                        {
+                            // For trees and/items a 99% match means we've definitely found our item x,y. And so don't need to bother searching for this item on any further street snaps
+                            itemFound = true;
+                        }
+                    }
                 }
 
                 debugInfo = spiralSearch.debugRGBInfo();
-                s = "searchForFragment - " + additionalInfo + "GOOD match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + ": best match so far is (with " + 
+                s = "searchResult - " + additionalInfo + "GOOD match found for " + thisItemInfo.readItemTSID() + " " + thisItemInfo.readItemClassTSID() + ": best match so far is (with " + 
                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
-                                           bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
-                printToFile.printDebugLine(this, s, 2);
+                                           bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + ")";
+                printToFile.printDebugLine(this, s, 2);          
                 break;
                 
             case NO_MATCH:
@@ -297,16 +329,17 @@ class FragmentFind
                     additionalInfo = " - worse match, stick with this one - ";
                 }     
                 debugInfo = spiralSearch.debugRGBInfo();
-                s = "searchForFragment - " + additionalInfo + "NO match found for " + thisItemInfo.readItemClassTSID() + ": best match is with " + 
+                s = "searchResult - " + additionalInfo + "NO match found for " + thisItemInfo.readItemClassTSID() + ": best match is with " + 
                                            bestMatchInfo.readBestMatchItemImageName() + ") found at x,y " +
-                                           bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                                           bestMatchInfo.readBestMatchX() + "," + bestMatchInfo.readBestMatchY() + " (" + bestMatchInfo.matchPercentAsFloatString() + ")";
                 printToFile.printDebugLine(this, s, 2);               
                 break;
         }
                
         // If this is an x,y search only, then we only search for one image on the street anyhow because we know the class/variant from the JSON file
-        // - except for trees which still have to search for all images regardless
-        if (configInfo.readChangeXYOnly() && !thisItemInfo.itemIsATree())
+        // - except for trees which still have to search for all images regardless.
+        // But also need to continue the search for the items which have multiple images loaded to manage the case where players have used resources and changed the appearance        
+        if (configInfo.readChangeXYOnly() && !thisItemInfo.itemIsAPlayerPlantedTree() && !thisItemInfo.itemHasMultipleImages())
         {
             searchDone = true;    
         }
@@ -314,8 +347,8 @@ class FragmentFind
         // So at this stage we have updated the quoin structure if necessary and bestMatchInfo contains the best match so far on this street with the item images
         if (!searchDone)
         {
-            // Need to move on to process the next image on the street
-            itemImageBeingUsed++;
+            // Need to move on to process the next image on the street - this function will handle skipping searches 
+            itemImageBeingUsed = nextImageToBeUsed(itemImageBeingUsed);
             if (itemImageBeingUsed >= itemImages.size())
             {
                 // Have searched using all the item images

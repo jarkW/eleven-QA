@@ -44,8 +44,20 @@ class PNGFile
             }
             fragOffsetX = fragOffsets.readOffsetX();
             fragOffsetY = fragOffsets.readOffsetY();
+            
+            if (PNGImage.width != fragOffsets.readFragmentWidth())
+            {
+                printToFile.printDebugLine(this, "Inconsistent fragment image width in samples.json for " + PNGImageName + " - image has width " + PNGImage.width + " compared to json value of " + fragOffsets.readFragmentWidth(), 3);
+                return false;
+            }
+            
+            if (PNGImage.height != fragOffsets.readFragmentHeight())
+            {
+                printToFile.printDebugLine(this, "Inconsistent fragment image height in samples.json for " + PNGImageName + " - image has height " + PNGImage.height + " compared to json value of " + fragOffsets.readFragmentHeight(), 3);
+                return false;
+            }
         }
-               
+ 
         PNGImageWidth = PNGImage.width;
         PNGImageHeight = PNGImage.height;
         

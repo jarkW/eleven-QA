@@ -84,6 +84,7 @@ class OutputFile
             if (configInfo.readDebugUseTintedFragment())
             {
                 printLine("DEBUG Using Geo data to change item image for B&W comparison");
+                printLine("DEBUG NB Wood trees might appear to be matched by an image which is one stage more mature - produces the same x,y (both images have same size/offsets)");
             }
             else
             {

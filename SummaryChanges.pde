@@ -156,10 +156,12 @@ class SummaryChanges implements Comparable
                 // sorting process until all co-located items have been resolved. E.g. first sort results in  A, B and C having the same co-ordinates which 
                 // could be detected as A-B and B-C being compared. If B is the actual quoin, then A is reset to original x,y. But B-C still have the same
                 // co-ordinates. 
+                //
+                // The list of items on a street may include the skipped qurazy quoin - which we need to ignore here as well otherwise a null pointer error happens as there is no bestMatchResult object associated with this quoin
                 if (streetInfo.readNumberTimesResultsSortedSoFar() >= StreetInfo.MAX_SORT_COUNT)
                 {
                     // We've exceeded the sanity count - to prevent any infinite looping - so set the flag for any quoins which are present
-                    if (itemInfo.readItemClassTSID().equals("quoin"))
+                    if (itemInfo.readItemClassTSID().equals("quoin") && !itemInfo.readOrigItemVariant().equals("qurazy"))
                     {
                         misplacedQuoin = true;
                         if (configInfo.readDebugRun())
@@ -169,7 +171,7 @@ class SummaryChanges implements Comparable
                         }
                         printToFile.printDebugLine(this, "Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured (exceeded sanity count)", 2);
                     }
-                    if (n.itemInfo.readItemClassTSID().equals("quoin"))
+                    if (n.itemInfo.readItemClassTSID().equals("quoin") && !itemInfo.readOrigItemVariant().equals("qurazy"))
                     {
                         n.misplacedQuoin = true;
                         if (configInfo.readDebugRun())
@@ -183,7 +185,7 @@ class SummaryChanges implements Comparable
                 else
                 {
                     // If both items are quoins then reset the one furthest away
-                    if (itemInfo.readItemClassTSID().equals("quoin") && (n.itemInfo.readItemClassTSID().equals("quoin")))
+                    if (itemInfo.readItemClassTSID().equals("quoin")  && !itemInfo.readOrigItemVariant().equals("qurazy") && n.itemInfo.readItemClassTSID().equals("quoin") && !n.itemInfo.readOrigItemVariant().equals("qurazy"))
                     {
                         float quoin1Distance = Utils.distanceBetweenX1Y1_X2Y2(itemInfo.readOrigItemX(), itemInfo.readOrigItemY(), X1, Y1);
                         float quoin2Distance = Utils.distanceBetweenX1Y1_X2Y2(n.itemInfo.readOrigItemX(), n.itemInfo.readOrigItemY(), X1, Y1);
@@ -214,7 +216,7 @@ class SummaryChanges implements Comparable
                     else
                     {
                         // Means we have an overlap between an item/quoin (rare) - so just reset the quoin
-                        if (itemInfo.readItemClassTSID().equals("quoin"))
+                        if (itemInfo.readItemClassTSID().equals("quoin") && !itemInfo.readOrigItemVariant().equals("qurazy"))
                         {
                             misplacedQuoin = true;
                             if (configInfo.readDebugRun())
@@ -225,7 +227,7 @@ class SummaryChanges implements Comparable
                             printToFile.printDebugLine(this, "Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with non-quoin and so will need to be manually configured", 2);
                         }
                     
-                        if (n.itemInfo.readItemClassTSID().equals("quoin"))
+                        if (n.itemInfo.readItemClassTSID().equals("quoin") && !n.itemInfo.readOrigItemVariant().equals("qurazy"))
                         {
                             n.misplacedQuoin = true;
                             if (configInfo.readDebugRun())

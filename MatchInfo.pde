@@ -236,6 +236,31 @@
         {
             return bestMatchResult;
         }
+         
+        public String readBestMatchResultAsString()
+        {
+            String result;
+            switch(bestMatchResult)
+            {
+                case PERFECT_MATCH:
+                    result = "PERFECT_MATCH";
+                    break;
+                    
+                case GOOD_MATCH:
+                    result =  "GOOD_MATCH";
+                    break;
+                    
+                case NO_MATCH:
+                    result =  "NO_MATCH";
+                    break;
+                    
+                default:
+                    result =  "UNRECOGNISED MATCH RESULT";
+                    break;
+            }
+            
+            return result;
+        }
         
         public void setBestMatchResult(int result)
         {

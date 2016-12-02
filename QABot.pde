@@ -37,7 +37,9 @@ import java.text.DecimalFormat;
  *
  */
  
-// Zutto street vendors bounce up and down too much - can't match reliably. So will not be implemented.
+// Zutto street vendors bounce up and down too much - can't match reliably. So will not be implemented. Also the bases of the zutto
+// vendors are different compared to older street snaps.
+// However it appears that the bases have simply been flipped - and so it might be possible to search using these two images. 
 
  // option to simply validate streets - i.e. not process the street, just inititialise. Might mean can quickly trap errors for a region? 
  // Rather than failing after an hour. So would just check all the JSON files exist for each

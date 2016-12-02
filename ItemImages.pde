@@ -57,6 +57,8 @@ class ItemImages
             addImageForItem("trant_egg", "", str(i));
             // Wood trees - need to include state 6 at same level as state 10 for all other trees
             // Wood trees have maturity 1-6 rather than 1-10
+            // Although the random duplication means that some 'adult' wood trees are searched before others
+            // because the fully grown version may be included in _6 or _2 files.
             int j = i - 4;
             if (j > 0)
             {
@@ -290,11 +292,15 @@ class ItemImages
             return false;
         }
         
-        // Now create an entry for enchanted wood tree
-        itemImages.add(new PNGFile("wood_tree_enchanted_1.png", false)); 
-        itemImages.add(new PNGFile("wood_tree_enchanted_2.png", false)); 
-        itemImages.add(new PNGFile("wood_tree_enchanted_3.png", false)); 
-        itemImages.add(new PNGFile("wood_tree_enchanted_4.png", false)); 
+        // Now create an entry for enchanted wood trees
+        // Load up mature variant first i.e. 6
+        for (i = 6; i > 0; i--)
+        {
+            addImageForItem("wood_tree_enchanted", "1", str(i));
+            addImageForItem("wood_tree_enchanted", "2", str(i));
+            addImageForItem("wood_tree_enchanted", "3", str(i));
+            addImageForItem("wood_tree_enchanted", "4", str(i));
+        }
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
         if (!addToHashMapAndLoadImages("wood_tree_enchanted"))
         {
@@ -308,7 +314,7 @@ class ItemImages
         {
             return false;
         }
-
+       
         printToFile.printDebugLine(this, "Loaded " + imageCount + "images in hashmap", 1);
         return true;
     }
@@ -343,7 +349,14 @@ class ItemImages
             fname = fname + "_" + maturity;
         }
         fname = fname + ".png";
-        itemImages.add(new PNGFile(fname, false));
+        
+        // Only add the item if it exists - wood trees share images across different aged trees of the same variant and so are not 
+        // always in numerical order. E.g. have images for variant 3 for maturity 1, 2 (which does 3-5 also) and 6
+        File file = new File(dataPath(fname));
+        if (file.exists())
+        {
+            itemImages.add(new PNGFile(fname, false));
+        }
     }
     
     public ArrayList<PNGFile> getItemImages(String itemClassTSID)

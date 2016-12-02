@@ -88,7 +88,6 @@ class ItemInfo
         // These need to be reset after been through the loop of streets
         // as part of initial validation
         itemFinished = false;
-        //itemImageBeingUsed = 0;
     }
       
     public boolean initialiseItemInfo()
@@ -181,7 +180,6 @@ class ItemInfo
         }
         
         // Initialise for the item to be searched for
-        //itemImageBeingUsed = 0;
         if (!resetReadyForNewItemSearch())
         {
             return false;
@@ -191,14 +189,7 @@ class ItemInfo
     } 
     
     boolean validItemToCheckFor()
-    {   
-        // USED FOR DEBUGGING SO ONLY HANDLE TREES _ REMOVE JARK
-        if (!itemIsATree())
-        {
-            return false;
-        }
-        // START NORMAL CODE
-        
+    {           
         // Returns true if this an item we expect to be scanning for on a snap
         if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
             (itemClassTSID.indexOf("trant_", 0) == 0) ||
@@ -231,7 +222,7 @@ class ItemInfo
             case "subway_map":
             case "bag_notice_board":
             case "wood_tree_enchanted":
-            case "npc_gardening_vendor":            
+            case "npc_gardening_vendor":
                 return true;
            
             case "quoin":
@@ -255,7 +246,7 @@ class ItemInfo
         // Using the item class_tsid, get the pointer to the images for this item
         // Depending on the item might need to tweak the order of items - TO DO???? 
         
-        if (itemIsATree())
+        if (itemIsAPlayerPlantedTree())
         {
             itemImages = allItemImages.getItemImages("trees");
         }
@@ -1185,6 +1176,18 @@ class ItemInfo
         // from a wood tree on a snap for example.         
         if (fragFind.readSearchDone())
         {
+            for (int n=0; n<fragFind.allMatchResultsForItem.size(); n++)
+            {
+                MatchInfo entry = fragFind.allMatchResultsForItem.get(n);
+                 
+                if (entry.readPercentageMatch() > configInfo.readDebugDumpAllMatchesValue())
+                {
+                    s = "Search Results (>" + configInfo.readDebugDumpAllMatchesValue() + "%) entry " + n + " " + itemTSID + " " + itemClassTSID + "(" + origItemVariant + ") " + entry.readBestMatchResultAsString() + " "  + entry.readBestMatchItemImageName();
+                    s = s + " giving x,y " + entry.matchXYString() + " (" + entry.matchPercentAsFloatString() + ")";
+                    printToFile.printDebugLine(this, s, 2);
+                }
+            }
+            
             // Search has completed - for this item on this street. All images searched OR item was actually found. 
             if (fragFind.readItemFound())
             {                
@@ -1192,7 +1195,7 @@ class ItemInfo
                 bestMatchInfo = fragFind.readBestMatchInfo();
                 itemFound = true;
                 s = "SEARCH DONE, Item found as perfect match " + itemTSID + " " + itemClassTSID + " with " + bestMatchInfo.readBestMatchItemImageName();
-                s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + ")";
                 printToFile.printDebugLine(this, s, 2);
             }
             else
@@ -1206,7 +1209,7 @@ class ItemInfo
                     // First street for this item
                     bestMatchInfo = fragFind.readBestMatchInfo();
                     s = "SEARCH DONE, First street, 'best' match for " + itemTSID + " " + itemClassTSID + " with " + bestMatchInfo.readBestMatchItemImageName();
-                    s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                    s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + ")";
                     printToFile.printDebugLine(this, s, 2);
                 } 
                 else if (itemClassTSID.equals("quoin"))
@@ -1236,7 +1239,7 @@ class ItemInfo
                                 if (newSearchDistFromOrigXY < prevSearchDistFromOrigXY)
                                 {
                                     s = "SEARCH DONE, found closer quoin for " + itemTSID + " " + itemClassTSID + " with " + bestMatchInfo.readBestMatchItemImageName();
-                                    s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + "%)";
+                                    s = s + " giving x,y " + bestMatchInfo.matchXYString() + " (" + bestMatchInfo.matchPercentAsFloatString() + ")";
                                     printToFile.printDebugLine(this, s, 2);
                                 }
                                 else
@@ -1549,13 +1552,71 @@ class ItemInfo
         return validationInfo;
     }
     
-    public boolean itemIsATree()
+    public boolean itemIsAPlayerPlantedTree()
     {
+        // Don't need to include enchanted trees in this list as they are not player planted trees
         if ((itemClassTSID.indexOf("trant", 0) == 0) || (itemClassTSID.equals("wood_tree")) || (itemClassTSID.indexOf("patch", 0) == 0))
         {
             return true;
         }
         return false;
+    }
+    
+    public boolean itemHasMultipleImages()
+    {
+        // Some items have multiple images associated with them - to reflect maturity or whether been used up by players.        
+        // Returns true if this an item we expect to be scanning for on a snap
+        if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
+            (itemClassTSID.indexOf("rock_", 0) == 0) ||
+            (itemClassTSID.indexOf("peat_", 0) == 0))
+        {
+            return false;
+        }
+        else if (itemClassTSID.indexOf("trant_", 0) == 0)
+        {
+            return true;
+        }
+        
+        switch (itemClassTSID)
+        {
+            // These items have a single image associated with the item (variant)
+            case "marker_qurazy":
+            case "paper_tree":
+            case "npc_mailbox":
+            case "dirt_pile":
+            case "ice_knob":
+            case "dust_trap":
+            case "wall_button":
+            case "visiting_stone":              
+            case "npc_sloth":
+            case "sloth_knocker":
+            case "party_atm":
+            case "race_ticket_dispenser":
+            case "subway_gate":
+            case "subway_map":
+            case "bag_notice_board":
+            case "npc_gardening_vendor":
+            case "quoin":
+                return false;
+            
+            // These items have multiple images - several states per item (variant)
+            case "wood_tree":
+            case "wood_tree_enchanted":
+            case "mortar_barnacle":
+            case "jellisac":
+            //case "dirt_pile":
+                return true;
+             
+            // Whilst these don't have multiple states, they could have trees planted in them in snaps ... so get treated like trees for this purpose
+            case "patch":
+            case "patch_dark":
+                return true;
+
+            default:
+                // Unexpected class tsid - should never be hit - so mark as only having single image
+                printToFile.printDebugLine(this, itemTSID + " has unexpected class tsid " + itemClassTSID, 3);
+                return true;
+         }
     }
     
     public MatchInfo readBestMatchInfo()

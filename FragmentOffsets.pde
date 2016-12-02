@@ -17,6 +17,8 @@ class FragmentOffsets
         JSONObject fragment = null;
         int fragOffsetX;
         int fragOffsetY;
+        int fragWidth;
+        int fragHeight;
         
         // Read in from samples.json file - created by the save_fragments tool. Easier to read in/update
         try
@@ -88,6 +90,22 @@ class FragmentOffsets
                 return false;
             }
             
+            // Read in the expected fragment width/height - used for validation checking only when loading images
+            fragWidth = Utils.readJSONInt(fragment, "width", true);
+            if (!okFlag)
+            {
+                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                printToFile.printDebugLine(this, "Failed to read width in fragments array in samples.json file", 3);
+                return false;
+            }
+            fragHeight = Utils.readJSONInt(fragment, "height", true);
+            if (!okFlag)
+            {
+                printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                printToFile.printDebugLine(this, "Failed to read height in fragments array in samples.json file", 3);
+                return false;
+            }
+            
             // Need to correct these offsets for quoins/QQ to compensate for original item images being recorded
             // at extremes of the actual range of the quoin (measured over 15 snaps)
             // Doesn't seem to make much difference, but worth keeping.
@@ -141,7 +159,7 @@ class FragmentOffsets
              */            
              
             // Now add into the hashmap - using classTSID/info as the key           
-            Offsets itemOffsets = new Offsets(fragOffsetX, fragOffsetY);
+            Offsets itemOffsets = new Offsets(fragOffsetX, fragOffsetY, fragWidth, fragHeight);
             String keyString = tsid;
             if (info.length() > 0)
             {
@@ -176,11 +194,15 @@ class FragmentOffsets
     {
         int offsetX;
         int offsetY;
+        int fragmentWidth;
+        int fragmentHeight;
         
-        Offsets(int x, int y)
+        Offsets(int x, int y, int w, int h)
         {
             offsetX = x;
             offsetY = y;
+            fragmentWidth = w;
+            fragmentHeight = h;
         }
         
         public int readOffsetX()
@@ -191,6 +213,16 @@ class FragmentOffsets
          public int readOffsetY()
         {
             return offsetY;
+        }
+        
+        public int readFragmentWidth()
+        {
+            return fragmentWidth;
+        }
+        
+        public int readFragmentHeight()
+        {
+            return fragmentHeight;
         }
         
   
