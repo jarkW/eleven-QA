@@ -222,7 +222,7 @@ class ItemInfo
             case "subway_map":
             case "bag_notice_board":
             case "wood_tree_enchanted":
-            case "npc_gardening_vendor":
+            case "street_spirit_zutto":
                 return true;
            
             case "quoin":
@@ -312,6 +312,7 @@ class ItemInfo
             case "ice_knob":
             case "dust_trap":
             case "wood_tree_enchanted":
+            //case "street_spirit_zutto": Do not read in cap information as the item is not stable enough to use this information to generate good matches
 
                 // Read in the instanceProps array - failure is always an error
                 instanceProps = Utils.readJSONObject(itemJSON, "instanceProps", true);
@@ -607,7 +608,7 @@ class ItemInfo
             case "wall_button":
             case "subway_map":
             case "bag_notice_board":
-            case "npc_gardening_vendor":
+            case "street_spirit_zutto": // are ignoring the cap information - we don't change this due to poor pattern matching
                        
                 // Don't have any additional information such as 'dir' - so return
                 return true;
@@ -758,6 +759,12 @@ class ItemInfo
             // So just return a clean empty variant field if not appropriate - i.e. because have non-wood tree/patch present.  
             // Also means the maturity information in the matched file name will also be ignored
             printToFile.printDebugLine(this, " tree or patch " + itemClassTSID, 1);
+            newItemVariant = "";
+            return true;
+        }
+        else if (itemClassTSID.equals("street_spirit_zutto"))
+        {
+            printToFile.printDebugLine(this, " zutto street spirit - ignore flipped/normal part of image name " + itemClassTSID, 1);
             newItemVariant = "";
             return true;
         }
@@ -1595,7 +1602,6 @@ class ItemInfo
             case "subway_gate":
             case "subway_map":
             case "bag_notice_board":
-            case "npc_gardening_vendor":
             case "quoin":
                 return false;
             
@@ -1604,6 +1610,7 @@ class ItemInfo
             case "wood_tree_enchanted":
             case "mortar_barnacle":
             case "jellisac":
+            case "street_spirit_zutto": // have flipped/normal image
             //case "dirt_pile":
                 return true;
              

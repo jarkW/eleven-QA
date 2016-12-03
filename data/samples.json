@@ -728,46 +728,6 @@
     "height": 60
   },
   {
-    "class_tsid": "npc_gardening_vendor",
-    "width": 19,
-    "offset_x": -19,
-    "offset_y": -97,
-    "info": "",
-    "height": 40
-  },
-  {
-    "class_tsid": "street_spirit_zutto",
-    "width": 43,
-    "offset_x": -23,
-    "offset_y": -82,
-    "info": "capPurple",
-    "height": 33
-  },
-  {
-    "class_tsid": "street_spirit_zutto",
-    "width": 43,
-    "offset_x": -25,
-    "offset_y": -82,
-    "info": "capAqua",
-    "height": 33
-  },
-  {
-    "class_tsid": "street_spirit_zutto",
-    "width": 43,
-    "offset_x": -27,
-    "offset_y": -80,
-    "info": "capOrange",
-    "height": 33
-  },
-  {
-    "class_tsid": "street_spirit_zutto",
-    "width": 43,
-    "offset_x": -24,
-    "offset_y": -78,
-    "info": "capGreen",
-    "height": 33
-  },
-  {
     "class_tsid": "trant_bean",
     "width": 28,
     "state": "10",
@@ -2098,5 +2058,23 @@
     "offset_y": -87,
     "info": "4",
     "height": 48
+  },
+  {
+    "class_tsid": "street_spirit_zutto",
+    "width": 29,
+    "state": "normal",
+    "offset_x": 17,
+    "offset_y": -20,
+    "info": "",
+    "height": 17
+  },
+  {
+    "class_tsid": "street_spirit_zutto",
+    "width": 29,
+    "state": "flipped",
+    "offset_x": -46,
+    "offset_y": -20,
+    "info": "",
+    "height": 17
   }
 ]}

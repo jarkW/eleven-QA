@@ -307,10 +307,11 @@ class ItemImages
             return false;
         }
         
-        // Now create an entry for gardening vendor - as fixed to the ground
-        itemImages.add(new PNGFile("npc_gardening_vendor.png", false)); 
+        // Now create an entry for zutto street vendor
+        itemImages.add(new PNGFile("street_spirit_zutto_normal.png", false));
+        itemImages.add(new PNGFile("street_spirit_zutto_flipped.png", false));
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
-        if (!addToHashMapAndLoadImages("npc_gardening_vendor"))
+        if (!addToHashMapAndLoadImages("street_spirit_zutto"))
         {
             return false;
         }
