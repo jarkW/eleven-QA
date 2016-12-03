@@ -46,8 +46,8 @@ class StreetInfo
     String quoinDefaultingInfo; 
     String quoinDefaultingWarningMsg;
     
-    final static int ITEM_FOUND_COLOUR = #0000FF;
-    final static int ITEM_MISSING_COLOUR = #FF0000;
+    final static int ITEM_FOUND_COLOUR = #0000FF; // blue
+    final static int ITEM_MISSING_COLOUR = #FF0000; // red
        
     // constructor/initialise fields
     public StreetInfo(String tsid)
@@ -884,7 +884,7 @@ class StreetInfo
                     return false;
                 }
                 
-                // Save an image of the street as a transparency - containing the fragments which matched and any missing items as a red square together with the 'best' match
+                // Save an image of the street  - with items marked with different coloured squares to show if found/missing
                 // Allows the user to quickly see what was found/missing against a street snap
                 if (!saveStreetFoundSummaryAsPNG(itemResults))
                 {
@@ -1047,6 +1047,8 @@ class StreetInfo
         int j;
         int locItem;
         int locStreet;
+        int startX;
+        int startY;
         
         // At this stage the street snap might have been unloaded - so just reload the first street snap
         if (!streetSnaps.get(0).loadPNGImage())
@@ -1070,9 +1072,9 @@ class StreetInfo
         {   
             if (itemResults.get(n).readResult() > SummaryChanges.SKIPPED)
             {
-                // Pixels are only filled in for items which are found/missing
+                // Only draw a square for items which are found/missing
                 bestItemMatchInfo = itemResults.get(n).readItemInfo().readBestMatchInfo();
-                
+                                
                 PImage bestFragment = bestItemMatchInfo.readColourItemFragment();
                 
                 if (bestFragment == null)
@@ -1080,18 +1082,29 @@ class StreetInfo
                     printToFile.printDebugLine(this, "Unexpected error - failed to load best match colour/tinted item fragment " + bestItemMatchInfo.readBestMatchItemImageName(), 3);
                     return false;
                 }
-                // Need to account for the offset of the item image from item x,y in JSON
-                int startX = itemResults.get(n).readItemX() + geoWidth/2 + bestItemMatchInfo.readItemImageXOffset();
-                int startY = itemResults.get(n).readItemY() + geoHeight + bestItemMatchInfo.readItemImageYOffset();              
                 
-                // Now copy the pixels into the correct place 
+                // Need to account for the offset of the item image from item x,y in JSON
+                // The results array list contains the final x,y - whether original x,y (missing) or the new x,y (found)
+                startX = itemResults.get(n).readItemX() + geoWidth/2 + bestItemMatchInfo.readItemImageXOffset();
+                startY = itemResults.get(n).readItemY() + geoHeight + bestItemMatchInfo.readItemImageYOffset(); 
+
+                // Now copy the pixels of the fragment into the correct place - so can see mismatches easily
                 float a;
                 for (i = 0; i < bestFragment.height; i++) 
                 {
                     for (j = 0; j < bestFragment.width; j++)
                     {
                         locItem = j + (i * bestFragment.width);
-                        locStreet = (startX + j) + ((startY + i) * geoWidth);
+                        if (itemResults.get(n).readResult() == SummaryChanges.MISSING || itemResults.get(n).readResult() == SummaryChanges.MISSING_DUPLICATE)
+                        {
+                            // copy the image into the middle of the square that will be drawn next
+                            locStreet = (startX + configInfo.readSearchRadius() - bestFragment.width/2 + j) + ((startY + configInfo.readSearchRadius() - bestFragment.height/2 + i) * geoWidth);
+                        }
+                        else
+                        {
+                            // Can copy image directly using the top left hand corner x,y given
+                            locStreet = (startX + j) + ((startY + i) * geoWidth);
+                        }
                         
                         a = alpha(bestFragment.pixels[locItem]);
                 
@@ -1107,28 +1120,58 @@ class StreetInfo
                 // If this is a missing item - then draw a red box around the item to show unsure - print %match also?
                 // For all other items draw a black box to show found
                 int boxColour;
+                int boxHeight;
+                int boxWidth;
+                int lineWidth;
                 if (itemResults.get(n).readResult() == SummaryChanges.MISSING || itemResults.get(n).readResult() == SummaryChanges.MISSING_DUPLICATE)
                 {
                     // Centre it on the original startX/StartY and have the size of the search radius
                     boxColour = ITEM_MISSING_COLOUR;
+                    boxHeight = configInfo.readSearchRadius() * 2;
+                    boxWidth = configInfo.readSearchRadius() * 2;
+                    lineWidth = 3;
                 }
                 else
                 {
                     boxColour = ITEM_FOUND_COLOUR;
+                    boxHeight = bestFragment.height;
+                    boxWidth = bestFragment.width;
+                    lineWidth = 1;
                 }
-                /*
-                // Box needs to run from +/- search radius centred on x,y
                 // Draw top/bottom horizontal lines
-                for (i = startX - configInfo.readSearchRadius(); i < (startX + configInfo.readSearchRadius()); i++)
+                for (i = 0; i < boxWidth; i++)
                 {
+                    for (j = 0; j < lineWidth; j++)
+                    {
+                        // Top pixel
+                        locStreet = startX + i + ((startY + j) * geoWidth);
+                        summaryStreetSnap.pixels[locStreet] = boxColour;
                     
-                    locStreet = (startX + j) + ((startY + i) * geoWidth);
-                    for (j = startY - configInfo.readSearchRadius(); i < (startX + configInfo.readSearchRadius()); i++)
+                        // Bottom pixel
+                        locStreet = startX + i + ((startY - j + boxHeight) * geoWidth);
+                        summaryStreetSnap.pixels[locStreet] = boxColour;
+                    }
                 }
-                */
-       
+                
+                // Draw vertical lines
+                for (i = 0; i < boxHeight; i++)
+                {
+                    for (j = 0; j < lineWidth; j++)
+                    {
+                        // Top pixel
+                        locStreet = startX + j + ((startY + i) * geoWidth);
+                        summaryStreetSnap.pixels[locStreet] = boxColour;
+                    
+                        // Bottom pixel
+                        locStreet = startX - j + boxWidth + ((startY + i) * geoWidth);
+                        summaryStreetSnap.pixels[locStreet] = boxColour;
+                    }
+                }
+                
+                // Draw in bottom RH pixel
+                locStreet = startX + boxWidth + ((startY + boxHeight) * geoWidth);
+                summaryStreetSnap.pixels[locStreet] = boxColour;
             }
-            
         } 
         
          summaryStreetSnap.updatePixels();
@@ -1141,11 +1184,15 @@ class StreetInfo
              printToFile.printDebugLine(this, "Unexpected error - failed to save street summary image to " + fname, 3);
              return false;
          }
+         
+         // Clean up this variable as no longer needed
+         summaryStreetSnap = null;
+         System.gc();
 
          return true;   
         
     }
-    
+
     boolean getJSONFile(String TSID)
     {
         String JSONFileName = TSID + ".json";
