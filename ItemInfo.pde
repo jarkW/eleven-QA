@@ -189,7 +189,7 @@ class ItemInfo
     } 
     
     boolean validItemToCheckFor()
-    {           
+    {    
         // Returns true if this an item we expect to be scanning for on a snap
         if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
             (itemClassTSID.indexOf("trant_", 0) == 0) ||

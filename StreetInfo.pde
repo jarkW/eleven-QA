@@ -1047,8 +1047,10 @@ class StreetInfo
         int j;
         int locItem;
         int locStreet;
-        int startX;
-        int startY;
+        int topX;
+        int topY;
+        int bottomX;
+        int bottomY;
         
         // At this stage the street snap might have been unloaded - so just reload the first street snap
         if (!streetSnaps.get(0).loadPNGImage())
@@ -1085,50 +1087,41 @@ class StreetInfo
                 
                 // Need to account for the offset of the item image from item x,y in JSON
                 // The results array list contains the final x,y - whether original x,y (missing) or the new x,y (found)
-                startX = itemResults.get(n).readItemX() + geoWidth/2 + bestItemMatchInfo.readItemImageXOffset();
-                startY = itemResults.get(n).readItemY() + geoHeight + bestItemMatchInfo.readItemImageYOffset(); 
+                topX = itemResults.get(n).readItemX() + geoWidth/2 + bestItemMatchInfo.readItemImageXOffset();
+                topY = itemResults.get(n).readItemY() + geoHeight + bestItemMatchInfo.readItemImageYOffset();                 
 
                 // Now copy the pixels of the fragment into the correct place - so can see mismatches easily
                 float a;
-                for (i = 0; i < bestFragment.height; i++) 
-                {
-                    for (j = 0; j < bestFragment.width; j++)
-                    {
-                        locItem = j + (i * bestFragment.width);
-                        if (itemResults.get(n).readResult() == SummaryChanges.MISSING || itemResults.get(n).readResult() == SummaryChanges.MISSING_DUPLICATE)
-                        {
-                            // copy the image into the middle of the square that will be drawn next
-                            locStreet = (startX + configInfo.readSearchRadius() - bestFragment.width/2 + j) + ((startY + configInfo.readSearchRadius() - bestFragment.height/2 + i) * geoWidth);
-                        }
-                        else
-                        {
-                            // Can copy image directly using the top left hand corner x,y given
-                            locStreet = (startX + j) + ((startY + i) * geoWidth);
-                        }
-                        
-                        a = alpha(bestFragment.pixels[locItem]);
-                
-                        // Copy across the pixel to the street summary if it is not transparent
-                        if (a == 255)
-                        {
-                            // Copy across the pixel to the street summary image
-                            summaryStreetSnap.pixels[locStreet] = bestFragment.pixels[locItem];
-                        }
-                    }        
-                }
-                
-                // If this is a missing item - then draw a red box around the item to show unsure - print %match also?
-                // For all other items draw a black box to show found
                 int boxColour;
                 int boxHeight;
                 int boxWidth;
                 int lineWidth;
+                                               
+                // If this is a missing item - then draw a red box around the item to show unsure - print %match also?
+                // For all other items draw a black box to show found
                 if (itemResults.get(n).readResult() == SummaryChanges.MISSING || itemResults.get(n).readResult() == SummaryChanges.MISSING_DUPLICATE)
                 {
                     // Centre it on the original startX/StartY and have the size of the search radius
                     boxColour = ITEM_MISSING_COLOUR;
+                    
+                    // Put a 9 pixel dot at the centre of the box
+                    locStreet = (topX-1) + ((topY-1) * geoWidth);
+                    summaryStreetSnap.pixels[locStreet] = boxColour;
+                    summaryStreetSnap.pixels[locStreet+1] = boxColour;
+                    summaryStreetSnap.pixels[locStreet+2] = boxColour;
+                    locStreet = (topX-1) + ((topY) * geoWidth);
+                    summaryStreetSnap.pixels[locStreet] = boxColour;
+                    summaryStreetSnap.pixels[locStreet+1] = boxColour;
+                    summaryStreetSnap.pixels[locStreet+2] = boxColour;
+                    locStreet = (topX-1) + ((topY+1) * geoWidth);
+                    summaryStreetSnap.pixels[locStreet] = boxColour;
+                    summaryStreetSnap.pixels[locStreet+1] = boxColour;
+                    summaryStreetSnap.pixels[locStreet+2] = boxColour;
+                    
                     boxHeight = configInfo.readSearchRadius() * 2;
                     boxWidth = configInfo.readSearchRadius() * 2;
+                    topX = topX - configInfo.readSearchRadius();
+                    topY = topY - configInfo.readSearchRadius();      
                     lineWidth = 3;
                 }
                 else
@@ -1138,46 +1131,77 @@ class StreetInfo
                     boxWidth = bestFragment.width;
                     lineWidth = 1;
                 }
-                // Draw top/bottom horizontal lines
-                for (i = 0; i < boxWidth; i++)
+                bottomX = topX + boxWidth;
+                bottomY = topY + boxHeight;
+                
+                printToFile.printDebugLine(this, "Top x,y " + topX + "," + topY + " Bottom x,y " + bottomX + "," + bottomY + " boxHeight " + boxHeight + " boxWidth " + boxWidth + " lineWidth " + lineWidth, 1);
+                // Draw out the box
+                drawBox(summaryStreetSnap, topX-lineWidth, topY-lineWidth, bottomX+lineWidth, bottomY+lineWidth, lineWidth, boxColour);
+                
+                // Now fill in the fragment - for found items - it is inside the red box. But for missing items need to be to the side of the red box
+                int x;
+                int y;
+                if (itemResults.get(n).readResult() == SummaryChanges.MISSING || itemResults.get(n).readResult() == SummaryChanges.MISSING_DUPLICATE)
                 {
-                    for (j = 0; j < lineWidth; j++)
+                    x = itemResults.get(n).readItemX() + geoWidth/2 + bestItemMatchInfo.readItemImageXOffset() - bestFragment.width/2;
+                    // Need to work out the best place for the red box
+                    if (bestFragment.height > (topY + 2*lineWidth))
                     {
-                        // Top pixel
-                        locStreet = startX + i + ((startY + j) * geoWidth);
-                        summaryStreetSnap.pixels[locStreet] = boxColour;
-                    
-                        // Bottom pixel
-                        locStreet = startX + i + ((startY - j + boxHeight) * geoWidth);
-                        summaryStreetSnap.pixels[locStreet] = boxColour;
+                        // Will go past top of image, so add to mid bottom of red box
+                        
+                        y = bottomY + lineWidth; 
+                        
                     }
+                    else
+                    {
+                        y = topY - bestFragment.height - lineWidth;
+                    }
+                    // Draw red box for this sample
+                    boxHeight = bestFragment.height;
+                    boxWidth = bestFragment.width;
+                    lineWidth = 1;
+                    drawBox(summaryStreetSnap, x-lineWidth, y-lineWidth, x + boxWidth +lineWidth, y + boxHeight+lineWidth, lineWidth, boxColour);
+                }
+                else
+                {
+                    // In the found case, it matches the top corner of the box. No need to draw additional box
+                    x = topX;
+                    y = topY;
                 }
                 
-                // Draw vertical lines
-                for (i = 0; i < boxHeight; i++)
+                for (i = 0; i < bestFragment.height; i++) 
                 {
-                    for (j = 0; j < lineWidth; j++)
+                    for (j = 0; j < bestFragment.width; j++)
                     {
-                        // Top pixel
-                        locStreet = startX + j + ((startY + i) * geoWidth);
-                        summaryStreetSnap.pixels[locStreet] = boxColour;
-                    
-                        // Bottom pixel
-                        locStreet = startX - j + boxWidth + ((startY + i) * geoWidth);
-                        summaryStreetSnap.pixels[locStreet] = boxColour;
-                    }
-                }
+                        locItem = j + (i * bestFragment.width);
+                        locStreet = (x + j) + ((y + i) * geoWidth);
+                        
+                        a = alpha(bestFragment.pixels[locItem]);
                 
-                // Draw in bottom RH pixel
-                locStreet = startX + boxWidth + ((startY + boxHeight) * geoWidth);
-                summaryStreetSnap.pixels[locStreet] = boxColour;
+                        // Copy across the pixel to the street summary if it is not transparent
+                        if (a == 255)
+                        {
+                            // Copy across the pixel to the street summary image
+                            setPixel(summaryStreetSnap, locStreet, bestFragment.pixels[locItem]);
+                        }
+                    }        
+                }
             }
         } 
         
          summaryStreetSnap.updatePixels();
      
          // save in work directory
-         String fname = workingDir + File.separatorChar +"StreetSummaries" + File.separatorChar + streetName + "_summary.png";
+         String fname;
+         if (configInfo.readDebugValidationRun())
+         {
+             fname = configInfo.readDebugValidationPath() + File.separatorChar +"StreetSummaries" + File.separatorChar + streetName + "_summary.png";
+         }
+         else
+         {
+             fname = workingDir + File.separatorChar +"StreetSummaries" + File.separatorChar + streetName + "_summary.png";
+         }
+
          printToFile.printDebugLine(this, "Saving summary image to " + fname, 1);
          if (!summaryStreetSnap.save(fname))
          {
@@ -1191,6 +1215,62 @@ class StreetInfo
 
          return true;   
         
+    }
+    
+    void drawBox(PImage street, int topX, int topY, int bottomX, int bottomY, int lineWidth, int lineColour)
+    {
+        // Draws a box at the specified co-ordinates - of the top LH corner/bottom RH corner. 
+        // Box is drawn inside the co-ordinates, so calling function must allow for line width
+        int i;
+        int j;
+        int loc;
+        
+        printToFile.printDebugLine(this, "Passing in top x,y " + topX + "," + topY + " bottom x,y " + bottomX + "," + bottomY, 1);
+        
+        // Draw top/bottom horizontal lines
+        for (i = 0; i < bottomX - topX + 1; i++)
+        {
+            for (j = 0; j < lineWidth; j++)
+            {
+                // Top pixel
+                loc = topX + i + ((topY + j) * geoWidth);
+                setPixel(street, loc, lineColour);
+            
+                // Bottom pixel
+                //loc = topX + i + ((topY - j + bottomY - topY) * geoWidth);
+                loc = bottomX - i + ((bottomY - j) * geoWidth);
+                setPixel(street, loc, lineColour);
+            }
+        }
+        
+        // Draw vertical lines
+        for (i = 0; i < bottomY - topY + 1; i++)
+        {            
+            for (j = 0; j < lineWidth; j++)
+            {
+                // Top pixel
+                //loc = topX + j + ((topY + i + 1) * geoWidth);
+                loc = topX + j + ((topY + i) * geoWidth);
+                setPixel(street, loc, lineColour);
+            
+                // Bottom pixel
+                //loc = bottomX - j + ((bottomY - i - 1) * geoWidth);
+                loc = bottomX - j + ((bottomY - i) * geoWidth);
+                setPixel(street, loc, lineColour);
+            }
+        }
+    }
+    
+    void setPixel(PImage image, int loc, int colour)
+    {
+        // Only attempt to copy across the pixel if it in a valid place
+        // Only need to use this function when generating boxes around items as usually
+        // we know we are in range
+        if ((loc > 0) && (loc < image.height * image.width))
+        {
+            // Is valid pixel
+            image.pixels[loc] = colour;
+        }
     }
 
     boolean getJSONFile(String TSID)
