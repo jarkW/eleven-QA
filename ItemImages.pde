@@ -23,6 +23,8 @@ class ItemImages
     public boolean loadAllItemImages()
     { 
         int i;
+        int j;
+        String [] imageFilenames;
         
         // This function initialises and then loads all images - done at start of program      
         itemImages.add(new PNGFile("quoin_xp.png", false));
@@ -59,7 +61,7 @@ class ItemImages
             // Wood trees have maturity 1-6 rather than 1-10
             // Although the random duplication means that some 'adult' wood trees are searched before others
             // because the fully grown version may be included in _6 or _2 files.
-            int j = i - 4;
+            j = i - 4;
             if (j > 0)
             {
                 addImageForItem("wood_tree", "1", str(j));
@@ -110,23 +112,62 @@ class ItemImages
             return false;
         }
         
-        // Now create one entry for each of the rock snaps
-        String [] imageFilenames = null;
-        imageFilenames = Utils.loadFilenames(dataPath(""), "rock_", ".png");
-        if ((imageFilenames == null) || (imageFilenames.length == 0))
+        // Now create one entry for each of the rock snaps e.g. rock_beryl_1, rock_beryl_2, rock_beryl_3
+        for (j = 1; j < 4; j++)
         {
-            printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for rock*.png", 3);
-            return false;
-        }
-        for (i = 0; i < imageFilenames.length; i++) 
-        {
-            itemImages.add(new PNGFile(imageFilenames[i], false)); 
-            // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
-            if (!addToHashMapAndLoadImages(imageFilenames[i].replace(".png", "")))
+            // Load up the mature version of the rock first.
+            // chunks_remaining goes from 50 down to 10
+            // As some of the different states have identical images, some of the images have not been created - this does
+            // not create an error as addImageForItem handles this scenario (more efficient than searching identical images)
+            
+            // Beryl
+            for (i = 5; i > 0; i--)
+            { 
+                // As the string is of the form rock_beryl_1_x, treat it as if we are calling the function for variant/state
+                addImageForItem("rock_beryl", str(j), str(i * 10));
+            }
+            // Now add this to the hashmap
+            if (!addToHashMapAndLoadImages("rock_beryl_" + str(j)))
             {
                 return false;
             }
-        } 
+            
+            // Dullite
+            for (i = 5; i > 0; i--)
+            { 
+                // As the string is of the form rock_dullite_1_x, treat it as if we are calling the function for variant/state
+                addImageForItem("rock_dullite", str(j), str(i * 10));
+            }
+            // Now add this to the hashmap
+            if (!addToHashMapAndLoadImages("rock_dullite_" + str(j)))
+            {
+                return false;
+            }
+            
+            // Sparkly
+            for (i = 5; i > 0; i--)
+            { 
+                // As the string is of the form rock_sparkly_1_x, treat it as if we are calling the function for variant/state
+                addImageForItem("rock_sparkly", str(j), str(i * 10));
+            }
+            // Now add this to the hashmap
+            if (!addToHashMapAndLoadImages("rock_sparkly_" + str(j)))
+            {
+                return false;
+            }
+            
+            // Metal
+            for (i = 5; i > 0; i--)
+            { 
+                // As the string is of the form rock_metal_1_x, treat it as if we are calling the function for variant/state
+                addImageForItem("rock_metal", str(j), str(i * 10));
+            }
+            // Now add this to the hashmap
+            if (!addToHashMapAndLoadImages("rock_metal_" + str(j)))
+            {
+                return false;
+            }
+        }
 
         // Now create one entry for each of the shrine snaps - one per shrine as only come in right versions
         imageFilenames = null;
@@ -164,24 +205,23 @@ class ItemImages
             return false;
         }
         
-        // Now create one entry for each of the peat snaps
-        imageFilenames = null;
-        imageFilenames = Utils.loadFilenames(dataPath(""), "peat_", ".png");
-        if ((imageFilenames == null) || (imageFilenames.length == 0))
+        // Now create one entry for each of the peat snaps i.e. for peat_1, peat_2, peat_3
+        for (j = 1; j < 4; j++)
         {
-            printToFile.printDebugLine(this, "No files found in " + dataPath("") + " for peat*.png", 3);
-            return false;
-        }
-        for (i = 0; i < imageFilenames.length; i++) 
-        {
-            itemImages.add(new PNGFile(imageFilenames[i], false)); 
-            // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
-            if (!addToHashMapAndLoadImages(imageFilenames[i].replace(".png", "")))
+            // Load up the mature version of the peat first.
+            // harvests_remaining goes from 4 to 0
+            for (i = 4; i >= 0; i--)
+            { 
+                // As the string is of the form peat_1_x, treat it as if we are calling the function for variant/state
+                addImageForItem("peat", str(j), str(i));
+            }
+            // Now add this to the hashmap
+            if (!addToHashMapAndLoadImages("peat_" + str(j)))
             {
                 return false;
             }
-        } 
-        
+        }
+                
         // Now create an entry for jellisac
         // Jellisacs have a scoop state of 1-5, but state 1 is unusable for searching.
         // Load up all the mature versions of the jellisacs first
@@ -210,8 +250,13 @@ class ItemImages
         }
         
         // Now create an entry for dirt pile
-        itemImages.add(new PNGFile("dirt_pile_dirt1.png", false)); 
-        itemImages.add(new PNGFile("dirt_pile_dirt2.png", false)); 
+        // Dirt piles have a dirt_state of 1-11.
+        // Load up all the full versions of the dirt pile first
+        for (i = 11; i > 0; i--)
+        { 
+            addImageForItem("dirt_pile", "dirt1", str(i));
+            addImageForItem("dirt_pile", "dirt2", str(i));
+        }
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
         if (!addToHashMapAndLoadImages("dirt_pile"))
         {
@@ -357,6 +402,10 @@ class ItemImages
         if (file.exists())
         {
             itemImages.add(new PNGFile(fname, false));
+        }
+        else
+        {
+            printToFile.printDebugLine(this, "Non-error - missing image for " + fname, 1);
         }
     }
     

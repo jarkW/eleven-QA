@@ -79,7 +79,7 @@ class ItemInfo
         {
             // Read in the label to supply additional info - but as sometimes is set to null, be able to handle this without failing
             String itemLabel = Utils.readJSONString(item, "label", false);
-            printToFile.printDebugLine(this, "ItemInfo constructor item tsid is " + itemTSID + "(" + itemLabel + ")", 2);
+            printToFile.printDebugLine(this, "ItemInfo constructor item tsid is " + itemTSID + "(" + itemLabel + ")", 1);
         }
     }
     
@@ -102,7 +102,7 @@ class ItemInfo
             return false;
         } 
                 
-        printToFile.printDebugLine(this, "Item file name is " + itemFileName, 2); 
+        printToFile.printDebugLine(this, "Item file name is " + itemFileName, 1); 
 
         // Now read the item JSON file
         itemJSON = null;
@@ -189,7 +189,7 @@ class ItemInfo
     } 
     
     boolean validItemToCheckFor()
-    {    
+    {            
         // Returns true if this an item we expect to be scanning for on a snap
         if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
             (itemClassTSID.indexOf("trant_", 0) == 0) ||
@@ -745,7 +745,7 @@ class ItemInfo
         s = s + " for matching image name " + name;
         printToFile.printDebugLine(this, s, 1);
         
-        // Some items never have a variant field e.g. rock_metal_1, QQ, so image name = class TSID
+        // Some items never have a variant field e.g. QQ, so image name = class TSID
         if (itemClassTSID.equals(name))
         {
             newItemVariant = "";
@@ -765,6 +765,13 @@ class ItemInfo
         else if (itemClassTSID.equals("street_spirit_zutto"))
         {
             printToFile.printDebugLine(this, " zutto street spirit - ignore flipped/normal part of image name " + itemClassTSID, 1);
+            newItemVariant = "";
+            return true;
+        }
+        else if ((itemClassTSID.indexOf("rock_", 0) == 0) || (itemClassTSID.indexOf("peat_", 0) == 0))
+        {
+            // Rocks have mutiple images but this information is not used for rocks/peat
+            printToFile.printDebugLine(this, " rock or peat " + itemClassTSID, 1);
             newItemVariant = "";
             return true;
         }
@@ -797,13 +804,15 @@ class ItemInfo
                 {
                     // These items have a variant and state part of the matching file name
                     case "wood_tree":
-                    //case "dirt_pile": 
                     case "mortar_barnacle":
                     case "jellisac":
-                    // rock_*? - will need to be handled differentle - just use the class tsid if searching multiple states of each rock
-                    // peat  will need to be handled differentle - just use the class tsid - as for rock
                         // The variant is the next digit - ignore the maturity information which comes after that
                         newItemVariant = (name.replace(itemClassTSID + "_", "")).substring(0,1);
+                        break;
+                        
+                    case "dirt_pile":
+                        // The variant of the form dirt1 or dirt2 - ignore the maturity information which comes after that
+                        newItemVariant = (name.replace(itemClassTSID + "_", "")).substring(0,5);
                         break;
             
                     // These items only have a variant that needs to be extracted
@@ -1573,13 +1582,11 @@ class ItemInfo
     {
         // Some items have multiple images associated with them - to reflect maturity or whether been used up by players.        
         // Returns true if this an item we expect to be scanning for on a snap
-        if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
-            (itemClassTSID.indexOf("rock_", 0) == 0) ||
-            (itemClassTSID.indexOf("peat_", 0) == 0))
+        if (itemClassTSID.indexOf("npc_shrine_", 0) == 0)
         {
             return false;
         }
-        else if (itemClassTSID.indexOf("trant_", 0) == 0)
+        else if ((itemClassTSID.indexOf("trant_", 0) == 0) || (itemClassTSID.indexOf("rock_", 0) == 0) || (itemClassTSID.indexOf("peat_", 0) == 0))
         {
             return true;
         }
@@ -1590,7 +1597,6 @@ class ItemInfo
             case "marker_qurazy":
             case "paper_tree":
             case "npc_mailbox":
-            case "dirt_pile":
             case "ice_knob":
             case "dust_trap":
             case "wall_button":
@@ -1610,8 +1616,8 @@ class ItemInfo
             case "wood_tree_enchanted":
             case "mortar_barnacle":
             case "jellisac":
+            case "dirt_pile":
             case "street_spirit_zutto": // have flipped/normal image
-            //case "dirt_pile":
                 return true;
              
             // Whilst these don't have multiple states, they could have trees planted in them in snaps ... so get treated like trees for this purpose

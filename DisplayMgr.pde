@@ -245,7 +245,10 @@ class DisplayMgr
         
     public void showStreetFragmentImage(PImage streetImage, int itemBoxWidth, int itemBoxHeight, int centreX, int centreY)
     {
-        PImage streetFragment = streetImage.get(centreX - STREET_FRAGMENT_WIDTH/2, centreY - STREET_FRAGMENT_HEIGHT/2, STREET_FRAGMENT_WIDTH, STREET_FRAGMENT_HEIGHT);
+        //PImage streetFragment = streetImage.get(centreX - STREET_FRAGMENT_WIDTH/2, centreY - STREET_FRAGMENT_HEIGHT/2, STREET_FRAGMENT_WIDTH, STREET_FRAGMENT_HEIGHT);
+        // Need to generate a street fragment which means the centre of the box is at the centre of the street fragment - if put the box at the centre, then a long thin
+        // item fragment risks going off the edge of the image
+        PImage streetFragment = streetImage.get(centreX - STREET_FRAGMENT_WIDTH/2 - itemBoxWidth/2, centreY - STREET_FRAGMENT_HEIGHT/2 -  - itemBoxHeight/2, STREET_FRAGMENT_WIDTH, STREET_FRAGMENT_HEIGHT);
         
         // clear the previous image from this place
         clearImage(200, 100, streetFragmentWidth, streetFragmentHeight);
@@ -259,7 +262,8 @@ class DisplayMgr
         noFill();
         stroke(204, 0, 0);
         // Need to calculate where to put the rectangle            
-        rect(200 + int(STREET_FRAGMENT_WIDTH/2), 100 + int(STREET_FRAGMENT_HEIGHT/2), itemBoxWidth, itemBoxHeight);
+        //rect(200 + int(STREET_FRAGMENT_WIDTH/2), 100 + int(STREET_FRAGMENT_HEIGHT/2), itemBoxWidth, itemBoxHeight);
+        rect(200 + int(STREET_FRAGMENT_WIDTH/2 - itemBoxWidth/2), 100 + int(STREET_FRAGMENT_HEIGHT/2 - itemBoxHeight/2), itemBoxWidth, itemBoxHeight);
 
     }
     
