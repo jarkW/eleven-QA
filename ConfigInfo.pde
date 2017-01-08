@@ -27,7 +27,8 @@ class ConfigInfo {
     boolean debugDumpAllMatches;
     int debugDumpAllMatchesValue;
     int debugGoodEnoughMatch;
-    
+    String debugThisTSIDOnly;
+    String debugThisClassTSIDOnly;    
     boolean debugShowPercentMatchAsFloat;
     
     StringList streetTSIDs = new StringList();
@@ -378,6 +379,12 @@ class ConfigInfo {
             debugRun = false;
         }
         
+        // Allows user to search street for single item, or only items starting with a particular class_tsid
+        // Easier than altering the code each time I want to check out changes affecting a particular item/class
+        // Having a single TSID set (not an empty string/missing) means that any class check will be ignored
+        debugThisTSIDOnly = Utils.readJSONString(json, "debug_this_TSID_only", false);
+        debugThisClassTSIDOnly = Utils.readJSONString(json, "debug_this_class_tsid_only", false);
+        
         debugUseTintedFragment = Utils.readJSONBool(json, "debug_tint_fragment", false);
         // By default will always be tinting the fragment before doing a BW test
         // The tinted comparison alone is not robust enough, so always have to do BW
@@ -665,4 +672,15 @@ class ConfigInfo {
     {
         return debugGoodEnoughMatch;
     }
+    
+    public String readDebugThisTSIDOnly()
+    {
+        return debugThisTSIDOnly;
+    }
+    
+    public String readDebugThisClassTSIDOnly()
+    {
+        return debugThisClassTSIDOnly;
+    }
+    
 }

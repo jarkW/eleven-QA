@@ -189,7 +189,27 @@ class ItemInfo
     } 
     
     boolean validItemToCheckFor()
-    {            
+    {
+        // During testing, this check allows me to just search for single item (TSID) or class of items and ignore everything else
+        String validItemStr = configInfo.readDebugThisTSIDOnly();       
+        if (validItemStr.length() > 0)
+        {
+            // Only continue on if the item matches this TSID
+            if (!itemTSID.equals(validItemStr))
+            {
+                return false;
+            }
+        }
+        validItemStr = configInfo.readDebugThisClassTSIDOnly();       
+        if (validItemStr.length() > 0)
+        {
+            // Only continue on if the item class matches this class
+            if (itemClassTSID.indexOf(validItemStr, 0) != 0)
+            {
+                return false;
+            }
+        }
+
         // Returns true if this an item we expect to be scanning for on a snap
         if ((itemClassTSID.indexOf("npc_shrine_", 0) == 0) ||
             (itemClassTSID.indexOf("trant_", 0) == 0) ||
