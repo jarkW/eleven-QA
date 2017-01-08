@@ -101,14 +101,21 @@ class PNGFile
     
     public boolean loadPNGImage()
     {
-        memory.printUsedMemory("image load start " + PNGImageName);
+        boolean dumpMemoryInfo = isStreetSnapFlag;
+        if (dumpMemoryInfo)
+        {
+            memory.printUsedMemory("image load start " + PNGImageName);
+        }
         // Load up this snap/item image
         String fullFileName;
         
         if (PNGImage != null)
         {
             // Image has already been loaded into memory
-            memory.printUsedMemory("image load end (already loaded) " + PNGImageName);
+            if (dumpMemoryInfo)
+            {    
+                memory.printUsedMemory("image load end (already loaded) " + PNGImageName);
+            }
             return true;
         } 
         
@@ -126,8 +133,7 @@ class PNGFile
             printToFile.printDebugLine(this, "Missing file - " + fullFileName, 3);
             return false;
         }
-        
-        
+                
         try
         {
             // load image
@@ -142,7 +148,10 @@ class PNGFile
         try
         {
             // load image pixels
-             memory.printUsedMemory("image load pre-loadPixels " + PNGImageName);
+            if (dumpMemoryInfo)
+            { 
+                memory.printUsedMemory("image load pre-loadPixels " + PNGImageName);
+            }
             PNGImage.loadPixels();
         }
         catch(Exception e)
@@ -153,7 +162,10 @@ class PNGFile
         } 
         
         printToFile.printDebugLine(this, "Loading image from " + fullFileName + " with width " + PNGImage.height + " height " + PNGImage.width, 1);
-        memory.printUsedMemory("image load end " + PNGImageName);
+        if (dumpMemoryInfo)
+        { 
+            memory.printUsedMemory("image load end " + PNGImageName);
+        }
         return true;
     }
     

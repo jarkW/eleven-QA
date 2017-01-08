@@ -17,6 +17,7 @@ class ConfigInfo {
     int serverPort;
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
     boolean showDistFromOrigXY;
+    boolean useMatureItemImagesOnly;
     
     boolean debugShowFragments;
     boolean debugDumpDiffImages;
@@ -359,6 +360,12 @@ class ConfigInfo {
             showDistFromOrigXY = false;
         }
         
+        useMatureItemImagesOnly = Utils.readJSONBool(json, "use_mature_item_images_only", false);
+        if (!Utils.readOkFlag())
+        {
+            useMatureItemImagesOnly = false;
+        }
+        
         // THESE ARE ONLY USED FOR DEBUG TESTING - so not error if missing
         debugShowFragments = Utils.readJSONBool(json, "debug_show_fragments", false);
         if (!Utils.readOkFlag())
@@ -435,6 +442,7 @@ class ConfigInfo {
             changeXYOnly = false;
             writeJSONsToPersdata = false;
             debugShowPercentMatchAsFloat = true;
+            useMatureItemImagesOnly = false;
             
             //Reset paths to snaps and persdata (so always use the same set of original JSON files)
             
@@ -656,6 +664,11 @@ class ConfigInfo {
     public boolean readShowDistFromOrigXY()
     {    
         return showDistFromOrigXY;
+    }
+    
+    public boolean readUseMatureItemImagesOnly()
+    {
+        return useMatureItemImagesOnly;
     }
     
     public boolean readDebugDumpAllMatches()

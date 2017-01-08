@@ -24,6 +24,7 @@ class ItemImages
     { 
         int i;
         int j;
+        int smallestMaturity;
         String [] imageFilenames;
         
         // This function initialises and then loads all images - done at start of program      
@@ -45,10 +46,19 @@ class ItemImages
         if (!addToHashMapAndLoadImages("marker_qurazy"))
         {
             return false;
-        }
+        }       
 
         // Load up the trees - most mature variants first as these are the most common
-        for (i = 10; i > 0; i--)
+        // If the option is set, then only load up the mature images rather than all images
+        if (configInfo.readUseMatureItemImagesOnly())
+        {
+            smallestMaturity = 10;
+        }
+        else
+        {
+            smallestMaturity = 1;
+        }
+        for (i = 10; i >= smallestMaturity; i--)
         { 
             // Some trees have maturity 1-10, wood trees are 1-6
             addImageForItem("trant_bean", "", str(i));
@@ -119,9 +129,18 @@ class ItemImages
             // chunks_remaining goes from 50 down to 10
             // As some of the different states have identical images, some of the images have not been created - this does
             // not create an error as addImageForItem handles this scenario (more efficient than searching identical images)
+            // If the option is set, then only load up the mature images rather than all images
+            if (configInfo.readUseMatureItemImagesOnly())
+            {
+                smallestMaturity = 5;
+            }
+            else
+            {
+                smallestMaturity = 1;
+            }
             
             // Beryl
-            for (i = 5; i > 0; i--)
+            for (i = 5; i >= smallestMaturity; i--)
             { 
                 // As the string is of the form rock_beryl_1_x, treat it as if we are calling the function for variant/state
                 addImageForItem("rock_beryl", str(j), str(i * 10));
@@ -133,7 +152,7 @@ class ItemImages
             }
             
             // Dullite
-            for (i = 5; i > 0; i--)
+            for (i = 5; i >= smallestMaturity; i--)
             { 
                 // As the string is of the form rock_dullite_1_x, treat it as if we are calling the function for variant/state
                 addImageForItem("rock_dullite", str(j), str(i * 10));
@@ -145,7 +164,7 @@ class ItemImages
             }
             
             // Sparkly
-            for (i = 5; i > 0; i--)
+            for (i = 5; i >= smallestMaturity; i--)
             { 
                 // As the string is of the form rock_sparkly_1_x, treat it as if we are calling the function for variant/state
                 addImageForItem("rock_sparkly", str(j), str(i * 10));
@@ -157,7 +176,7 @@ class ItemImages
             }
             
             // Metal
-            for (i = 5; i > 0; i--)
+            for (i = 5; i >= smallestMaturity; i--)
             { 
                 // As the string is of the form rock_metal_1_x, treat it as if we are calling the function for variant/state
                 addImageForItem("rock_metal", str(j), str(i * 10));
@@ -190,7 +209,16 @@ class ItemImages
         // Now create an entry for barnacles
         // Barnacles have a scrape state of 1-4, but state 1 is unusable for searching.
         // Load up all the mature versions of the barnacles first
-        for (i = 4; i > 1; i--)
+        // If the option is set, then only load up the mature images rather than all images
+        if (configInfo.readUseMatureItemImagesOnly())
+        {
+            smallestMaturity = 4;
+        }
+        else
+        {
+            smallestMaturity = 2;
+        }
+        for (i = 4; i >= smallestMaturity; i--)
         { 
             addImageForItem("mortar_barnacle", "1", str(i));
             addImageForItem("mortar_barnacle", "2", str(i));
@@ -206,11 +234,20 @@ class ItemImages
         }
         
         // Now create one entry for each of the peat snaps i.e. for peat_1, peat_2, peat_3
+        // If the option is set, then only load up the mature images rather than all images
+        if (configInfo.readUseMatureItemImagesOnly())
+        {
+            smallestMaturity = 4;
+        }
+        else
+        {
+            smallestMaturity = 0;
+        }
         for (j = 1; j < 4; j++)
         {
             // Load up the mature version of the peat first.
             // harvests_remaining goes from 4 to 0
-            for (i = 4; i >= 0; i--)
+            for (i = 4; i >= smallestMaturity; i--)
             { 
                 // As the string is of the form peat_1_x, treat it as if we are calling the function for variant/state
                 addImageForItem("peat", str(j), str(i));
@@ -225,7 +262,16 @@ class ItemImages
         // Now create an entry for jellisac
         // Jellisacs have a scoop state of 1-5, but state 1 is unusable for searching.
         // Load up all the mature versions of the jellisacs first
-        for (i = 5; i > 1; i--)
+        // If the option is set, then only load up the mature images rather than all images
+        if (configInfo.readUseMatureItemImagesOnly())
+        {
+            smallestMaturity = 5;
+        }
+        else
+        {
+            smallestMaturity = 2;
+        }
+        for (i = 5; i >= smallestMaturity; i--)
         { 
             addImageForItem("jellisac", "1", str(i));
             addImageForItem("jellisac", "2", str(i));
@@ -252,7 +298,16 @@ class ItemImages
         // Now create an entry for dirt pile
         // Dirt piles have a dirt_state of 1-11.
         // Load up all the full versions of the dirt pile first
-        for (i = 11; i > 0; i--)
+        // If the option is set, then only load up the mature images rather than all images
+        if (configInfo.readUseMatureItemImagesOnly())
+        {
+            smallestMaturity = 11;
+        }
+        else
+        {
+            smallestMaturity = 1;
+        }
+        for (i = 11; i >= smallestMaturity; i--)
         { 
             addImageForItem("dirt_pile", "dirt1", str(i));
             addImageForItem("dirt_pile", "dirt2", str(i));
@@ -339,7 +394,16 @@ class ItemImages
         
         // Now create an entry for enchanted wood trees
         // Load up mature variant first i.e. 6
-        for (i = 6; i > 0; i--)
+        // If the option is set, then only load up the mature images rather than all images
+        if (configInfo.readUseMatureItemImagesOnly())
+        {
+            smallestMaturity = 6;
+        }
+        else
+        {
+            smallestMaturity = 1;
+        }
+        for (i = 6; i >= smallestMaturity; i--)
         {
             addImageForItem("wood_tree_enchanted", "1", str(i));
             addImageForItem("wood_tree_enchanted", "2", str(i));
@@ -361,7 +425,7 @@ class ItemImages
             return false;
         }
        
-        printToFile.printDebugLine(this, "Loaded " + imageCount + "images in hashmap", 1);
+        printToFile.printDebugLine(this, "Loaded " + imageCount + " images in hashmap", 2);
         return true;
     }
     

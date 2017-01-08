@@ -77,6 +77,15 @@ class OutputFile
         {
             printLine("WARNING Changing x,y ONLY of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
         }
+        
+        if (configInfo.readUseMatureItemImagesOnly())
+        {
+            printLine("Searching using mature/complete images of items such as trees, rocks etc");
+        }
+        else
+        {
+            printLine("Searching using images of all stages of items such as trees, rocks etc");
+        }
     
         if (configInfo.readDebugRun())
         {
