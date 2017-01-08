@@ -23,8 +23,6 @@ class ItemImages
     public boolean loadAllItemImages()
     { 
         int i;
-        int j;
-        int smallestMaturity;
         String [] imageFilenames;
         
         // This function initialises and then loads all images - done at start of program      
@@ -49,37 +47,11 @@ class ItemImages
         }       
 
         // Load up the trees - most mature variants first as these are the most common
-        // If the option is set, then only load up the mature images rather than all images
-        if (configInfo.readUseMatureItemImagesOnly())
+        if (!addMultipleImagesForItem("trees", 10, 1, -1, -1))
         {
-            smallestMaturity = 10;
+            return false;
         }
-        else
-        {
-            smallestMaturity = 1;
-        }
-        for (i = 10; i >= smallestMaturity; i--)
-        { 
-            // Some trees have maturity 1-10, wood trees are 1-6
-            addImageForItem("trant_bean", "", str(i));
-            addImageForItem("trant_fruit", "", str(i));
-            addImageForItem("trant_bubble", "", str(i));
-            addImageForItem("trant_spice", "", str(i));
-            addImageForItem("trant_gas", "", str(i));
-            addImageForItem("trant_egg", "", str(i));
-            // Wood trees - need to include state 6 at same level as state 10 for all other trees
-            // Wood trees have maturity 1-6 rather than 1-10
-            // Although the random duplication means that some 'adult' wood trees are searched before others
-            // because the fully grown version may be included in _6 or _2 files.
-            j = i - 4;
-            if (j > 0)
-            {
-                addImageForItem("wood_tree", "1", str(j));
-                addImageForItem("wood_tree", "2", str(j));
-                addImageForItem("wood_tree", "3", str(j));
-                addImageForItem("wood_tree", "4", str(j));
-            }
-        }
+
         // Add in images for dead trees
         itemImages.add(new PNGFile("trant_bean_dead.png", false));
         itemImages.add(new PNGFile("trant_fruit_dead.png", false));
@@ -123,70 +95,48 @@ class ItemImages
         }
         
         // Now create one entry for each of the rock snaps e.g. rock_beryl_1, rock_beryl_2, rock_beryl_3
-        for (j = 1; j < 4; j++)
-        {
-            // Load up the mature version of the rock first.
-            // chunks_remaining goes from 50 down to 10
-            // As some of the different states have identical images, some of the images have not been created - this does
-            // not create an error as addImageForItem handles this scenario (more efficient than searching identical images)
-            // If the option is set, then only load up the mature images rather than all images
-            if (configInfo.readUseMatureItemImagesOnly())
-            {
-                smallestMaturity = 5;
-            }
-            else
-            {
-                smallestMaturity = 1;
-            }
-            
+        for (i = 1; i < 4; i++)
+        {  
             // Beryl
-            for (i = 5; i >= smallestMaturity; i--)
-            { 
-                // As the string is of the form rock_beryl_1_x, treat it as if we are calling the function for variant/state
-                addImageForItem("rock_beryl", str(j), str(i * 10));
+            if (!addMultipleImagesForItem("rock_beryl_" + str(i), 50, 10, -1, -1))
+            {
+                return false;
             }
-            // Now add this to the hashmap
-            if (!addToHashMapAndLoadImages("rock_beryl_" + str(j)))
+            if (!addToHashMapAndLoadImages("rock_beryl_" + str(i)))
             {
                 return false;
             }
             
             // Dullite
-            for (i = 5; i >= smallestMaturity; i--)
-            { 
-                // As the string is of the form rock_dullite_1_x, treat it as if we are calling the function for variant/state
-                addImageForItem("rock_dullite", str(j), str(i * 10));
+            if (!addMultipleImagesForItem("rock_dullite_" + str(i), 50, 10, -1, -1))
+            {
+                return false;
             }
-            // Now add this to the hashmap
-            if (!addToHashMapAndLoadImages("rock_dullite_" + str(j)))
+            if (!addToHashMapAndLoadImages("rock_dullite_" + str(i)))
             {
                 return false;
             }
             
             // Sparkly
-            for (i = 5; i >= smallestMaturity; i--)
-            { 
-                // As the string is of the form rock_sparkly_1_x, treat it as if we are calling the function for variant/state
-                addImageForItem("rock_sparkly", str(j), str(i * 10));
+            if (!addMultipleImagesForItem("rock_sparkly_" + str(i), 50, 10, -1, -1))
+            {
+                return false;
             }
-            // Now add this to the hashmap
-            if (!addToHashMapAndLoadImages("rock_sparkly_" + str(j)))
+            if (!addToHashMapAndLoadImages("rock_sparkly_" + str(i)))
             {
                 return false;
             }
             
             // Metal
-            for (i = 5; i >= smallestMaturity; i--)
-            { 
-                // As the string is of the form rock_metal_1_x, treat it as if we are calling the function for variant/state
-                addImageForItem("rock_metal", str(j), str(i * 10));
-            }
-            // Now add this to the hashmap
-            if (!addToHashMapAndLoadImages("rock_metal_" + str(j)))
+            if (!addMultipleImagesForItem("rock_metal_" + str(i), 50, 10, -1, -1))
             {
                 return false;
             }
-        }
+            if (!addToHashMapAndLoadImages("rock_metal_" + str(i)))
+            {
+                return false;
+            }
+        } 
 
         // Now create one entry for each of the shrine snaps - one per shrine as only come in right versions
         imageFilenames = null;
@@ -208,24 +158,9 @@ class ItemImages
         
         // Now create an entry for barnacles
         // Barnacles have a scrape state of 1-4, but state 1 is unusable for searching.
-        // Load up all the mature versions of the barnacles first
-        // If the option is set, then only load up the mature images rather than all images
-        if (configInfo.readUseMatureItemImagesOnly())
+        if (!addMultipleImagesForItem("mortar_barnacle", 4, 2, 1, 6))
         {
-            smallestMaturity = 4;
-        }
-        else
-        {
-            smallestMaturity = 2;
-        }
-        for (i = 4; i >= smallestMaturity; i--)
-        { 
-            addImageForItem("mortar_barnacle", "1", str(i));
-            addImageForItem("mortar_barnacle", "2", str(i));
-            addImageForItem("mortar_barnacle", "3", str(i));
-            addImageForItem("mortar_barnacle", "4", str(i));
-            addImageForItem("mortar_barnacle", "5", str(i));
-            addImageForItem("mortar_barnacle", "6", str(i));
+            return false;
         }
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
         if (!addToHashMapAndLoadImages("mortar_barnacle"))
@@ -234,49 +169,24 @@ class ItemImages
         }
         
         // Now create one entry for each of the peat snaps i.e. for peat_1, peat_2, peat_3
-        // If the option is set, then only load up the mature images rather than all images
-        if (configInfo.readUseMatureItemImagesOnly())
-        {
-            smallestMaturity = 4;
-        }
-        else
-        {
-            smallestMaturity = 0;
-        }
-        for (j = 1; j < 4; j++)
-        {
-            // Load up the mature version of the peat first.
-            // harvests_remaining goes from 4 to 0
-            for (i = 4; i >= smallestMaturity; i--)
-            { 
-                // As the string is of the form peat_1_x, treat it as if we are calling the function for variant/state
-                addImageForItem("peat", str(j), str(i));
-            }
-            // Now add this to the hashmap
-            if (!addToHashMapAndLoadImages("peat_" + str(j)))
+        // harvests_remaining goes from 4 to 0
+        for (i = 1; i < 4; i++)
+        {  
+            if (!addMultipleImagesForItem("peat_" + str(i), 4, 0, -1, -1))
             {
                 return false;
             }
-        }
+            if (!addToHashMapAndLoadImages("peat_" + str(i)))
+            {
+                return false;
+            }
+        }        
                 
         // Now create an entry for jellisac
         // Jellisacs have a scoop state of 1-5, but state 1 is unusable for searching.
-        // Load up all the mature versions of the jellisacs first
-        // If the option is set, then only load up the mature images rather than all images
-        if (configInfo.readUseMatureItemImagesOnly())
+        if (!addMultipleImagesForItem("jellisac", 5, 2, 1, 4))
         {
-            smallestMaturity = 5;
-        }
-        else
-        {
-            smallestMaturity = 2;
-        }
-        for (i = 5; i >= smallestMaturity; i--)
-        { 
-            addImageForItem("jellisac", "1", str(i));
-            addImageForItem("jellisac", "2", str(i));
-            addImageForItem("jellisac", "3", str(i));
-            addImageForItem("jellisac", "4", str(i));
+            return false;
         }
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
         if (!addToHashMapAndLoadImages("jellisac"))
@@ -297,21 +207,11 @@ class ItemImages
         
         // Now create an entry for dirt pile
         // Dirt piles have a dirt_state of 1-11.
-        // Load up all the full versions of the dirt pile first
-        // If the option is set, then only load up the mature images rather than all images
-        if (configInfo.readUseMatureItemImagesOnly())
+        // The variant here is dirt1 or dirt2, called function will handle this
+        if (!addMultipleImagesForItem("dirt_pile", 11, 1, -1, -1))
         {
-            smallestMaturity = 11;
-        }
-        else
-        {
-            smallestMaturity = 1;
-        }
-        for (i = 11; i >= smallestMaturity; i--)
-        { 
-            addImageForItem("dirt_pile", "dirt1", str(i));
-            addImageForItem("dirt_pile", "dirt2", str(i));
-        }
+            return false;
+        }       
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
         if (!addToHashMapAndLoadImages("dirt_pile"))
         {
@@ -393,22 +293,9 @@ class ItemImages
         }
         
         // Now create an entry for enchanted wood trees
-        // Load up mature variant first i.e. 6
-        // If the option is set, then only load up the mature images rather than all images
-        if (configInfo.readUseMatureItemImagesOnly())
+        if (!addMultipleImagesForItem("wood_tree_enchanted", 6, 1, 1, 4))
         {
-            smallestMaturity = 6;
-        }
-        else
-        {
-            smallestMaturity = 1;
-        }
-        for (i = 6; i >= smallestMaturity; i--)
-        {
-            addImageForItem("wood_tree_enchanted", "1", str(i));
-            addImageForItem("wood_tree_enchanted", "2", str(i));
-            addImageForItem("wood_tree_enchanted", "3", str(i));
-            addImageForItem("wood_tree_enchanted", "4", str(i));
+            return false;
         }
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
         if (!addToHashMapAndLoadImages("wood_tree_enchanted"))
@@ -426,6 +313,110 @@ class ItemImages
         }
        
         printToFile.printDebugLine(this, "Loaded " + imageCount + " images in hashmap", 2);
+        return true;
+    }
+    
+    boolean addMultipleImagesForItem(String hashkey, int maxMaturityVal, int minMaturityVal, int minVariant, int maxVariant)
+    {
+        int smallestMaturity;
+        int i;
+        int j;
+        // If the option is set, then only load up the mature images rather than all images
+        if (configInfo.readUseMatureItemImagesOnly())
+        {
+            smallestMaturity = maxMaturityVal;
+        }
+        else
+        {
+            smallestMaturity = minMaturityVal;
+        }
+        
+        // Some items are more complex than others, so need to handle within a case statement
+        switch (hashkey)
+        {
+            case "trees":
+                // Load up the trees - most mature variants first as these are the most common      
+                for (i = maxMaturityVal; i >= smallestMaturity; i--)
+                {     
+                    // Some trees have maturity 1-10, wood trees are 1-6
+                    addImageForItem("trant_bean", "", str(i));
+                    addImageForItem("trant_fruit", "", str(i));
+                    addImageForItem("trant_bubble", "", str(i));
+                    addImageForItem("trant_spice", "", str(i));
+                    addImageForItem("trant_gas", "", str(i));
+                    addImageForItem("trant_egg", "", str(i));
+                    // Wood trees - need to include state 6 at same level as state 10 for all other trees
+                    // Wood trees have maturity 1-6 rather than 1-10
+                    // Although the random duplication means that some 'adult' wood trees are searched before others
+                    // because the fully grown version may be included in _6 or _2 files.
+                    // Enchanted trees are not included in the list - as they are never planted by players
+                    j = i - 4;
+                    if (j > 0)
+                    {
+                        addImageForItem("wood_tree", "1", str(j));
+                        addImageForItem("wood_tree", "2", str(j));
+                        addImageForItem("wood_tree", "3", str(j));
+                        addImageForItem("wood_tree", "4", str(j));
+                    }
+                }
+                break;
+            
+            case "rock_beryl_1":
+            case "rock_beryl_2":
+            case "rock_beryl_3":
+            case "rock_dullite_1":
+            case "rock_dullite_2":
+            case "rock_dullite_3":
+            case "rock_sparkly_1":
+            case "rock_sparkly_2":
+            case "rock_sparkly_3":
+            case "rock_metal_1":
+            case "rock_metal_2":
+            case "rock_metal_3":
+                // As some of the different states have identical images, some of the images have not been created - this does
+                // not create an error as addImageForItem handles this scenario (more efficient than searching identical images)
+                for (i = maxMaturityVal; i >= smallestMaturity; i -= 10)
+                {     
+                    addImageForItem(hashkey, "", str(i));
+                }
+                break;
+            
+            // These items have no variant to pass to addImageForItem
+            case "peat_1":
+            case "peat_2":
+            case "peat_3":
+                for (i = maxMaturityVal; i >= smallestMaturity; i--)
+                {     
+                    addImageForItem(hashkey, "", str(i));
+                }
+                break;               
+                       
+            // These items need to pass the variant to addImageForItem
+            case "mortar_barnacle":
+            case "jellisac":
+            case "wood_tree_enchanted":
+                for (i = maxMaturityVal; i >= smallestMaturity; i--)
+                {   
+                    for (j = minVariant; j <= maxVariant; j++)
+                    {
+                        addImageForItem(hashkey, str(j), str(i));
+                    }
+                } 
+                break;
+                
+            case "dirt_pile":
+                for (i = maxMaturityVal; i >= smallestMaturity; i--)
+                {   
+                    addImageForItem(hashkey, "dirt1", str(i));
+                    addImageForItem(hashkey, "dirt2", str(i));
+                }               
+                break;       
+            
+            default:
+                printToFile.printDebugLine(this, "Error - unexpected hashkey passed to function " + hashkey, 3);
+                return false;
+        }
+        
         return true;
     }
     
