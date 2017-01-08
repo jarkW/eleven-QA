@@ -378,7 +378,7 @@ class OutputFile
                 printLine(itemResults.get(i).itemInfo.readValidationInfo());
             }
 
-            if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin"))
+            if (itemResults.get(i).itemInfo.readItemClassTSID().equals("quoin") && (itemResults.get(i).readResult() != SummaryChanges.SKIPPED))
             {
                 switch (itemResults.get(i).itemInfo.readNewItemVariant())
                 {

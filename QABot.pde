@@ -415,9 +415,10 @@ public void draw()
             if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
             {
                 // Reached end of list of streets - normal ending
-                boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();       
-                printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED\n\n");
-                printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
+                boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg(); 
+                String duration = "(" + printToFile.scanDuration() + ")";
+                printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED " + duration + "\n\n");
+                printToFile.printDebugLine(this, "Exit now - All processing completed " + duration, 3);
                 if (nothingToShow)
                 {
                     // Display success message as no error message present
@@ -554,9 +555,10 @@ public void draw()
             break;
           
         case SHOW_FAILED_STREETS_MSG:
-            boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();       
-            printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED\n\n");
-            printToFile.printDebugLine(this, "Exit now - All processing completed", 3);
+            boolean nothingToShow = displayMgr.showAllSkippedStreetsMsg();  
+            String duration = "(" + printToFile.scanDuration() + ")";
+            printToFile.printOutputLine("\n\nALL PROCESSING COMPLETED " + duration + "\n\n");
+            printToFile.printDebugLine(this, "Exit now - All processing completed " + duration, 3);
             if (nothingToShow)
             {
                 // Can go ahead and display success message as there are no error messages to show

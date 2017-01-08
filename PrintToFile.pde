@@ -1,16 +1,17 @@
 class PrintToFile 
 {
    
-   boolean okFlag;
-   String timestamp;
- 
+   boolean okFlag; 
    StringList existingOutputText;
+   
+    // Save the start time so can report how long the scan took
+    long startTimeMillis; 
     
      // constructor/initialise fields
     public PrintToFile()
     {
         okFlag = true;
-        timestamp = nf(day(),2) + "/" + nf(month(),2) + "/" + year() + "   " + nf(hour(),2) + ":" + nf(minute(),2) + ":" + nf(second(),2);
+        startTimeMillis = System.currentTimeMillis();
     }
     
     public boolean initPrintToDebugFile()
@@ -28,7 +29,7 @@ class PrintToFile
             }
         } 
         // Print timestamp at top of file
-        printDebugLine(this, timestamp, 3);             
+        printDebugLine(this, getTimeStamp(), 3);             
         return true;
     }     
     
@@ -50,7 +51,7 @@ class PrintToFile
         }
         
         // Write header information - which just dumps out the settings in the config.json file 
-        printOutputLine(timestamp);      
+        printOutputLine(getTimeStamp());      
         infoOutput.writeHeaderInfo(false);
         return true;
     } 
@@ -79,7 +80,7 @@ class PrintToFile
         }
         
         // Write header information - which just dumps out the settings in the config.json file   
-        printValidationSummaryOutputLine(timestamp);  
+        printValidationSummaryOutputLine(getTimeStamp());  
         validationSummaryOutput.writeHeaderInfo(true);
         
         // Add in reminder line to file about what is being dumped
@@ -223,6 +224,13 @@ class PrintToFile
         return; 
     }
     
+    public String getTimeStamp()
+    {
+        String timeStamp;
+        timeStamp = nf(day(),2) + "/" + nf(month(),2) + "/" + year() + "   " + nf(hour(),2) + ":" + nf(minute(),2) + ":" + nf(second(),2);
+        return timeStamp;
+    }
+    
     public boolean printOutputSummaryData(ArrayList<SummaryChanges> itemResults)
     {
         if (!infoOutput.printSummaryData(itemResults, false))
@@ -243,6 +251,41 @@ class PrintToFile
     public boolean readOkFlag()
     {
         return (okFlag);
+    }
+    
+    public String scanDuration()
+    {
+        String str = "";
+        long scanLengthMillis = System.currentTimeMillis() - startTimeMillis;
+        long remainder;
+        long value;
+        // Now convert to hours, mins, secs and format as nice string
+        value = scanLengthMillis/(60*60*1000);
+        if (value > 0)
+        {
+            str = str + value + " hours";
+        }
+        remainder = scanLengthMillis - (value * 60*60*1000);
+        value = remainder/(60*1000);
+        if (value > 0)
+        {
+            if (str.length() > 0)
+            {
+                str = str + " ";
+            }
+            str = str + value + " mins";
+        }
+        remainder = remainder - (value*60*1000);    
+        value = remainder/1000;
+        if (value > 0)
+        {
+            if (str.length() > 0)
+            {
+                str = str + " ";
+            }
+            str = str + value + " secs";
+        }
+        return(str);
     }
     
 }
