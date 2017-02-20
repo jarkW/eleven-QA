@@ -487,11 +487,6 @@ class OutputFile
         {
             // Dump out the count summary of items missing/skipped/changed                
             s = "\nSkipped " + skippedCount + " items, missing " + missingCount + " items, changed " + nosChangedItems + " items";
-            if ((nosChangedItems > 0) && configInfo.readWriteJSONsToPersdata() && !streetInfo.readStreetNotInPersdataQA())
-            {
-                // For streets already in persdata-qa remind user to rerun qasave if items have actually been changed in persdata
-                s = s + " (remember to redo /qasave [withgeo] for this street to save changes)";
-            }
             printLine(s);
     
             // Just dump out number of quoins
@@ -500,7 +495,14 @@ class OutputFile
                 " Total=" + (quoinXP + quoinEnergy + quoinMood + quoinCurrants + quoinFavor + quoinTime + quoinMystery);
         }
         s = s + "\n";
-        printLine(s);   
+        printLine(s); 
+        
+        if (!validationSummaryFlag && (nosChangedItems > 0) && configInfo.readWriteJSONsToPersdata() && !streetInfo.readStreetNotInPersdataQA())
+        {
+            // For streets already in persdata-qa remind user to rerun qasave if items have actually been changed in persdata
+            s = " (NB REMEMEMBER TO REDO /QASAVE [WITHGEO] FOR THIS STREET TO SAVE THESE CHANGES)\n";
+            printLine(s);
+        }
         return true;
     }
     

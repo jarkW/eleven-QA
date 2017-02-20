@@ -15,6 +15,7 @@ class ConfigInfo {
     String serverPassword;
     int serverPort;
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
+    boolean outputListJSONsWrittenToPersdata;
     boolean showDistFromOrigXY;
     boolean useMatureItemImagesOnly;
     ActionToTake streetInPersdataQAAction;
@@ -313,18 +314,24 @@ class ConfigInfo {
 
         // The following options are OPTIONAL - so don't need to be in the JSON file   
         
+        outputListJSONsWrittenToPersdata = Utils.readJSONBool(json, "output_list_JSONs_written_to_persdata", false);
+        if (!Utils.readOkFlag())
+        {
+            outputListJSONsWrittenToPersdata = true;
+        }
+        
         // Read in the actions that are to be taken for streets which are found in persdata-qa, or not.
         // Can either be no action, change x,y only or change everything. 
         // Fail if there is not one option set to true.
         // If this structure is missing, then set to the default position of changing everything in non persdata-qa, nothing for persdata-qa
         streetInPersdataQAAction = new ActionToTake("persdata_qa_streets");
-        JSONObject actionInfo = Utils.readJSONObject(json, "persdata_qa_streets", true); 
+        JSONObject actionInfo = Utils.readJSONObject(json, "persdata_qa_streets", false); 
         if (!Utils.readOkFlag())
         {
             // Set up default values
             streetInPersdataQAAction.defaultSetup();
-            println("Failed to read persdata_qa_streets in config.json file - defaulting to change x,y only for these streets");
-            displayMgr.showErrMsg("Failed to read persdata_qa_streets in config.json file - defaulting to change x,y only for these streets", false);
+            println("Failed to read persdata_qa_streets in config.json file - defaulting to skip these streets");
+            displayMgr.showErrMsg("Failed to read persdata_qa_streets in config.json file - defaulting to skip these streets", false);
         } 
         else
         {
@@ -337,7 +344,7 @@ class ConfigInfo {
         }
         
         streetNotInPersdataQAAction = new ActionToTake("non_persdata_qa_streets");
-        actionInfo = Utils.readJSONObject(json, "non_persdata_qa_streets", true); 
+        actionInfo = Utils.readJSONObject(json, "non_persdata_qa_streets", false); 
         if (!Utils.readOkFlag())
         {
             // Set up default values
@@ -657,6 +664,11 @@ class ConfigInfo {
     public int readPercentMatchCriteria()
     {
         return percentMatchCriteria;
+    }
+    
+    public boolean readOutputListJSONsWrittenToPersdata()
+    {
+        return outputListJSONsWrittenToPersdata;
     }
     
     public ActionToTake readStreetInPersdataQAAction()
