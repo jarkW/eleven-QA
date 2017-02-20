@@ -53,6 +53,9 @@ class StreetInfo
     // Saved information about whether or not this street has already been saved in persdata-qa - for logging only
     boolean streetNotInPersdataQA;
     
+    // Keep a count of the number of JSON files copied to persdata
+    int persdataJSONFileCount;
+    
     final static int ITEM_FOUND_COLOUR = #0000FF; // blue
     final static int ITEM_MISSING_COLOUR = #FF0000; // red
        
@@ -78,6 +81,7 @@ class StreetInfo
         streetInitialisationFinished = false;
         streetNotInPersdataQA = true;
         changeItemXYOnly = false;
+        persdataJSONFileCount = 0;
 
         streetTSID = tsid;       
         itemInfo = new ArrayList<ItemInfo>();
@@ -267,15 +271,7 @@ class StreetInfo
             // Item being skipped or is unchanged/missing           
             nothingChanged = true; 
         }
-        
-        // move on to next item
-        itemBeingProcessed++;
-        if (itemBeingProcessed >= itemInfo.size())
-        {
-            // Reached end of item list
-            streetWritingItemsFinished = true;
-        }
-        
+      
         // Report error to users but continue
         if (!uploadOK)
         {
@@ -290,6 +286,31 @@ class StreetInfo
         else if (!nothingChanged)
         {
             displayMgr.showInfoMsg(uploadString + " " + itemTSID + ".json to " + configInfo.readPersdataPath());
+        }
+        
+        // move on to next item
+        itemBeingProcessed++;
+        if (itemBeingProcessed >= itemInfo.size())
+        {
+            // Reached end of item list
+            streetWritingItemsFinished = true;
+            
+            // If the user didn't want the detailed list of files copied, just indicate here the number copied for completeness sake
+            if(!configInfo.readOutputListJSONsWrittenToPersdata())
+            {
+                String s;
+                if (configInfo.readUseVagrantFlag())
+                {
+                    s = "Successfully copied ";
+                }
+                else
+                {
+                   s = "Successfully uploaded ";
+                }
+                s = s + persdataJSONFileCount + " changed JSON files to " + configInfo.readPersdataPath();
+                printToFile.printDebugLine(this, s, 2);
+                printToFile.printOutputLine(s);
+            }
         }
         
         return true;
@@ -679,7 +700,7 @@ class StreetInfo
                 // Skip this street - is not an error
                 String s;
                 // If the structure is missing, then this field may be have been defaulted by the program - so give different error message
-                if (configInfo.readStreetNotInPersdataQAAction().readUsingDefaultedValues())
+                if (configInfo.readStreetInPersdataQAAction().readUsingDefaultedValues())
                 {
                     s = " = default action for street found in persdata-qa (missing persdata_qa_streets in config.json)"; 
                 }
@@ -1428,8 +1449,15 @@ class StreetInfo
                 printToFile.printOutputLine("FAILED TO COPY " + TSID + ".json file to " + configInfo.readPersdataPath());
                 return false;
             }
+            
+            // Successful copying
+            persdataJSONFileCount++;
             printToFile.printDebugLine(this, "Success copying " + TSID + ".json file to " + configInfo.readPersdataPath(), 3);
-            printToFile.printOutputLine("Success copying " + TSID + ".json file to " + configInfo.readPersdataPath());
+            // Only print out the name of the file copied if that is what the user has requested
+            if(configInfo.readOutputListJSONsWrittenToPersdata())
+            {
+                printToFile.printOutputLine("Success copying " + TSID + ".json file to " + configInfo.readPersdataPath());
+            }
         }
         else
         {
@@ -1440,9 +1468,14 @@ class StreetInfo
                  printToFile.printOutputLine("FAILED TO UPLOAD " + TSID + ".json file to " + configInfo.readPersdataPath());
                  return false;   
             } 
-            
+            // Successful uploading
+            persdataJSONFileCount++;
             printToFile.printDebugLine(this, "Success uploading " + TSID + ".json file to " + configInfo.readPersdataPath(), 3);
-            printToFile.printOutputLine("Success uploading " + TSID + ".json file to " + configInfo.readPersdataPath());
+            // Only print out the name of the file copied if that is what the user has requested
+            if(configInfo.readOutputListJSONsWrittenToPersdata())
+            {
+                printToFile.printOutputLine("Success uploading " + TSID + ".json file to " + configInfo.readPersdataPath());
+            }
         }
         
         // Only reach here if file uploaded OK 
