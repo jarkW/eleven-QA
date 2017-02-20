@@ -418,10 +418,22 @@ class JSONDiff
             return true;
         }
         
-        if (configInfo.readChangeXYOnly())
+        if (streetInfo.readChangeItemXYOnly())
         {
             // Should never reach this point - as the only changes permitted are x,y changes. So report an error if this happens
-            printToFile.printDebugLine(this, "ERROR - unexpected change to field - " + keyName + " - should never be changed when change_xy_only option is set, for this item class " + itemClassTSID, 3);
+            String s;
+            s = "ERROR - unexpected change to field - " + keyName + " - should never be changed when change_xy_only option is set in ";
+            if (streetInfo.readStreetNotInPersdataQA())
+            {
+                s = s + "non_persdata_qa_streets in config.json";
+            }
+            else
+            {
+                s = s + "persdata_qa_streets in config.json";
+            }
+            s = ", for this item class " + itemClassTSID;
+            
+            printToFile.printDebugLine(this, s, 3);
             return false;
         }
         

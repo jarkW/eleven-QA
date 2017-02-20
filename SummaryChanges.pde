@@ -60,7 +60,7 @@ class SummaryChanges implements Comparable
                                     
         if (searchResult > NO_MATCH)
         {
-            if (configInfo.readChangeXYOnly())
+            if (streetInfo.readChangeItemXYOnly())
             {
                 if ((itemInfo.readNewItemX() == itemInfo.readOrigItemX()) && (itemInfo.readNewItemY() == itemInfo.readOrigItemY()))
                 {

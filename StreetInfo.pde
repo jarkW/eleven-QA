@@ -7,6 +7,7 @@ class StreetInfo
     boolean streetInitialisationFinished;
     boolean streetWritingItemsFinished;
     boolean invalidStreet;
+    boolean skipStreet;
     
     // passed to constructor - read in originally from config.json
     String streetTSID;
@@ -46,6 +47,12 @@ class StreetInfo
     String quoinDefaultingInfo; 
     String quoinDefaultingWarningMsg;
     
+    // Action for items on this street
+    boolean changeItemXYOnly;
+    
+    // Saved information about whether or not this street has already been saved in persdata-qa - for logging only
+    boolean streetNotInPersdataQA;
+    
     final static int ITEM_FOUND_COLOUR = #0000FF; // blue
     final static int ITEM_MISSING_COLOUR = #FF0000; // red
        
@@ -66,8 +73,11 @@ class StreetInfo
         streetSnapBeingUsed = 0;
         streetProcessingFinished = false;
         invalidStreet = false;
+        skipStreet = false;
         streetWritingItemsFinished = false;
         streetInitialisationFinished = false;
+        streetNotInPersdataQA = true;
+        changeItemXYOnly = false;
 
         streetTSID = tsid;       
         itemInfo = new ArrayList<ItemInfo>();
@@ -147,7 +157,7 @@ class StreetInfo
          // Everything OK   
         return true;
     }
-    
+       
     boolean readStreetItemData()
     {
         String itemTSID = readCurrentItemTSIDBeingProcessed();
@@ -500,7 +510,8 @@ class StreetInfo
         if (snapFilenames == null || snapFilenames.length == 0)
         {
             printToFile.printDebugLine(this, "SKIPPING STREET - No valid street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName + " in directory " + configInfo.readStreetSnapPath(), 3);
-            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ")" + " in directory " + configInfo.readStreetSnapPath() + "\n\n");
+            printToFile.printOutputLine("============================================================================================\n");
+            printToFile.printOutputLine("SKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ")" + " in directory " + configInfo.readStreetSnapPath() + "\n");
             displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No valid street snaps found in directory " + configInfo.readStreetSnapPath());
             invalidStreet = true;
             return false;
@@ -600,7 +611,8 @@ class StreetInfo
         if (streetSnaps.size() == 0)
         {
             printToFile.printDebugLine(this, "SKIPPING STREET - No valid street image files found in " + configInfo.readStreetSnapPath() + " for street " + streetName + " with resolution " + geoWidth + " x " + geoHeight + " pixels", 3);
-            printToFile.printOutputLine("\nSKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ") with resolution " + geoWidth + " x " + geoHeight + " pixels\n\n");
+            printToFile.printOutputLine("============================================================================================\n");
+            printToFile.printOutputLine("SKIPPING - No valid street image files found for " + streetName + "(" + streetTSID + ") with resolution " + geoWidth + " x " + geoHeight + " pixels\n");
             displayMgr.setSkippedStreetsMsg("Skipping street " + streetName + ": No valid street snaps found with resolution " + geoWidth + " x " + geoHeight + " pixels");
             invalidStreet = true;
             return false;
@@ -619,52 +631,96 @@ class StreetInfo
             // Unable to get the L* JSON file
             // This isn't treated as an error - could have been a typo in the TSID list
             printToFile.printDebugLine(this, "Failed to copy/download street L* JSON file so SKIPPING STREET " + streetTSID, 3);
-            printToFile.printOutputLine("\nFailed to copy/download street L* JSON file so SKIPPING STREET " + streetTSID + "\n\n");
+            printToFile.printOutputLine("============================================================================================\n");
+            printToFile.printOutputLine("Failed to copy/download street L* JSON file so SKIPPING STREET " + streetTSID + "\n");
             displayMgr.setSkippedStreetsMsg("Skipping street: Failed to copy/download loc file " + streetTSID + ".json");
             invalidStreet = true;
             return true; // continue
         }
         
-        // Confirm that this street TSID is not already something that has been QA'd already - i.e. is in persdata-qa.
-        // Otherwise we would risk overwriting quoins with mystery types if not present on the snaps. 
-        // For this kind of street should only allow change_xy_only option
-        if (!streetNotExistInPersdataQA(streetTSID) && !configInfo.readChangeXYOnly())
+        // Read in street data - list of item TSIDs 
+        // As this also reads in the street name, done here so that we can output that information if we skip the street because no G* file or in persdata-qa
+        if (!readStreetData())  //<>//
         {
-            // This isn't treated as an error - but don't want to carry on with this street
-            printToFile.printDebugLine(this, "SKIPPING STREET because " + streetTSID + " already exists in persdata-qa; use change_xy_only option to change item x,y only", 3);
-            printToFile.printOutputLine("\nSKIPPING STREET because " + streetTSID + " already exists in persdata-qa; use change_xy_only option to change item x,y only\n\n");
-            displayMgr.setSkippedStreetsMsg("Skipping street: " + streetTSID  + " already exists in persdata-qa; use change_xy_only option to change item x,y only");
-            invalidStreet = true;
-            return true; // continue
-        }        
+            // error - need to stop //<>//
+            printToFile.printDebugLine(this, "Error in readStreetData", 3);
+            okFlag = false;
+            return false;
+        } 
+        
+        // Work out what action to take with the items on this street
+        // The user will have set up a flag indicating what to do with streets which are are in/outside persdata-qa
+        // If no action is to be taken, then just skip the street without flagging it as an error
+        streetNotInPersdataQA = streetNotExistInPersdataQA(streetTSID);
+        
+        if (streetNotInPersdataQA)
+        {
+            if (configInfo.readStreetNotInPersdataQAAction().readDoNothingFlag())
+            {
+                // Skip this street - is not an error
+                // This flag is never defaulted to this value - so is only ever set by the user
+                printToFile.printDebugLine(this, "SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in non_persdata_qa_streets in config.json", 2);
+                printToFile.printOutputLine("============================================================================================\n");
+                printToFile.printOutputLine("SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in non_persdata_qa_streets in config.json\n");
+                displayMgr.setSkippedStreetsMsg("Skipping street: " + streetTSID + " (" + streetName + ") because skip_street flag set in non_persdata_qa_streets in config.json");
+                skipStreet = true;
+                return true; // continue
+            }
+            else if (configInfo.readStreetNotInPersdataQAAction().readChangeXYOnlyFlag())
+            {
+                // Reset the flag to true - is false by default, implying change everything
+                changeItemXYOnly = true;
+            }            
+        }
+        else
+        {
+            if (configInfo.readStreetInPersdataQAAction().readDoNothingFlag())
+            {
+                // Skip this street - is not an error
+                String s;
+                // If the structure is missing, then this field may be have been defaulted by the program - so give different error message
+                if (configInfo.readStreetNotInPersdataQAAction().readUsingDefaultedValues())
+                {
+                    s = " = default action for street found in persdata-qa (missing persdata_qa_streets in config.json)"; 
+                }
+                else
+                {
+                    s = " because skip_street flag set in persdata_qa_streets in config.json";
+                }
+                printToFile.printDebugLine(this, "SKIPPING STREET " + streetTSID + " (" + streetName + ")" + s, 2);    
+                printToFile.printOutputLine("============================================================================================\n");
+                printToFile.printOutputLine("SKIPPING STREET " + streetTSID + " (" + streetName + ")" + s + "\n");
+                displayMgr.setSkippedStreetsMsg("Skipping street: " + streetTSID + " (" + streetName + ")"  + s);
+                skipStreet = true;
+                return true; // continue
+            }
+            else if (configInfo.readStreetInPersdataQAAction().readChangeXYOnlyFlag())
+            {
+                // Reset the flag to true - is false by default, implying change everything
+                changeItemXYOnly = true;
+            }   
+        }      
         
         if (!getJSONFile(streetTSID.replaceFirst("L", "G")))
         {
             // Unable to get the G* JSON file
-            printToFile.printDebugLine(this, "Failed to copy/download street G* JSON file so SKIPPING STREET " + streetTSID, 3);
-            printToFile.printOutputLine("\nFailed to copy/download street G* JSON file so SKIPPING STREET " + streetTSID + "\n\n");
-            displayMgr.setSkippedStreetsMsg("Skipping street: Failed to copy/download geo file " + streetTSID.replaceFirst("L", "G") + ".json");
+            printToFile.printDebugLine(this, "Failed to copy/download street G* JSON file so SKIPPING STREET " + streetTSID + "(" + streetName + ")", 3);
+            printToFile.printOutputLine("============================================================================================\n");
+            printToFile.printOutputLine("Failed to copy/download street G* JSON file so SKIPPING STREET " + streetTSID + "(" + streetName + ")\n");
+            displayMgr.setSkippedStreetsMsg("Skipping street: Failed to copy/download geo file " + streetTSID.replaceFirst("L", "G") + ".json" + "(" + streetName + ")");
             invalidStreet = true;
             return true; // continue
         }       
-
-        // Read in street data - list of item TSIDs 
-        if (!readStreetData()) //<>// //<>//
-        {
-            // error - need to stop //<>// //<>//
-            printToFile.printDebugLine(this, "Error in readStreetData", 3);
-            okFlag = false;
-            return false;
-        }
-        
+ //<>// //<>//
         // If street does not contain any items then continue to next street
         if (streetItems.size() <= 0)
         {
             // This isn't treated as an error - but don't want to carry on with this street as it doesn't contain anything that can be handled
             printToFile.printDebugLine(this, "SKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool", 3);
-            printToFile.printOutputLine("\nSKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool\n\n");
+            printToFile.printOutputLine("============================================================================================\n");
+            printToFile.printOutputLine("SKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool\n");
             displayMgr.setSkippedStreetsMsg("SKIPPING STREET because " + streetTSID + "(" + streetName + ") does not contain any items which can be QA'd by this tool");
-            invalidStreet = true;
+            skipStreet = true;
             return true; // continue
         }
 
@@ -687,8 +743,8 @@ class StreetInfo
             if (invalidStreet)
             {
                 // i.e. need to skip this street as missing street snaps for street
+                // output message already given in validateStreetSnaps()
                 printToFile.printDebugLine(this, "Missing/invalid street snaps so SKIPPING STREET " + streetTSID, 3);
-                printToFile.printOutputLine("Missing/invalid street snaps so SKIPPING STREET " + streetTSID);
                 return true; // continue
             }
             else
@@ -1507,9 +1563,24 @@ class StreetInfo
         }
     }
     
+    public boolean readStreetNotInPersdataQA()
+    {
+        return streetNotInPersdataQA;
+    }
+    
+    public boolean readChangeItemXYOnly()
+    {
+        return changeItemXYOnly;
+    }
+    
     public boolean readInvalidStreet()
     {
         return invalidStreet;
+    }
+    
+    public boolean readSkipStreet()
+    {
+        return skipStreet;
     }
    
     public int readGeoHeight()

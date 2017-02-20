@@ -190,6 +190,7 @@ class ItemInfo
     
     boolean validItemToCheckFor()
     {
+        
         // During testing, this check allows me to just search for single item (TSID) or class of items and ignore everything else
         String validItemStr = configInfo.readDebugThisTSIDOnly();       
         if (validItemStr.length() > 0)
@@ -953,7 +954,7 @@ class ItemInfo
                     saveChangedJSONfile = true;
                 }
                 
-                if (!configInfo.readChangeXYOnly())
+                if (!streetInfo.readChangeItemXYOnly())
                 {
                     printToFile.printDebugLine(this, "Set missing quoin " + itemTSID + " to be type = mystery", 1);
                     newItemVariant = "mystery";
@@ -1019,7 +1020,7 @@ class ItemInfo
         // Only do this if not doing an x,y_only kind of search - which leaves the special fields
         // as originally set
         // Sets the saveChangedJSONFile flag as needed
-        if (!configInfo.readChangeXYOnly())
+        if (!streetInfo.readChangeItemXYOnly())
         {
             if (!setItemInfoInJSON())
             {

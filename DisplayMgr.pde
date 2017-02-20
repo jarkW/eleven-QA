@@ -352,7 +352,7 @@ class DisplayMgr
         
     }
     
-    public void showThisSkippedStreetMsg()
+    public void showThisSkippedStreetMsg(boolean errorFlag)
     {
         clearDisplay();
         fill(50);
@@ -363,7 +363,14 @@ class DisplayMgr
             return;
         }
         //String s = "The following streets were not processed";
-        fill(RED_TEXT);
+        if (errorFlag)
+        {
+            fill(RED_TEXT);
+        }
+        else
+        {
+            fill(50);
+        }
         //text(s, 10, 100, width-10, 80);  // Text wraps within text box
         
         // Print out each of the messages for this street ... and save to the total message buffer for reporting at end of run

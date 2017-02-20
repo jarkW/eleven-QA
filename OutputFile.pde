@@ -62,20 +62,72 @@ class OutputFile
             
         if (configInfo.readWriteJSONsToPersdata())
         {
+            s = "Changing";
+        }
+        else
+        {
+            s = "Reporting (not changing)";
+        }
+ 
+        // construct the string which documents the actions to be taken for persdata-qa and non-persdata-qa streets
+        if (configInfo.readStreetNotInPersdataQAAction().readChangeXYOnlyFlag())
+        {
+            if (configInfo.readStreetInPersdataQAAction().readChangeXYOnlyFlag())
+            {
+                s = "WARNING " + s + " x,y ONLY for items on ALL streets including those in persdata-qa";
+            }
+            else if (configInfo.readStreetInPersdataQAAction().readChangeXYAndVariantFlag())
+            {
+                // This is particularly concerning - so flag up
+                s = "!!! WARNING !!! " + s + " x,y ONLY for items on streets not in persdata-qa, x,y and variant for streets in persdata-qa";
+            }
+            else
+            {
+                s = "WARNING " + s + " x,y ONLY for items on streets not in persdata-qa, skipping streets in persdata-qa";
+            }
+        }
+        else if (configInfo.readStreetNotInPersdataQAAction().readChangeXYAndVariantFlag())
+        {
+            if (configInfo.readStreetInPersdataQAAction().readChangeXYOnlyFlag())
+            {
+                s = "WARNING " + s + " x,y and variant for items on streets not in persdata-qa, x,y ONLY for streets in persdata-qa"; 
+            }
+            else if (configInfo.readStreetInPersdataQAAction().readChangeXYAndVariantFlag())
+            {
+                // This is particularly concerning - so flag up
+                s = "!!! WARNING !!! " + s + " x,y and variant for items on ALL streets including those in persdata-qa";
+            }
+            else
+            {
+                s = "DEFAULT action - " + s + " x,y and variant for items on streets not in persdata-qa, skipping streets in persdata-qa";
+            }
+        }
+        else
+        {
+            if (configInfo.readStreetInPersdataQAAction().readChangeXYOnlyFlag())
+            {
+                s = "WARNING " + s + " skipping items on streets not in persdata-qa, x,y ONLY for streets in persdata-qa"; 
+            }
+            else if (configInfo.readStreetInPersdataQAAction().readChangeXYAndVariantFlag())
+            {
+                // This is particularly concerning - so flag up
+                s = "!!! WARNING !!! " + s + " skipping items on streets not in persdata-qa, x,y and variant for items in persdata-qa";
+            }
+            else
+            {
+                s = "WARNING " + s + " skipping items on ALL streets";
+            }
+        }
+        printLine(s);
+        printLine("Using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
+        
+        if (configInfo.readWriteJSONsToPersdata())
+        {
             printLine("Writing JSON files to persdata (see list of changed files below)");
         }
         else
         {
             printLine("WARNING No JSON files being written to persdata");
-        }
-    
-        if (!configInfo.readChangeXYOnly())
-        {
-            printLine("Changing x,y and variants of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
-        }
-        else
-        {
-            printLine("WARNING Changing x,y ONLY of items using a search radius of " + configInfo.readSearchRadius() + " pixels and a match requirement of " + configInfo.readPercentMatchCriteria() + "%");
         }
         
         if (configInfo.readUseMatureItemImagesOnly())
@@ -196,7 +248,7 @@ class OutputFile
                     {
                         s = s + "MISSING quoin " + itemResults.get(i).itemInfo.readItemTSID() + ": " + itemResults.get(i).itemInfo.readItemClassTSID();
                         s = s + "(" + itemResults.get(i).itemInfo.readOrigItemClassName() + ")";
-                        if (!configInfo.readChangeXYOnly())
+                        if (!streetInfo.readChangeItemXYOnly())
                         {
                             s = s + " defaulted to (mystery/placement tester)";
                         }
@@ -433,10 +485,16 @@ class OutputFile
         }
         else
         {
-            // Just dump out number of quoins
-            s = "\nSkipped " + skippedCount + " items, missing " + missingCount + " items";
+            // Dump out the count summary of items missing/skipped/changed                
+            s = "\nSkipped " + skippedCount + " items, missing " + missingCount + " items, changed " + nosChangedItems + " items";
+            if ((nosChangedItems > 0) && configInfo.readWriteJSONsToPersdata() && !streetInfo.readStreetNotInPersdataQA())
+            {
+                // For streets already in persdata-qa remind user to rerun qasave if items have actually been changed in persdata
+                s = s + " (remember to redo /qasave [withgeo] for this street to save changes)";
+            }
             printLine(s);
     
+            // Just dump out number of quoins
             s = "Quoin count is: XP=" + quoinXP + "   energy=" + quoinEnergy + "   mood=" + quoinMood +
                 "   currants=" + quoinCurrants +"   favor=" + quoinFavor +"   time=" + quoinTime +"   mystery=" + quoinMystery +
                 " Total=" + (quoinXP + quoinEnergy + quoinMood + quoinCurrants + quoinFavor + quoinTime + quoinMystery);

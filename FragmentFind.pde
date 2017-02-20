@@ -154,7 +154,7 @@ class FragmentFind
         // doing x,y changes only - when the variant is assumed to be correct.
         // Seemed easier than making an object copy of the array list of images passed to this class - didn't want to risk breaking images for subsequent item searches
         int nextImageNumber = currentImageNumber + 1;
-        if (!configInfo.readChangeXYOnly() || thisItemInfo.readOrigItemVariant().length() == 0 || thisItemInfo.readItemClassTSID().equals("wood_tree"))
+        if (!streetInfo.readChangeItemXYOnly() || thisItemInfo.readOrigItemVariant().length() == 0 || thisItemInfo.readItemClassTSID().equals("wood_tree"))
         {
             // Need to search all the fragment images - as this is a normal search or there is no variant field (e.g. trant) or this is a wood tree - which could have a match
             // on a snap for any other kind of tree, so need to search all tree images as per normal
@@ -216,7 +216,7 @@ class FragmentFind
                 
                 // The match info for non-quoins will be the best so far because perfect - for quoins, it will be rewritten from the saved quoinData structure before returning the search result
                 bestMatchInfo = spiralSearch.readSearchMatchInfo();
-                if (thisItemInfo.readItemClassTSID().equals("quoin") && !configInfo.readChangeXYOnly())
+                if (thisItemInfo.readItemClassTSID().equals("quoin") && !streetInfo.readChangeItemXYOnly())
                 {
                     // Only need to do this when collecting search results for all quoin images - otherwise can just use the data for the single search done
                     QuoinMatchData quoinData = new QuoinMatchData(bestMatchInfo);
@@ -251,7 +251,7 @@ class FragmentFind
                 // Quoins still need to be searched for using the next image (unless this is an x/y only search). 
                 // Check other images for items on this street in the hope that a perfect match might be found - except items with multiple maturity images such as trees when we call 99% a good enough match
 
-                if (thisItemInfo.readItemClassTSID().equals("quoin") && !configInfo.readChangeXYOnly())
+                if (thisItemInfo.readItemClassTSID().equals("quoin") && !streetInfo.readChangeItemXYOnly())
                 {
                     // Only need to do this when collecting search results for all quoin images - otherwise can just use the data for the single search done
                     bestMatchInfo = spiralSearch.readSearchMatchInfo();
@@ -339,7 +339,7 @@ class FragmentFind
         // If this is an x,y search only, then we only search for one image on the street anyhow because we know the class/variant from the JSON file
         // - except for trees which still have to search for all images regardless.
         // But also need to continue the search for the items which have multiple images loaded to manage the case where players have used resources and changed the appearance        
-        if (configInfo.readChangeXYOnly() && !thisItemInfo.itemIsAPlayerPlantedTree() && !thisItemInfo.itemHasMultipleImages())
+        if (streetInfo.readChangeItemXYOnly() && !thisItemInfo.itemIsAPlayerPlantedTree() && !thisItemInfo.itemHasMultipleImages())
         {
             searchDone = true;    
         }

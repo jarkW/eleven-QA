@@ -8,7 +8,6 @@ class ConfigInfo {
     String persdataPath;
     String persdataQAPath;
     String streetSnapPath;
-    boolean changeXYOnly;
     int searchRadius;
     int percentMatchCriteria;
     String serverName;
@@ -18,6 +17,8 @@ class ConfigInfo {
     boolean writeJSONsToPersdata;  // until sure that the files are all OK, will be in NewJSONs directory under processing sketch
     boolean showDistFromOrigXY;
     boolean useMatureItemImagesOnly;
+    ActionToTake streetInPersdataQAAction;
+    ActionToTake streetNotInPersdataQAAction;
     
     boolean debugShowFragments;
     boolean debugDumpDiffImages;
@@ -309,15 +310,51 @@ class ConfigInfo {
             displayMgr.showErrMsg("Failed to read write_JSONs_to_persdata in config.json file", true);
             return false;
         }
-        
 
-        // The following options are OPTIONAL - so don't need to be in the JSON file
-        changeXYOnly = Utils.readJSONBool(json, "change_xy_only", false);
+        // The following options are OPTIONAL - so don't need to be in the JSON file   
+        
+        // Read in the actions that are to be taken for streets which are found in persdata-qa, or not.
+        // Can either be no action, change x,y only or change everything. 
+        // Fail if there is not one option set to true.
+        // If this structure is missing, then set to the default position of changing everything in non persdata-qa, nothing for persdata-qa
+        streetInPersdataQAAction = new ActionToTake("persdata_qa_streets");
+        JSONObject actionInfo = Utils.readJSONObject(json, "persdata_qa_streets", true); 
         if (!Utils.readOkFlag())
         {
-            changeXYOnly = false;
+            // Set up default values
+            streetInPersdataQAAction.defaultSetup();
+            println("Failed to read persdata_qa_streets in config.json file - defaulting to change x,y only for these streets");
+            displayMgr.showErrMsg("Failed to read persdata_qa_streets in config.json file - defaulting to change x,y only for these streets", false);
+        } 
+        else
+        {
+            // Read in values from config.json
+            if (!streetInPersdataQAAction.validAction(actionInfo))
+            {
+                // Error message already logged
+                return false;
+            }
         }
         
+        streetNotInPersdataQAAction = new ActionToTake("non_persdata_qa_streets");
+        actionInfo = Utils.readJSONObject(json, "non_persdata_qa_streets", true); 
+        if (!Utils.readOkFlag())
+        {
+            // Set up default values
+            streetNotInPersdataQAAction.defaultSetup();
+            println("Failed to read non_persdata_qa_streets in config.json file - defaulting to change x,y and variant for these streets");
+            displayMgr.showErrMsg("Failed to read non_persdata_qa_streets in config.json file - defaulting to change x,y only for these streets", false);
+        } 
+        else
+        {
+            // Read in values from config.json
+            if (!streetNotInPersdataQAAction.validAction(actionInfo))
+            {
+                // Error message already logged
+                return false;
+            }
+        }            
+                    
         searchRadius = Utils.readJSONInt(json, "search_radius", false);
         if (!Utils.readOkFlag())
         {
@@ -439,10 +476,11 @@ class ConfigInfo {
             debugLevel = 1;
             percentMatchCriteria = 90;
             searchRadius = 25;
-            changeXYOnly = false;
             writeJSONsToPersdata = false;
             debugShowPercentMatchAsFloat = true;
             useMatureItemImagesOnly = false;
+            streetInPersdataQAAction.validationSetup();
+            streetNotInPersdataQAAction.validationSetup();
             
             //Reset paths to snaps and persdata (so always use the same set of original JSON files)
             
@@ -554,11 +592,6 @@ class ConfigInfo {
         return streetSnapPath;
     }
     
-    public boolean readChangeXYOnly()
-    {
-        return changeXYOnly;
-    }
-    
     public boolean readWriteJSONsToPersdata()
     {
         return writeJSONsToPersdata;
@@ -624,6 +657,16 @@ class ConfigInfo {
     public int readPercentMatchCriteria()
     {
         return percentMatchCriteria;
+    }
+    
+    public ActionToTake readStreetInPersdataQAAction()
+    {
+        return streetInPersdataQAAction;
+    }
+    
+    public ActionToTake readStreetNotInPersdataQAAction()
+    {
+        return streetNotInPersdataQAAction;
     }
     
     public boolean readDebugDumpDiffImages()
@@ -696,4 +739,130 @@ class ConfigInfo {
         return debugThisClassTSIDOnly;
     }
     
+}
+
+class ActionToTake
+{
+    boolean changeXYOnly;
+    boolean changeXYAndVariant;
+    boolean doNothing;
+    String streetsAppliesTo;
+    boolean usingDefaultedValues;
+    
+    ActionToTake(String info)
+    {  
+        changeXYOnly = false;       
+        changeXYAndVariant = false;
+        doNothing = false;
+        usingDefaultedValues = false;
+        streetsAppliesTo = info;
+    }
+    
+    public boolean validAction(JSONObject actionInfo)
+    {
+        String s;
+        int flagSetCount;
+              
+        // Read in the different options
+        changeXYOnly = Utils.readJSONBool(actionInfo, "change_xy_only", true);
+        if (!Utils.readOkFlag())
+        {
+           println(Utils.readErrMsg());
+           s = "Failed to read change_xy_only in " + streetsAppliesTo + " structure in config.json file";
+           println(s);
+           displayMgr.showErrMsg(s, true);
+           return false;
+        }
+        
+        changeXYAndVariant = Utils.readJSONBool(actionInfo, "change_xy_and_variant", true);
+        if (!Utils.readOkFlag())
+        {
+           println(Utils.readErrMsg());
+           s = "Failed to read change_xy_and_variant in " + streetsAppliesTo + " structure in config.json file";
+           println(s);
+           displayMgr.showErrMsg(s, true);
+           return false;
+        }
+        
+        doNothing = Utils.readJSONBool(actionInfo, "skip_street", true);
+        if (!Utils.readOkFlag())
+        {
+           println(Utils.readErrMsg());
+           s = "Failed to read skip_street in " + streetsAppliesTo + " structure in config.json file";
+           println(s);
+           displayMgr.showErrMsg(s, true);
+           return false;
+        }
+
+        // Now check that only one flag is set in this structure
+        flagSetCount = 0;
+        if (changeXYOnly)
+        {
+            flagSetCount++;
+        }
+        if (changeXYAndVariant)
+        {
+            flagSetCount++;
+        }
+        if (doNothing)
+        {
+            flagSetCount++;
+        }
+        if (flagSetCount != 1)
+        {
+           s = "Should be one flag only set to true in " + streetsAppliesTo + " structure in config.json file";
+           println(s);
+           displayMgr.showErrMsg(s, true);
+           return false; 
+        }
+        
+        // Everything OK
+        return true;
+    }
+    
+    public void defaultSetup()
+    {
+        if (streetsAppliesTo.equals("persdata_qa_streets"))
+        {
+            changeXYOnly = false;
+            changeXYAndVariant = false; 
+            doNothing = true;
+        }
+        else
+        {
+            changeXYOnly = false;
+            changeXYAndVariant = true;
+            doNothing = false;
+        }
+        usingDefaultedValues = true;
+        return;
+    }
+    
+    public void validationSetup()
+    {
+        changeXYOnly = false;
+        changeXYAndVariant = true;
+        doNothing = false;
+        return;
+    }
+    
+    public boolean readChangeXYOnlyFlag()
+    {
+        return changeXYOnly;
+    }
+    
+    public boolean readChangeXYAndVariantFlag()
+    {
+        return changeXYAndVariant;
+    }
+    
+    public boolean readDoNothingFlag()
+    {
+        return doNothing;
+    }
+    
+    public boolean readUsingDefaultedValues()
+    {
+        return usingDefaultedValues;
+    }
 }

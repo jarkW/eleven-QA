@@ -391,7 +391,13 @@ public void draw()
             {
                 // The L* or G* file is missing for this street, or invalid data of some sort - so skip the street       
                 // Display the start up error messages
-                displayMgr.showThisSkippedStreetMsg();
+                displayMgr.showThisSkippedStreetMsg(true);
+                nextAction = SHOW_FAILED_STREET_MSG;
+                return;
+            }
+            else if (streetInfo.readSkipStreet())
+            {
+                displayMgr.showThisSkippedStreetMsg(false);
                 nextAction = SHOW_FAILED_STREET_MSG;
                 return;
             }
@@ -408,8 +414,16 @@ public void draw()
             break;
             
         case SHOW_FAILED_STREET_MSG:
-           // pause things for 5 seconds - so user can see previous output about failed street - then move on to next one
-            delay(5000);
+           // pause things for 5 seconds for actual errors - so user can see previous output about failed street - then move on to next one
+            if (streetInfo.readInvalidStreet())
+            {
+                delay(5000);
+            }
+            else
+            {
+                // Just delay for 1s to show skipping street for legitimate reasons
+                delay(1000);
+            }
             displayMgr.clearDisplay();
             streetBeingProcessed++;
             if (streetBeingProcessed >= configInfo.readTotalJSONStreetCount())
@@ -916,6 +930,3 @@ void configJSONFileSelected(File selection)
     }));
    
 }
-
-
-    
