@@ -45,7 +45,7 @@ class OutputFile
      
         String s;
         
-        // Write header information - which just dumps out the settings in the config.json file   
+        // Write header information - which just dumps out the settings in the QABot_config.json file   
         if (!configInfo.readUseVagrantFlag())
         {
             s = "Reading/writing files from server " + configInfo.readServerName();

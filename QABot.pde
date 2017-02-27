@@ -2,7 +2,7 @@ import sftp.*;
 import java.text.DecimalFormat;
 
 /*
- * Reads in a list of street TSIDs from a config.json file, and then using the item
+ * Reads in a list of street TSIDs from a QABot_config.json file, and then using the item
  * information/co-ordinates, searches street snaps with small item fragment images
  * to work out what the x,y needs to be for that item (rather than the guesses done manually 
  * during QA1). The item fragment images are stored in the data directory and were 
@@ -51,15 +51,15 @@ import java.text.DecimalFormat;
 
 
 
-// Directory where config.json is, and all saved JSON files - both original/new
+// Directory where QABot_config.json is, and all saved JSON files - both original/new
 String workingDir;
-// Contains all the info read in from config.json
+// Contains all the info read in from QABot_config.json
 ConfigInfo configInfo = null;
 
 // Information for this street i.e. the snaps of the street, items on the street
 StreetInfo streetInfo;
 
-// Keep track of which street we are on in the list from the config.json file
+// Keep track of which street we are on in the list from the QABot_config.json file
 int streetBeingProcessed;
 
 // Hash map of all the item images needed to validate this street - will be used by all streets
@@ -113,7 +113,7 @@ boolean failNow = false;    // abnormal ending/error
 PrintToFile printToFile;
 // 0 = no debug info 1=all debug info (useful for detailed stuff, rarely used), 
 // 2= general tracing info 3= error debug info only
-// This will be reset when the config.json is read
+// This will be reset when the QABot_config.json is read
 int debugLevel = 3;
 boolean debugToConsole = true;
 
@@ -148,12 +148,12 @@ public void setup()
         return;
     }
                      
-    // Find the directory that contains the config.json 
+    // Find the directory that contains the QABot_config.json 
     workingDir = "";
     if (!validConfigJSONLocation())
     {
         nextAction = USER_INPUT_CONFIG_FOLDER;
-        selectInput("Select config.json in working folder:", "configJSONFileSelected");
+        selectInput("Select QABot_config.json in working folder:", "configJSONFileSelected");
     }
     else
     {
@@ -170,7 +170,7 @@ public void draw()
     if (failNow)
     {
         // Give the user a chance to see any saved error message which could not be displayed earlier
-        // In particular when user selected invalid config.json (e.g. with hidden .txt suffix)
+        // In particular when user selected invalid QABot_config.json (e.g. with hidden .txt suffix)
         displayMgr.showSavedErrMsg();       
         nextAction = WAITING_FOR_INPUT;
     }
@@ -186,7 +186,7 @@ public void draw()
             break;
             
         case USER_INPUT_CONFIG_FOLDER:
-            // Need to get user to input valid location of config.json
+            // Need to get user to input valid location of QABot_config.json
             // Come here whilst wait for user to select the input
             if (workingDir.length() > 0)
             {
@@ -196,7 +196,7 @@ public void draw()
             
         case CONTINUE_SETUP:
         
-            // Now we have the working directory, we can set up the debug output file - so can report useful config.json errors
+            // Now we have the working directory, we can set up the debug output file - so can report useful QABot_config.json errors
             if (!printToFile.initPrintToDebugFile())
             {
                 println("Error creating debug output file");
@@ -651,7 +651,7 @@ boolean initialiseStreet()
     if (streetTSID.length() == 0)
     {
         // Failure to retrieve TSID
-        printToFile.printDebugLine(this, "Failed to read street TSID number " + str(streetBeingProcessed) + " from config.json", 3); 
+        printToFile.printDebugLine(this, "Failed to read street TSID number " + str(streetBeingProcessed) + " from QABot_config.json", 3); 
         return false;
     }
     
@@ -754,7 +754,7 @@ void keyPressed()
 
 boolean validConfigJSONLocation()
 {
-    // Searches for the configLocation.txt file which contains the saved location of the config.json file
+    // Searches for the configLocation.txt file which contains the saved location of the QABot_config.json file
     // That location is returned by this function.
     String  configLocation = "";
     File file = new File(sketchPath("configLocation.txt"));
@@ -764,17 +764,17 @@ boolean validConfigJSONLocation()
     }
     
     // File exists - now validate
-    //Read contents - first line is config.json location
+    //Read contents - first line is QABot_config.json location
     String [] configFileContents = loadStrings(sketchPath("configLocation.txt"));
     configLocation = configFileContents[0];
     
     // Have read in location - check it exists
     if (configLocation.length() > 0)
     {        
-        file = new File(configLocation + File.separatorChar + "config.json");
+        file = new File(configLocation + File.separatorChar + "QABot_config.json");
         if (!file.exists())
         {
-            println("Missing config.json file from ", configLocation);
+            println("Missing QABot_config.json file from ", configLocation);
             return false;
         }
     }
@@ -796,19 +796,19 @@ void configJSONFileSelected(File selection)
     {
         println("User selected " + selection.getAbsolutePath());
 
-        // Check that not selected config.json.txt which might look like config.json in the picker (as not seeing file suffixes for known file types on PC)
-        if (!selection.getAbsolutePath().endsWith("config.json"))
+        // Check that not selected QABot_config.json.txt which might look like QABot_config.json in the picker (as not seeing file suffixes for known file types on PC)
+        if (!selection.getAbsolutePath().endsWith("QABot_config.json"))
         {
-            println("Please select a config.json file (check does not have hidden .txt ending)");
-            displayMgr.setSavedErrMsg("Please select a config.json file (check does not have hidden .txt ending)");
+            println("Please select a QABot_config.json file (check does not have hidden .txt ending)");
+            displayMgr.setSavedErrMsg("Please select a QABot_config.json file (check does not have hidden .txt ending)");
             failNow = true;
             return;
         }
         
         // User selected correct file name so now save
         String[] list = new String[1];
-        // Strip out config.json part of name - to just get folder name
-        list[0] = selection.getAbsolutePath().replace(File.separatorChar + "config.json", "");
+        // Strip out QABot_config.json part of name - to just get folder name
+        list[0] = selection.getAbsolutePath().replace(File.separatorChar + "QABot_config.json", "");
         try
         {
             saveStrings(sketchPath("configLocation.txt"), list);
@@ -816,8 +816,8 @@ void configJSONFileSelected(File selection)
         catch (Exception e)
         {
             println(e);
-            println("error detected saving config.json location to configLocation.txt in program directory");
-            displayMgr.setSavedErrMsg("Error detected saving config.json location to configLocation.txt in program directory");
+            println("error detected saving QABot_config.json location to configLocation.txt in program directory");
+            displayMgr.setSavedErrMsg("Error detected saving QABot_config.json location to configLocation.txt in program directory");
             failNow = true;
             return;
         }

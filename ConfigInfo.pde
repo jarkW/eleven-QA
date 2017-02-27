@@ -60,29 +60,29 @@ class ConfigInfo {
         File file;
         
         // Open the config file
-        file = new File(workingDir + File.separatorChar + "config.json");
+        file = new File(workingDir + File.separatorChar + "QABot_config.json");
         if (!file.exists())
         {
-            println("Missing config.json file from ", workingDir);
-            displayMgr.showErrMsg("Missing config.json file from " + workingDir, true);
+            println("Missing QABot_config.json file from ", workingDir);
+            displayMgr.showErrMsg("Missing QABot_config.json file from " + workingDir, true);
             return false;
         }
         else
         {
-            println("Using config.json file in ", workingDir);
-            printToFile.printDebugLine(this, "Using config.json file in " + workingDir, 1);
+            println("Using QABot_config.json file in ", workingDir);
+            printToFile.printDebugLine(this, "Using QABot_config.json file in " + workingDir, 1);
         }
         
         try
         {
             // Read in stuff from the config file
-            json = loadJSONObject(workingDir + File.separatorChar + "config.json"); 
+            json = loadJSONObject(workingDir + File.separatorChar + "QABot_config.json"); 
         }
         catch(Exception e)
         {
             println(e);
-            println("Failed to load config.json file - check file is correctly formatted by pasting contents into http://jsonlint.com/");
-            displayMgr.showErrMsg("Failed to load config.json file - check file is correctly formatted by pasting contents into http://jsonlint.com/", true);
+            println("Failed to load QABot_config.json file - check file is correctly formatted by pasting contents into http://jsonlint.com/");
+            displayMgr.showErrMsg("Failed to load QABot_config.json file - check file is correctly formatted by pasting contents into http://jsonlint.com/", true);
             return false;
         }
         
@@ -98,8 +98,8 @@ class ConfigInfo {
         if (!Utils.readOkFlag())
         {
             println(Utils.readErrMsg());
-            println("Failed to read use_vagrant_dirs in config.json file");
-            displayMgr.showErrMsg("Failed to read use_vagrant_dirs in config.json file", true);
+            println("Failed to read use_vagrant_dirs in QABot_config.json file");
+            displayMgr.showErrMsg("Failed to read use_vagrant_dirs in QABot_config.json file", true);
             return false;
         }
         
@@ -117,8 +117,8 @@ class ConfigInfo {
             if (!Utils.readOkFlag())
             {
                 println(Utils.readErrMsg());
-                println("Failed to read vagrant_info in config.json file");
-                displayMgr.showErrMsg("Failed to read vagrant_info in config.json file", true);
+                println("Failed to read vagrant_info in QABot_config.json file");
+                displayMgr.showErrMsg("Failed to read vagrant_info in QABot_config.json file", true);
                 return false;
             }           
             serverName = "";
@@ -135,40 +135,40 @@ class ConfigInfo {
             if (!Utils.readOkFlag())
             {
                 println(Utils.readErrMsg());
-                println("Failed to read server_info in config.json file");
-                displayMgr.showErrMsg("Failed to read server_info in config.json file", true);
+                println("Failed to read server_info in QABot_config.json file");
+                displayMgr.showErrMsg("Failed to read server_info in QABot_config.json file", true);
                 return false;
             }  
             serverName = Utils.readJSONString(serverInfo, "host", true);
             if (!Utils.readOkFlag())
             {
                 println(Utils.readErrMsg());
-                println("Failed to read server host name in config.json file");
-                displayMgr.showErrMsg("Failed to read server host name in config.json file", true);
+                println("Failed to read server host name in QABot_config.json file");
+                displayMgr.showErrMsg("Failed to read server host name in QABot_config.json file", true);
                 return false;
             }  
             serverUsername = Utils.readJSONString(serverInfo, "username", true);
             if (!Utils.readOkFlag())
             {
                  println(Utils.readErrMsg());
-                 println("Failed to read server username in config.json file");
-                 displayMgr.showErrMsg("Failed to read server username in config.json file", true);
+                 println("Failed to read server username in QABot_config.json file");
+                 displayMgr.showErrMsg("Failed to read server username in QABot_config.json file", true);
                  return false;
             }            
             serverPassword = Utils.readJSONString(serverInfo, "password", true);
             if (!Utils.readOkFlag())
             {
                println(Utils.readErrMsg());
-               println("Failed to read server password in config.json file");
-               displayMgr.showErrMsg("Failed to read server password in config.json file", true);
+               println("Failed to read server password in QABot_config.json file");
+               displayMgr.showErrMsg("Failed to read server password in QABot_config.json file", true);
                return false;
             }
             serverPort = Utils.readJSONInt(serverInfo, "port", true);
             if (!Utils.readOkFlag())
             {
                println(Utils.readErrMsg());
-               println("Failed to read port in config.json file");
-               displayMgr.showErrMsg("Failed to read port in config.json file", true);
+               println("Failed to read port in QABot_config.json file");
+               displayMgr.showErrMsg("Failed to read port in QABot_config.json file", true);
                return false;
             }
             
@@ -176,8 +176,8 @@ class ConfigInfo {
             if (!Utils.readOkFlag())
             {
                 println(Utils.readErrMsg());
-                println("Failed to read server_dirs in config.json file");
-                displayMgr.showErrMsg("Failed to read server_dirs in config.json file", true);
+                println("Failed to read server_dirs in QABot_config.json file");
+                displayMgr.showErrMsg("Failed to read server_dirs in QABot_config.json file", true);
                 return false;
             }
             uploadString = "Uploading";
@@ -191,13 +191,13 @@ class ConfigInfo {
             println(Utils.readErrMsg());
             if (useVagrant)
             {
-                println("Failed to read eleven_path from vagrant_dirs in config.json file");
-                displayMgr.showErrMsg("Failed to read eleven_path from vagrant_dirs in config.json file", true);
+                println("Failed to read eleven_path from vagrant_dirs in QABot_config.json file");
+                displayMgr.showErrMsg("Failed to read eleven_path from vagrant_dirs in QABot_config.json file", true);
             }
             else
             {
-                println("Failed to read eleven_path from server_dirs in config.json file");
-                displayMgr.showErrMsg("Failed to read eleven_path from server_dirs in config.json file", true);
+                println("Failed to read eleven_path from server_dirs in QABot_config.json file");
+                displayMgr.showErrMsg("Failed to read eleven_path from server_dirs in QABot_config.json file", true);
             }
             return false;
         }
@@ -280,8 +280,8 @@ class ConfigInfo {
         if (!Utils.readOkFlag() || streetSnapPath.length() == 0)
         {
             println(Utils.readErrMsg());
-            println("Failed to read street_snap_path in config.json file");
-            displayMgr.showErrMsg("Failed to read street_snap_path in config.json file", true);
+            println("Failed to read street_snap_path in QABot_config.json file");
+            displayMgr.showErrMsg("Failed to read street_snap_path in QABot_config.json file", true);
             return false;
         }
         myDir = new File(streetSnapPath);
@@ -297,9 +297,9 @@ class ConfigInfo {
         outputStreetImagesPath = Utils.readJSONString(json, "output_street_images_path", false);
         if (outputStreetImagesPath.length() == 0)
         {
-            println("Failed to read output_street_images_path in config.json file - using default " + workingDir + File.separatorChar + "StreetSummaries");
+            println("Failed to read output_street_images_path in QABot_config.json file - using default " + workingDir + File.separatorChar + "StreetSummaries");
             // Don't report as error as would confuse the user - can't dump to log file as not yet created
-            //displayMgr.showErrMsg("Failed to read output_street_images_path in config.json file - using default " + defaultOutputStreetImagePath, false);
+            //displayMgr.showErrMsg("Failed to read output_street_images_path in QABot_config.json file - using default " + defaultOutputStreetImagePath, false);
             // Set path to the default
             outputStreetImagesPath = workingDir + File.separatorChar + "StreetSummaries";           
         }
@@ -329,8 +329,8 @@ class ConfigInfo {
         if (!Utils.readOkFlag() || outputFile.length() == 0)
         {
             println(Utils.readErrMsg());
-            println("Failed to read output_file in config.json file");
-            displayMgr.showErrMsg("Failed to read output_file in config.json file", true);
+            println("Failed to read output_file in QABot_config.json file");
+            displayMgr.showErrMsg("Failed to read output_file in QABot_config.json file", true);
             return false;
         }        
         // Need to check that output file is a text file
@@ -344,8 +344,8 @@ class ConfigInfo {
         writeJSONsToPersdata = Utils.readJSONBool(json, "write_JSONs_to_persdata", true);
         if (!Utils.readOkFlag())
         {
-            println("Failed to read write_JSONs_to_persdata in config.json file");
-            displayMgr.showErrMsg("Failed to read write_JSONs_to_persdata in config.json file", true);
+            println("Failed to read write_JSONs_to_persdata in QABot_config.json file");
+            displayMgr.showErrMsg("Failed to read write_JSONs_to_persdata in QABot_config.json file", true);
             return false;
         }
 
@@ -367,13 +367,13 @@ class ConfigInfo {
         {
             // Set up default values
             streetInPersdataQAAction.defaultSetup();
-            println("Failed to read persdata_qa_streets in config.json file - defaulting to skip these streets");
+            println("Failed to read persdata_qa_streets in QABot_config.json file - defaulting to skip these streets");
             // Don't report as error as would confuse the user - can't dump to log file as not yet created
-            //displayMgr.showErrMsg("Failed to read persdata_qa_streets in config.json file - defaulting to skip these streets", false);
+            //displayMgr.showErrMsg("Failed to read persdata_qa_streets in QABot_config.json file - defaulting to skip these streets", false);
         } 
         else
         {
-            // Read in values from config.json
+            // Read in values from QABot_config.json
             if (!streetInPersdataQAAction.validAction(actionInfo))
             {
                 // Error message already logged
@@ -387,13 +387,13 @@ class ConfigInfo {
         {
             // Set up default values
             streetNotInPersdataQAAction.defaultSetup();
-            println("Failed to read non_persdata_qa_streets in config.json file - defaulting to change x,y and variant for these streets");
+            println("Failed to read non_persdata_qa_streets in QABot_config.json file - defaulting to change x,y and variant for these streets");
             // Don't report as error as would confuse the user - can't dump to log file as not yet created
-            //displayMgr.showErrMsg("Failed to read non_persdata_qa_streets in config.json file - defaulting to change x,y only for these streets", false);
+            //displayMgr.showErrMsg("Failed to read non_persdata_qa_streets in QABot_config.json file - defaulting to change x,y only for these streets", false);
         } 
         else
         {
-            // Read in values from config.json
+            // Read in values from QABot_config.json
             if (!streetNotInPersdataQAAction.validAction(actionInfo))
             {
                 // Error message already logged
@@ -408,8 +408,8 @@ class ConfigInfo {
         }
         else if (searchRadius < 1)
         {
-            println("Please enter a search_radius which is larger than 0 in config.json file");
-            displayMgr.showErrMsg("Please enter a search_radius which is larger than 0 in config.json file", true);
+            println("Please enter a search_radius which is larger than 0 in QABot_config.json file");
+            displayMgr.showErrMsg("Please enter a search_radius which is larger than 0 in QABot_config.json file", true);
             return false;
         }
         
@@ -420,8 +420,8 @@ class ConfigInfo {
         }
         else if ((percentMatchCriteria < 1) || (percentMatchCriteria > 100))
         {
-            println("Please enter a valid value for percent_match_criteria which is between 1-100 in config.json file");
-            displayMgr.showErrMsg("Please enter a valid value for percent_match_criteria which is between 1-100 in config.json file", true);
+            println("Please enter a valid value for percent_match_criteria which is between 1-100 in QABot_config.json file");
+            displayMgr.showErrMsg("Please enter a valid value for percent_match_criteria which is between 1-100 in QABot_config.json file", true);
             return false;
         }
         
@@ -432,8 +432,8 @@ class ConfigInfo {
         }
         else if ((debugLevel < 0) || (debugLevel > 3))
         {
-            println("Please enter a valid value for tracing_level which is between 0-3 (0 is off, 1 gives much information, 3 reports errors only) in config.json file");
-            displayMgr.showErrMsg("Please enter a valid value for tracing_level which is between 0-3 (0 is off, 1 gives much information, 3 reports errors only) in config.json file", true);
+            println("Please enter a valid value for tracing_level which is between 0-3 (0 is off, 1 gives much information, 3 reports errors only) in QABot_config.json file");
+            displayMgr.showErrMsg("Please enter a valid value for tracing_level which is between 0-3 (0 is off, 1 gives much information, 3 reports errors only) in QABot_config.json file", true);
             return false;
         }
         
@@ -534,8 +534,8 @@ class ConfigInfo {
             if (!Utils.readOkFlag() || debugValidationPath.length() == 0)
             {
                 println(Utils.readErrMsg());
-                println("Failed to read debug_validation_path in config.json file");
-                displayMgr.showErrMsg("Failed to read debug_validation_path in config.json file", true);
+                println("Failed to read debug_validation_path in QABot_config.json file");
+                displayMgr.showErrMsg("Failed to read debug_validation_path in QABot_config.json file", true);
                 return false;
             }          
             outputFile = debugValidationPath + File.separatorChar + "validation.txt";
@@ -572,8 +572,8 @@ class ConfigInfo {
         if (!Utils.readOkFlag())
         {
             println(Utils.readErrMsg());
-            println("Failed to read in streets array from config.json");
-            displayMgr.showErrMsg("Failed to read in streets array from config.json", true);
+            println("Failed to read in streets array from QABot_config.json");
+            displayMgr.showErrMsg("Failed to read in streets array from QABot_config.json", true);
             return false;
         }
         try
@@ -585,8 +585,8 @@ class ConfigInfo {
                 if (!Utils.readOkFlag())
                 {
                     println(Utils.readErrMsg());
-                    println("Unable to read TSID entry from streets array in config.json");
-                    displayMgr.showErrMsg("Unable to read TSID entry from streets array in config.json", true);
+                    println("Unable to read TSID entry from streets array in QABot_config.json");
+                    displayMgr.showErrMsg("Unable to read TSID entry from streets array in QABot_config.json", true);
                     return false;
                 }
                              
@@ -604,8 +604,8 @@ class ConfigInfo {
         catch(Exception e)
         {
             println(e);
-            println("Failed to read (exception) in street array from config.json");
-            displayMgr.showErrMsg("Failed to read (exception) in street array from config.json", true);
+            println("Failed to read (exception) in street array from QABot_config.json");
+            displayMgr.showErrMsg("Failed to read (exception) in street array from QABot_config.json", true);
             return false;
         }  
         
@@ -825,7 +825,7 @@ class ActionToTake
         if (!Utils.readOkFlag())
         {
            println(Utils.readErrMsg());
-           s = "Failed to read change_xy_only in " + streetsAppliesTo + " structure in config.json file";
+           s = "Failed to read change_xy_only in " + streetsAppliesTo + " structure in QABot_config.json file";
            println(s);
            displayMgr.showErrMsg(s, true);
            return false;
@@ -835,7 +835,7 @@ class ActionToTake
         if (!Utils.readOkFlag())
         {
            println(Utils.readErrMsg());
-           s = "Failed to read change_xy_and_variant in " + streetsAppliesTo + " structure in config.json file";
+           s = "Failed to read change_xy_and_variant in " + streetsAppliesTo + " structure in QABot_config.json file";
            println(s);
            displayMgr.showErrMsg(s, true);
            return false;
@@ -845,7 +845,7 @@ class ActionToTake
         if (!Utils.readOkFlag())
         {
            println(Utils.readErrMsg());
-           s = "Failed to read skip_street in " + streetsAppliesTo + " structure in config.json file";
+           s = "Failed to read skip_street in " + streetsAppliesTo + " structure in QABot_config.json file";
            println(s);
            displayMgr.showErrMsg(s, true);
            return false;
@@ -867,7 +867,7 @@ class ActionToTake
         }
         if (flagSetCount != 1)
         {
-           s = "Should be one flag only set to true in " + streetsAppliesTo + " structure in config.json file";
+           s = "Should be one flag only set to true in " + streetsAppliesTo + " structure in QABot_config.json file";
            println(s);
            displayMgr.showErrMsg(s, true);
            return false; 

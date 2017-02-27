@@ -50,7 +50,7 @@ class PrintToFile
             return false;
         }
         
-        // Write header information - which just dumps out the settings in the config.json file 
+        // Write header information - which just dumps out the settings in the QABot_config.json file 
         printOutputLine(getTimeStamp());      
         infoOutput.writeHeaderInfo(false);
         return true;
@@ -79,7 +79,7 @@ class PrintToFile
             return false;
         }
         
-        // Write header information - which just dumps out the settings in the config.json file   
+        // Write header information - which just dumps out the settings in the QABot_config.json file   
         printValidationSummaryOutputLine(getTimeStamp());  
         validationSummaryOutput.writeHeaderInfo(true);
         

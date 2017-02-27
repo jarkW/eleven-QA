@@ -110,7 +110,7 @@ class SpiralSearch
         itemRGBMedian = -9999;
         streetRGBMedian = -9999;
         
-        // Set the search width to whatever was specified in the config.json file
+        // Set the search width to whatever was specified in the QABot_QABot_config.json file
         // For some items e.g. sloths, will manually extend the search radius as the branches have been
         // very poorly configured so far
         widthSearchBox = widthBox + (2*searchRadius) + searchAdjustment;

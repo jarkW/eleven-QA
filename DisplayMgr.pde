@@ -13,7 +13,7 @@ class DisplayMgr
     String streetNameMsg;
     String itemNameMsg;
     
-    // Needed e.g. for when prompting for config.json file and user enters invalid value - usual showErrMsg does not work because call back function?
+    // Needed e.g. for when prompting for QABot_config.json file and user enters invalid value - usual showErrMsg does not work because call back function?
     String savedErrMsg;
     boolean savedErrMsgToDisplay;
     
