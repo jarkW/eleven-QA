@@ -703,6 +703,9 @@ boolean setupWorkingDirectories()
         return false;
     }
     
+    // Default location for street output images is cleared each time the tool is run.
+    // If the user has specified a path for these files, then they are not cleared - up to the user
+    // Means that images are not lost when the tool is rerun for a single street for that region.
     if (!Utils.setupDir(workingDir + File.separatorChar +"StreetSummaries", false))
     {
         printToFile.printDebugLine(this, Utils.readErrMsg(), 3);

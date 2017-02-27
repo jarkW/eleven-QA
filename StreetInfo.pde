@@ -1268,16 +1268,10 @@ class StreetInfo
         
          summaryStreetSnap.updatePixels();
      
-         // save in work directory
+         // save in work/named directory
          String fname;
-         if (configInfo.readDebugValidationRun())
-         {
-             fname = configInfo.readDebugValidationPath() + File.separatorChar +"StreetSummaries" + File.separatorChar + streetName + "_summary.png";
-         }
-         else
-         {
-             fname = workingDir + File.separatorChar +"StreetSummaries" + File.separatorChar + streetName + "_summary.png";
-         }
+         
+         fname = configInfo.readOutputStreetImagesPath() + File.separatorChar + streetName + "_summary.png";
 
          printToFile.printDebugLine(this, "Saving summary image to " + fname, 1);
          if (!summaryStreetSnap.save(fname))

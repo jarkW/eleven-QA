@@ -69,6 +69,7 @@ class DisplayMgr
         textSize(16);
         
         s = "";
+        
         if (exitNow)
         {
             s = "FATAL ERROR: ";
@@ -88,8 +89,12 @@ class DisplayMgr
             }
             text(s1, 10, 140, width-10, 80);
             text("Press q or x or ESC to close window", 10, 160, width-10, 80);
+            printToFile.printDebugLine(this, "ERR MSG = FATAL ERROR: " + info + " exit now flag = " + exitNow, 3);
         }
-        printToFile.printDebugLine(this, "ERR MSG = FATAL ERROR: " + info + " exit now flag = " + exitNow, 3);
+        else
+        {
+            printToFile.printDebugLine(this, "ERR MSG = " + info + " exit now flag = " + exitNow, 3);
+        }
         
         errsFlag = true;
     }

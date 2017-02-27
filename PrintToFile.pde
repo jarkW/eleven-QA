@@ -98,7 +98,7 @@ class PrintToFile
             // Does not exist - so OK to continue
             return true;
         }
-
+        
         // Output file already exists. So rename
         String fileName = f.getName();
         String fileNamePrefix = fileName.replace(".txt", "");
