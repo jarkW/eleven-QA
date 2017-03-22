@@ -70,7 +70,7 @@ class OutputFile
         }
  
         // construct the string which documents the actions to be taken for persdata-qa and non-persdata-qa streets
-        if (configInfo.readStreetNotInPersdataQAAction().readChangeXYOnlyFlag())
+        if (configInfo.readStreetInPersdataAction().readChangeXYOnlyFlag())
         {
             if (configInfo.readStreetInPersdataQAAction().readChangeXYOnlyFlag())
             {
@@ -86,7 +86,7 @@ class OutputFile
                 s = "WARNING " + s + " x,y ONLY for items on streets not in persdata-qa, skipping streets in persdata-qa";
             }
         }
-        else if (configInfo.readStreetNotInPersdataQAAction().readChangeXYAndVariantFlag())
+        else if (configInfo.readStreetInPersdataAction().readChangeXYAndVariantFlag())
         {
             if (configInfo.readStreetInPersdataQAAction().readChangeXYOnlyFlag())
             {

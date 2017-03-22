@@ -425,7 +425,7 @@ class JSONDiff
             s = "ERROR - unexpected change to field - " + keyName + " - should never be changed when change_xy_only option is set in ";
             if (streetInfo.readStreetNotInPersdataQA())
             {
-                s = s + "non_persdata_qa_streets in QABot_config.json";
+                s = s + "persdata_streets in QABot_config.json";
             }
             else
             {

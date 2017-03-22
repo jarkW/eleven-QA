@@ -19,7 +19,7 @@ class ConfigInfo {
     boolean showDistFromOrigXY;
     boolean useMatureItemImagesOnly;
     ActionToTake streetInPersdataQAAction;
-    ActionToTake streetNotInPersdataQAAction;
+    ActionToTake streetInPersdataAction;
     String outputStreetImagesPath;
     
     boolean debugShowFragments;
@@ -381,20 +381,20 @@ class ConfigInfo {
             }
         }
         
-        streetNotInPersdataQAAction = new ActionToTake("non_persdata_qa_streets");
-        actionInfo = Utils.readJSONObject(json, "non_persdata_qa_streets", false); 
+        streetInPersdataAction = new ActionToTake("persdata_streets");
+        actionInfo = Utils.readJSONObject(json, "persdata_streets", false); 
         if (!Utils.readOkFlag())
         {
             // Set up default values
-            streetNotInPersdataQAAction.defaultSetup();
-            println("Failed to read non_persdata_qa_streets in QABot_config.json file - defaulting to change x,y and variant for these streets");
+            streetInPersdataAction.defaultSetup();
+            println("Failed to read persdata_streets in QABot_config.json file - defaulting to change x,y and variant for these streets");
             // Don't report as error as would confuse the user - can't dump to log file as not yet created
-            //displayMgr.showErrMsg("Failed to read non_persdata_qa_streets in QABot_config.json file - defaulting to change x,y only for these streets", false);
+            //displayMgr.showErrMsg("Failed to read persdata_streets in QABot_config.json file - defaulting to change x,y only for these streets", false);
         } 
         else
         {
             // Read in values from QABot_config.json
-            if (!streetNotInPersdataQAAction.validAction(actionInfo))
+            if (!streetInPersdataAction.validAction(actionInfo))
             {
                 // Error message already logged
                 return false;
@@ -526,7 +526,7 @@ class ConfigInfo {
             debugShowPercentMatchAsFloat = true;
             useMatureItemImagesOnly = false;
             streetInPersdataQAAction.validationSetup();
-            streetNotInPersdataQAAction.validationSetup();
+            streetInPersdataAction.validationSetup();
             
             //Reset paths to snaps and persdata (so always use the same set of original JSON files)
             
@@ -721,9 +721,9 @@ class ConfigInfo {
         return streetInPersdataQAAction;
     }
     
-    public ActionToTake readStreetNotInPersdataQAAction()
+    public ActionToTake readStreetInPersdataAction()
     {
-        return streetNotInPersdataQAAction;
+        return streetInPersdataAction;
     }
     
     public boolean readDebugDumpDiffImages()
@@ -821,34 +821,34 @@ class ActionToTake
         int flagSetCount;
               
         // Read in the different options
-        changeXYOnly = Utils.readJSONBool(actionInfo, "change_xy_only", true);
+        changeXYOnly = Utils.readJSONBool(actionInfo, "change_xy_only", false);
         if (!Utils.readOkFlag())
         {
+           // Just log this - is not an error
+           changeXYOnly = false;
            println(Utils.readErrMsg());
            s = "Failed to read change_xy_only in " + streetsAppliesTo + " structure in QABot_config.json file";
            println(s);
-           displayMgr.showErrMsg(s, true);
-           return false;
         }
         
-        changeXYAndVariant = Utils.readJSONBool(actionInfo, "change_xy_and_variant", true);
+        changeXYAndVariant = Utils.readJSONBool(actionInfo, "change_xy_and_variant", false);
         if (!Utils.readOkFlag())
         {
+           // Just log this - is not an error
+           changeXYAndVariant = false;
            println(Utils.readErrMsg());
            s = "Failed to read change_xy_and_variant in " + streetsAppliesTo + " structure in QABot_config.json file";
            println(s);
-           displayMgr.showErrMsg(s, true);
-           return false;
         }
         
-        doNothing = Utils.readJSONBool(actionInfo, "skip_street", true);
+        doNothing = Utils.readJSONBool(actionInfo, "skip_street", false);
         if (!Utils.readOkFlag())
         {
+           // Just log this - is not an error
+           doNothing = false;
            println(Utils.readErrMsg());
            s = "Failed to read skip_street in " + streetsAppliesTo + " structure in QABot_config.json file";
            println(s);
-           displayMgr.showErrMsg(s, true);
-           return false;
         }
 
         // Now check that only one flag is set in this structure

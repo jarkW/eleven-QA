@@ -676,18 +676,18 @@ class StreetInfo
         
         if (streetNotInPersdataQA)
         {
-            if (configInfo.readStreetNotInPersdataQAAction().readDoNothingFlag())
+            if (configInfo.readStreetInPersdataAction().readDoNothingFlag())
             {
                 // Skip this street - is not an error
                 // This flag is never defaulted to this value - so is only ever set by the user
-                printToFile.printDebugLine(this, "SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in non_persdata_qa_streets in QABot_config.json", 2);
+                printToFile.printDebugLine(this, "SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in persdata_streets in QABot_config.json", 2);
                 printToFile.printOutputLine("============================================================================================\n");
-                printToFile.printOutputLine("SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in non_persdata_qa_streets in QABot_config.json\n");
-                displayMgr.setSkippedStreetsMsg("Skipping street: " + streetTSID + " (" + streetName + ") because skip_street flag set in non_persdata_qa_streets in QABot_config.json");
+                printToFile.printOutputLine("SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in persdata_streets in QABot_config.json\n");
+                displayMgr.setSkippedStreetsMsg("Skipping street: " + streetTSID + " (" + streetName + ") because skip_street flag set in persdata_streets in QABot_config.json");
                 skipStreet = true;
                 return true; // continue
             }
-            else if (configInfo.readStreetNotInPersdataQAAction().readChangeXYOnlyFlag())
+            else if (configInfo.readStreetInPersdataAction().readChangeXYOnlyFlag())
             {
                 // Reset the flag to true - is false by default, implying change everything
                 changeItemXYOnly = true;
