@@ -1,6 +1,8 @@
 import sftp.*;
 import java.text.DecimalFormat;
 
+// v2.0
+
 /*
  * Reads in a list of street TSIDs from a QABot_config.json file, and then using the item
  * information/co-ordinates, searches street snaps with small item fragment images

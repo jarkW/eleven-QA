@@ -351,6 +351,7 @@ class ConfigInfo {
 
         // The following options are OPTIONAL - so don't need to be in the JSON file   
         
+        // Haven't included this in the docs for other people - so this flag will always be true for them
         outputListJSONsWrittenToPersdata = Utils.readJSONBool(json, "output_list_JSONs_written_to_persdata", false);
         if (!Utils.readOkFlag())
         {
