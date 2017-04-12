@@ -362,15 +362,15 @@ class ConfigInfo {
         // Can either be no action, change x,y only or change everything. 
         // Fail if there is not one option set to true.
         // If this structure is missing, then set to the default position of changing everything in non persdata-qa, nothing for persdata-qa
-        streetInPersdataQAAction = new ActionToTake("persdata_qa_streets");
-        JSONObject actionInfo = Utils.readJSONObject(json, "persdata_qa_streets", false); 
+        streetInPersdataQAAction = new ActionToTake("persdata_qa_streets_action");
+        JSONObject actionInfo = Utils.readJSONObject(json, "persdata_qa_streets_action", false); 
         if (!Utils.readOkFlag())
         {
             // Set up default values
             streetInPersdataQAAction.defaultSetup();
-            println("Failed to read persdata_qa_streets in QABot_config.json file - defaulting to skip these streets");
+            println("Failed to read persdata_qa_streets_action in QABot_config.json file - defaulting to skip these streets");
             // Don't report as error as would confuse the user - can't dump to log file as not yet created
-            //displayMgr.showErrMsg("Failed to read persdata_qa_streets in QABot_config.json file - defaulting to skip these streets", false);
+            //displayMgr.showErrMsg("Failed to read persdata_qa_streets_action in QABot_config.json file - defaulting to skip these streets", false);
         } 
         else
         {
@@ -382,15 +382,15 @@ class ConfigInfo {
             }
         }
         
-        streetInPersdataAction = new ActionToTake("persdata_streets");
-        actionInfo = Utils.readJSONObject(json, "persdata_streets", false); 
+        streetInPersdataAction = new ActionToTake("persdata_streets_action");
+        actionInfo = Utils.readJSONObject(json, "persdata_streets_action", false); 
         if (!Utils.readOkFlag())
         {
             // Set up default values
             streetInPersdataAction.defaultSetup();
-            println("Failed to read persdata_streets in QABot_config.json file - defaulting to change x,y and variant for these streets");
+            println("Failed to read persdata_streets_action in QABot_config.json file - defaulting to change x,y and variant for these streets");
             // Don't report as error as would confuse the user - can't dump to log file as not yet created
-            //displayMgr.showErrMsg("Failed to read persdata_streets in QABot_config.json file - defaulting to change x,y only for these streets", false);
+            //displayMgr.showErrMsg("Failed to read persdata_streets_action in QABot_config.json file - defaulting to change x,y only for these streets", false);
         } 
         else
         {
@@ -880,7 +880,7 @@ class ActionToTake
     
     public void defaultSetup()
     {
-        if (streetsAppliesTo.equals("persdata_qa_streets"))
+        if (streetsAppliesTo.equals("persdata_qa_streets_action"))
         {
             changeXYOnly = false;
             changeXYAndVariant = false; 

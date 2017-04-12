@@ -680,10 +680,10 @@ class StreetInfo
             {
                 // Skip this street - is not an error
                 // This flag is never defaulted to this value - so is only ever set by the user
-                printToFile.printDebugLine(this, "SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in persdata_streets in QABot_config.json", 2);
+                printToFile.printDebugLine(this, "SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in persdata_streets_action in QABot_config.json", 2);
                 printToFile.printOutputLine("============================================================================================\n");
-                printToFile.printOutputLine("SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in persdata_streets in QABot_config.json\n");
-                displayMgr.setSkippedStreetsMsg("Skipping street: " + streetTSID + " (" + streetName + ") because skip_street flag set in persdata_streets in QABot_config.json");
+                printToFile.printOutputLine("SKIPPING STREET " + streetTSID + " (" + streetName + ") because skip_street flag set in persdata_streets_action in QABot_config.json\n");
+                displayMgr.setSkippedStreetsMsg("Skipping street: " + streetTSID + " (" + streetName + ") because skip_street flag set in persdata_streets_action in QABot_config.json");
                 skipStreet = true;
                 return true; // continue
             }
@@ -702,11 +702,11 @@ class StreetInfo
                 // If the structure is missing, then this field may be have been defaulted by the program - so give different error message
                 if (configInfo.readStreetInPersdataQAAction().readUsingDefaultedValues())
                 {
-                    s = " = default action for street found in persdata-qa (missing persdata_qa_streets in QABot_config.json)"; 
+                    s = " = default action for street found in persdata-qa (missing persdata_qa_streets_action in QABot_config.json)"; 
                 }
                 else
                 {
-                    s = " because skip_street flag set in persdata_qa_streets in QABot_config.json";
+                    s = " because skip_street flag set in persdata_qa_streets_action in QABot_config.json";
                 }
                 printToFile.printDebugLine(this, "SKIPPING STREET " + streetTSID + " (" + streetName + ")" + s, 2);    
                 printToFile.printOutputLine("============================================================================================\n");
