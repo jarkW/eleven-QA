@@ -47,7 +47,26 @@ class ItemImages
         }       
 
         // Load up the trees - most mature variants first as these are the most common
-        if (!addMultipleImagesForItem("trees", 10, 1, -1, -1))
+        // Separate out egg/dark_patch from other trees - as egg trees can only ever be planted here
+        if (!addMultipleImagesForItem("trees_subterranean", 10, 1, -1, -1))
+        {
+            return false;
+        }
+
+        // Add in images for dead trees
+        itemImages.add(new PNGFile("trant_egg_dead.png", false));
+
+        // Also include dirt patches - as these might be what exists on snaps if trees had been killed
+        itemImages.add(new PNGFile("patch_dark.png", false)); 
+
+        // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
+        if (!addToHashMapAndLoadImages("trees_subterranean"))
+        {
+            return false;
+        }
+        
+        // Now do the remaining trees 
+        if (!addMultipleImagesForItem("trees_ground", 10, 1, -1, -1))
         {
             return false;
         }
@@ -58,14 +77,12 @@ class ItemImages
         itemImages.add(new PNGFile("trant_bubble_dead.png", false));
         itemImages.add(new PNGFile("trant_spice_dead.png", false));
         itemImages.add(new PNGFile("trant_gas_dead.png", false));
-        itemImages.add(new PNGFile("trant_egg_dead.png", false));
 
         // Also include dirt patches - as these might be what exists on snaps if trees had been killed
-        itemImages.add(new PNGFile("patch_dark.png", false)); 
         itemImages.add(new PNGFile("patch.png", false)); 
 
         // This function will also update the imageCount and then new the itemImages array list ready for the next set of images
-        if (!addToHashMapAndLoadImages("trees"))
+        if (!addToHashMapAndLoadImages("trees_ground"))
         {
             return false;
         }
@@ -333,8 +350,17 @@ class ItemImages
         
         // Some items are more complex than others, so need to handle within a case statement
         switch (hashkey)
-        {
-            case "trees":
+        { 
+            case "trees_subterranean":
+                // Load up the trees - most mature variants first as these are the most common      
+                for (i = maxMaturityVal; i >= smallestMaturity; i--)
+                {     
+                    // Trees have maturity 1-10
+                    addImageForItem("trant_egg", "", str(i));
+                }
+                break;
+                
+            case "trees_ground":
                 // Load up the trees - most mature variants first as these are the most common      
                 for (i = maxMaturityVal; i >= smallestMaturity; i--)
                 {     
@@ -344,7 +370,6 @@ class ItemImages
                     addImageForItem("trant_bubble", "", str(i));
                     addImageForItem("trant_spice", "", str(i));
                     addImageForItem("trant_gas", "", str(i));
-                    addImageForItem("trant_egg", "", str(i));
                     // Wood trees - need to include state 6 at same level as state 10 for all other trees
                     // Wood trees have maturity 1-6 rather than 1-10
                     // Although the random duplication means that some 'adult' wood trees are searched before others

@@ -264,12 +264,17 @@ class ItemInfo
     
     boolean getThisItemImages()
     {
-        // Using the item class_tsid, get the pointer to the images for this item
-        // Depending on the item might need to tweak the order of items - TO DO???? 
-        
+        // Using the item class_tsid, get the pointer to the images for this item       
         if (itemIsAPlayerPlantedTree())
         {
-            itemImages = allItemImages.getItemImages("trees");
+            if (itemClassTSID.equals("trant_egg") || itemClassTSID.equals("patch_dark"))
+            {
+                itemImages = allItemImages.getItemImages("trees_subterranean");
+            }
+            else
+            {
+                itemImages = allItemImages.getItemImages("trees_ground");
+            }
         }
         else
         {
