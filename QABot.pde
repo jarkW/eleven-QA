@@ -1,7 +1,7 @@
 import sftp.*;
 import java.text.DecimalFormat;
 
-// v2.0 for real
+// v2.0 - uses Processing 3.3.3
 
 /*
  * Reads in a list of street TSIDs from a QABot_config.json file, and then using the item
