@@ -475,6 +475,7 @@ class JSONDiff
                 break;
                  
             case "wood_tree":
+            case "wood_tree_enchanted":
                 if (!keyName.equals("variant"))
                 {
                     validKey = false;
@@ -487,16 +488,15 @@ class JSONDiff
                     // This leg of code was needed to trap a bug I found where the class_tsid of the snap tree appeared in the wood_tree variant field.
                     if (checkValue && !value.equals("1") && !value.equals("2") && !value.equals("3") && !value.equals("4"))
                     {
-                        printToFile.printDebugLine(this, "Unexpected change to field " + keyName + " in wood_tree JSON file - set to " + value, 3);
+                        printToFile.printDebugLine(this, "Unexpected change to field " + keyName + " in " + itemClassTSID + " JSON file - set to " + value, 3);
                         return false;
                     }
                 }
-                printToFile.printDebugLine(this, "Expected change to field " + keyName + " in wood_tree JSON file ", 1);
+                printToFile.printDebugLine(this, "Expected change to field " + keyName + " in " + itemClassTSID + " JSON file ", 1);
                 break;            
 
             case "npc_mailbox":
             case "dirt_pile":
-            case "wood_tree_enchanted":
                 if (!keyName.equals("variant"))
                 {
                     validKey = false;

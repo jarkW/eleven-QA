@@ -830,6 +830,7 @@ class ItemInfo
                 {
                     // These items have a variant and state part of the matching file name
                     case "wood_tree":
+                    case "wood_tree_enchanted":
                     case "mortar_barnacle":
                     case "jellisac":
                         // The variant is the next digit - ignore the maturity information which comes after that
