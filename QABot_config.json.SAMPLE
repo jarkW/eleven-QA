@@ -1,0 +1,69 @@
+/*
+--- INSTRUCTIONS ---
+This is to be used as the basis for creating the QABot_config.json - it is NOT a valid
+JSON file as is (comments are not allowed).
+To create a valid QABot_config.json  file do the following:
+	1) Create an empty file named QABot_config.json in the working directory.
+	2) Set up the fields to the correct values
+	streets - list of TSIDs to be read (NB last TSID must not have trailing comma)
+	use_vagrant_dirs - set to true if the street/item JSON files are on a PC version of Eleven
+					 - set to false if using the QA server/persdata
+    server - set up the hostname, port, username and password for server. 
+	eleven_path - set to root directory which contains eleven-fixtures-json and eleven-throwaway-server
+	(optional) fixtures_path - set to directory which contains fixtures (overrides default eleven_path/eleven-fixtures-json)
+	(optional) persdata_path - set to directory which contains persdata (overrides default eleven_path/eleven-throwaway-server/persdata)
+	(optional) persdata_qa_path - set to directory which contains persdata-qa (overrides default eleven_path/eleven-throwaway-server/persdata-qa)
+	street_snap_path - set to path containing all the archive street snaps for these streets (for PC use '\\', Mac use '/' as path separator)
+	output_file - set to path/name of file which contain a summary of all the changes made by this tool. (for PC use '\\', Mac use '/' as path separator)
+	(optional) output_street_images_path - set to path which contain copies of the street images clearly showing missing/found items. If missing, these images will be placed in the StreetSummaries in the working directory, which will be cleared each time the tool is run. (for PC use '\\', Mac use '/' as path separator)
+	(optional) search_radius - defaulted to 25 pixels. Making the number smaller will speed up the searches, but may miss items which are almost in the right place
+	(optional) percent_match_criteria - defaulted to 90% match for an item to be considered 'found' (as QQs stretch/contract they will need (value - 15)% to count as a match)
+	(optional) tracing_level - 0 (no tracing); 1 (maxiumum tracing = default); 2 (important messages); 3 (error messages only)
+	write_JSONs_to_persdata - indicates if changed JSON files should be written into the persdata directory or not. Set to false if only want to see tool output.
+	(optional) persdata_streets_action - indicates the actions this tool should carry out for streets found in persdata only before /qasave has been run. These are change x,y/variant (default), change x,y only, skip street.
+	(optional) persdata_qa_streets_action - indicates the actions this tool should carry out for streets found in persdata-qa after /qasave has already been run - which means you don't want to overwrite the variant of quoins for example, only want to tweak x,y values. These are change x,y/variant, change x,y only (default), skip street.
+	(optional) use_mature_item_images_only: Specifies whether to search the street for mature i.e. fully formed trees, rocks etc only. This speeds up the tool, but means that immature trees or mined rocks will not lead to a match. The default is set to false, which means the full set of immature items will be used to attempt to find a match.
+	(optional) show_distance_from_original_xy: Specifies whether to report on how far the found item is from the original x,y in the item json file. Default is set to false.
+	3) Copy and paste everything inside/including braces to new file. There must NOT be a trailing comma
+		after the final section.
+	4) Using a json validator (there are a number online) may be helpful after editing.
+*/
+// Copy everything from below this line into your QABot_config.json
+{
+  "streets": [
+	{"tsid": "LHV4U509S9B2MRV"},
+	{"tsid": "LHVT0JVHRIA2IE9"}
+  ],
+  "use_vagrant_dirs": true,
+  "vagrant_info": {
+	"eleven_path": "C:\\Glitch\\eleven"
+  },
+  "server_info": {
+  	"host": "",
+	"port": "",
+    "username": "",
+    "password": "",
+	"server_dirs": {
+		"eleven_path": ""
+	}
+  },
+  "street_snap_path": "C:\\Glitch\\QA2\\StreetSnapsArchive\\Groddle Forest",
+  "output_file": "C:\\Glitch\\QA2\\region.txt",
+  "output_street_images_path": "C:\\Glitch\\QA2\\QABotOutput\\StreetImages\\GroddleForest",
+  "search_radius": 25,
+  "percent_match_criteria": 90,
+  "tracing_level": 1,
+  "show_distance_from_original_xy": false,
+  "persdata_streets_action": {
+	  "change_xy_and_variant": true,
+	  "change_xy_only": false,
+	  "skip_street": false
+	},
+  "persdata_qa_streets_action": {
+	  "change_xy_and_variant": false,
+	  "change_xy_only": true,
+	  "skip_street": false
+	},
+  "use_mature_item_images_only": false,	
+  "write_JSONs_to_persdata": false
+} 

@@ -88,7 +88,7 @@ class DisplayMgr
                 s1 = s1 + workingDir + File.separatorChar + "debug_info.txt for more information";
             }
             text(s1, 10, 140, width-10, 80);
-            text("Press q or x or ESC to close window", 10, 160, width-10, 80);
+            text("Press q or x or ESC to close window", 10, 160, width-10, 80);           
             printToFile.printDebugLine(this, "ERR MSG = FATAL ERROR: " + info + " exit now flag = " + exitNow, 3);
         }
         else

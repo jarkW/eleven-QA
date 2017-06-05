@@ -1,7 +1,7 @@
 import sftp.*;
 import java.text.DecimalFormat;
 
-// v2.0.1 - uses Processing 3.3.3
+// v2.0.1 - uses Processing 3.3.4
 
 /*
  * Reads in a list of street TSIDs from a QABot_config.json file, and then using the item
@@ -161,7 +161,6 @@ public void setup()
     {
         nextAction = CONTINUE_SETUP;
     }
-
 }
 
 public void draw() 
@@ -169,7 +168,7 @@ public void draw()
     String currentItemTSID;
 
     // Each time we enter the loop check for error/end flags
-    if (failNow)
+    if (failNow && nextAction != EXIT_NOW)
     {
         // Give the user a chance to see any saved error message which could not be displayed earlier
         // In particular when user selected invalid QABot_config.json (e.g. with hidden .txt suffix)
@@ -587,7 +586,7 @@ public void draw()
             doExitCleanUp();
             memory.printMemoryUsage();
             exit();
-            break;
+            //break;
            
         default:
             // Error condition
@@ -637,11 +636,7 @@ void doExitCleanUp()
     // Close the output/debug files
     printToFile.closeOutputFile();
     printToFile.closeDebugFile();
-    if (configInfo.readDebugValidationRun())
-    {
-        printToFile.closevalidationSummaryOutputFile();
-    }
-
+    printToFile.closevalidationSummaryOutputFile();
 }
 
 boolean initialiseStreet()

@@ -12,6 +12,9 @@ class PrintToFile
     {
         okFlag = true;
         startTimeMillis = System.currentTimeMillis();
+        debugOutput = null;
+        infoOutput = null;
+        validationSummaryOutput = null;
     }
     
     public boolean initPrintToDebugFile()
@@ -29,7 +32,7 @@ class PrintToFile
             }
         } 
         // Print timestamp at top of file
-        printDebugLine(this, getTimeStamp(), 3);             
+        printDebugLine(this, getTimeStamp(), 3);  
         return true;
     }     
     
@@ -145,8 +148,8 @@ class PrintToFile
     // if not needed
     public void printDebugLine(Object callingClass, String lineToWrite, int severity)
     {     
-        // Do nothing if not collecting debug info
-        if (debugLevel == 0)
+        // Do nothing if not collecting debug info or file not yet opened
+        if ((debugLevel == 0) || (debugOutput == null))
         {
             return;
         }
@@ -170,6 +173,11 @@ class PrintToFile
     // prints out line to file which tells the user what the tool actually did/found
     public void printOutputLine(String lineToWrite)
     {
+        // Just return if output file not open yet
+        if (infoOutput == null)
+        {
+            return;
+        }
                
         // Do we need to print this line to the console
         if (debugToConsole)
@@ -182,7 +190,13 @@ class PrintToFile
     }
 
     public void printValidationSummaryOutputLine(String lineToWrite)
-    {               
+    { 
+        // Just return if output file not open yet
+        if (validationSummaryOutput == null)
+        {
+            return;
+        }
+        
         // Output line 
         validationSummaryOutput.printLine(lineToWrite);
     }
