@@ -278,6 +278,29 @@ class SummaryChanges implements Comparable
     {
         return result;
     }
+
+    public String readResultAsText()
+    {
+        switch (result)
+        {
+            case SKIPPED:
+                return "SKIPPED";
+            case MISSING:
+                return "MISSING";
+            case MISSING_DUPLICATE:
+                return "MISSING_DUPLICATE";
+            case COORDS_ONLY:
+                return "COORDS_ONLY";
+            case VARIANT_ONLY:
+                return "VARIANT_ONLY";
+            case VARIANT_AND_COORDS_CHANGED:
+                return "VARIANT_AND_COORDS_CHANGED";
+            case UNCHANGED:
+                return "UNCHANGED";
+            default:
+                return "UNEXPECTED RESULT";      
+        }
+    }
     
     public boolean readMisplacedQuoin()
     {

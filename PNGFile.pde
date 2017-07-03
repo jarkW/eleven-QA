@@ -161,7 +161,7 @@ class PNGFile
             return false;
         } 
         
-        printToFile.printDebugLine(this, "Loading image from " + fullFileName + " with width " + PNGImage.height + " height " + PNGImage.width, 1);
+        printToFile.printDebugLine(this, "Loading image from " + fullFileName + " with width " + PNGImage.width + " height " + PNGImage.height, 1);
         if (dumpMemoryInfo)
         { 
             memory.printUsedMemory("image load end " + PNGImageName);

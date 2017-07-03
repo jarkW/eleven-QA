@@ -1165,15 +1165,18 @@ class StreetInfo
                 // Need to account for the offset of the item image from item x,y in JSON
                 // The results array list contains the final x,y - whether original x,y (missing) or the new x,y (found)
                 topX = itemResults.get(n).readItemX() + geoWidth/2 + bestItemMatchInfo.readItemImageXOffset();
-                topY = itemResults.get(n).readItemY() + geoHeight + bestItemMatchInfo.readItemImageYOffset();                 
-
+                topY = itemResults.get(n).readItemY() + geoHeight + bestItemMatchInfo.readItemImageYOffset();  
+                
+                String s = itemResults.get(n).readResultAsText() + " " + itemResults.get(n).readItemInfo().readItemClassTSID() + " " + itemResults.get(n).readItemInfo().readItemTSID() + " at " + itemResults.get(n).readItemX() + "," + itemResults.get(n).readItemY();
+                s = s + " matchXOffset= " + bestItemMatchInfo.readItemImageXOffset() + " matchYOffset= " + bestItemMatchInfo.readItemImageYOffset() + " gives box top LH corner at " + topX + "," + topY;
+                printToFile.printDebugLine(this, s, 1);
                 // Now copy the pixels of the fragment into the correct place - so can see mismatches easily
                 float a;
                 int boxColour;
                 int boxHeight;
                 int boxWidth;
                 int lineWidth;
-                                               
+                                                             
                 // If this is a missing item - then draw a red box around the item to show unsure - print %match also?
                 // For all other items draw a black box to show found
                 if (itemResults.get(n).readResult() == SummaryChanges.MISSING || itemResults.get(n).readResult() == SummaryChanges.MISSING_DUPLICATE)
@@ -1183,18 +1186,17 @@ class StreetInfo
                     
                     // Put a 9 pixel dot at the centre of the box
                     locStreet = (topX-1) + ((topY-1) * geoWidth);
-                    summaryStreetSnap.pixels[locStreet] = boxColour;
-                    summaryStreetSnap.pixels[locStreet+1] = boxColour;
-                    summaryStreetSnap.pixels[locStreet+2] = boxColour;
+                    setPixel(summaryStreetSnap, locStreet, boxColour);
+                    setPixel(summaryStreetSnap, locStreet+1, boxColour);
+                    setPixel(summaryStreetSnap, locStreet+2, boxColour);
                     locStreet = (topX-1) + ((topY) * geoWidth);
-                    summaryStreetSnap.pixels[locStreet] = boxColour;
-                    summaryStreetSnap.pixels[locStreet+1] = boxColour;
-                    summaryStreetSnap.pixels[locStreet+2] = boxColour;
+                    setPixel(summaryStreetSnap, locStreet, boxColour);
+                    setPixel(summaryStreetSnap, locStreet+1, boxColour);
+                    setPixel(summaryStreetSnap, locStreet+2, boxColour);
                     locStreet = (topX-1) + ((topY+1) * geoWidth);
-                    summaryStreetSnap.pixels[locStreet] = boxColour;
-                    summaryStreetSnap.pixels[locStreet+1] = boxColour;
-                    summaryStreetSnap.pixels[locStreet+2] = boxColour;
-                    
+                    setPixel(summaryStreetSnap, locStreet, boxColour);
+                    setPixel(summaryStreetSnap, locStreet+1, boxColour);
+                    setPixel(summaryStreetSnap, locStreet+2, boxColour);
                     boxHeight = configInfo.readSearchRadius() * 2;
                     boxWidth = configInfo.readSearchRadius() * 2;
                     topX = topX - configInfo.readSearchRadius();
@@ -1295,7 +1297,7 @@ class StreetInfo
         int i;
         int j;
         int loc;
-        
+               
         printToFile.printDebugLine(this, "Passing in top x,y " + topX + "," + topY + " bottom x,y " + bottomX + "," + bottomY, 1);
         
         // Draw top/bottom horizontal lines
@@ -1341,6 +1343,14 @@ class StreetInfo
         {
             // Is valid pixel
             image.pixels[loc] = colour;
+            
+            
+            // print out the Processing x,y for this loc
+            /*
+            int x = loc % geoWidth;
+            int y = loc / geoWidth;
+            printToFile.printDebugLine(this, "Writing pixel at loc " + loc + " (Processing x,y " + x + "," + y + ")", 1);
+            */
         }
     }
 
