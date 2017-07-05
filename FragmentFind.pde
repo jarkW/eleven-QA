@@ -186,13 +186,12 @@ class FragmentFind
     {
         String debugInfo = "";
         String s;
-                
         displayMgr.showItemImage(itemImages.get(itemImageBeingUsed).readPNGImage(), thisItemInfo.readOrigItemX() + "," + thisItemInfo.readOrigItemY());
         displayMgr.showStreetFragmentImage(streetSnapImage.readPNGImage(), 
                                 itemImages.get(itemImageBeingUsed).readPNGImageWidth(), 
                                 itemImages.get(itemImageBeingUsed).readPNGImageHeight(),
-                                startItemX + streetSnapImage.readPNGImage().width/2 + itemImages.get(itemImageBeingUsed).readFragOffsetX(),
-                                startItemY + streetSnapImage.readPNGImage().height + itemImages.get(itemImageBeingUsed).readFragOffsetY());
+                                streetInfo.convertJSONXToProcessingX(startItemX + itemImages.get(itemImageBeingUsed).readFragOffsetX()),
+                                streetInfo.convertJSONYToProcessingY(startItemY + itemImages.get(itemImageBeingUsed).readFragOffsetY()));
         displayMgr.showStreetImage(streetSnapImage.readPNGImage(), streetSnapImage.readPNGImageName());
         
         // Carry out the search for the item and depending on the result might then move on to look at the next image

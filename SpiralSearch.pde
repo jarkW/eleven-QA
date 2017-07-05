@@ -101,8 +101,8 @@ class SpiralSearch
         itemImageName = itemFragName;
         streetImageName = streetSnapName;
         
-        startX = itemX + thisStreetImage.width/2 + fragOffsetX;
-        startY = itemY + thisStreetImage.height + fragOffsetY;
+        startX = streetInfo.convertJSONXToProcessingX(itemX + fragOffsetX);
+        startY = streetInfo.convertJSONYToProcessingY(itemY + fragOffsetY);
         
         spiralCount = 0; 
         RGBDiffCount = 0;
@@ -189,15 +189,18 @@ class SpiralSearch
                 searchResult = PERFECT_MATCH;
                 lowestAvgRGBDiffStepX = stepX;
                 lowestAvgRGBDiffStepY = stepY;
-                printToFile.printDebugLine(this, "Perfect Match found at  x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) + " spiralCount = " + spiralCount, 2);
+                printToFile.printDebugLine(this, "Perfect Match found at  x,y " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + 
+                                                  streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY) + " spiralCount = " + spiralCount, 2);
                            
                 if (!configInfo.readDebugUseTintedFragment())
                 {
-                    info = "Perfect fit/B&W at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) + " with " + itemImageName;
+                    info = "Perfect fit/B&W at " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + 
+                            streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY) + " with " + itemImageName;
                 }
                 else
                 {
-                    info = "Perfect fit/tinted at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) + " with " + itemImageName;
+                    info = "Perfect fit/tinted at " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + 
+                            streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY) + " with " + itemImageName;
                 }
                 displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);
                 return searchResult;
@@ -239,7 +242,8 @@ class SpiralSearch
         {
             searchResult = GOOD_MATCH;
             printToFile.printDebugLine(this, "Good enough match found " +
-            " at x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) +
+            " at x,y " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + 
+            streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY) +
             " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
             " ratio lowest:total avg RGB diff = " + formattedRatio +
@@ -250,7 +254,8 @@ class SpiralSearch
             testStreetFragment = convertImageToBW(testStreetFragment, thisItemImage); 
 
             // Item images are good as they are - are the ones which have been used to do the searching with
-            info = "good enough fit (avgRGBDiff = " + formattedRatio + ") at " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY) + " with " + itemImageName;
+            info = "good enough fit (avgRGBDiff = " + formattedRatio + ") at " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + 
+                    streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY) + " with " + itemImageName;
             displayMgr.showDebugImages(testStreetFragment, testItemFragment, info);          
             return searchResult;
         }
@@ -262,7 +267,8 @@ class SpiralSearch
             " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
             " ratio lowest:total avg RGB diff = " + formattedRatio +
             " % match = " + formattedPercentage +
-            " for x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY), 2); 
+            " for x,y " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + 
+            streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY), 2); 
         }
              
         // If reached this stage - failed to find item
@@ -759,18 +765,6 @@ class SpiralSearch
         printToFile.printDebugLine(this, "Adjusted percentage match criteria for " + thisItemClassTSID + " is " + adjustedPercent, 1);
         return int(adjustedPercent);
     }
-       
-    public int convertToJSONX(int pixelX)
-    {
-        // converts the pixel X co-ord from 0-width, into JSON equivalent X co-ord
-        return pixelX - thisStreetImage.width/2 - fragOffsetX;
-    }
-    
-    public int convertToJSONY(int pixelY)
-    {
-        // converts the pixel Y co-ord from 0-width, into JSON equivalent Y co-ord
-        return pixelY - thisStreetImage.height - fragOffsetY;
-    }
 
     // Used for debugging only
     public String debugRGBInfo()
@@ -799,8 +793,7 @@ class SpiralSearch
         String s = " avg lowest RGB diff/pixel/avg RGB total diff/pixel = " + int (lowestAvgRGBDiffPerPixel) +
                     " /" + int (avgTotalRGBDiffPerPixel) +
                     " = " + formattedRatio +
-                    " at x,y " + convertToJSONX(lowestAvgRGBDiffStepX) + "," + convertToJSONY(lowestAvgRGBDiffStepY);
-
+                    " at x,y " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY);
         return s;
     }
     
@@ -808,8 +801,10 @@ class SpiralSearch
     {       
         int x;
         int y;
-        x = convertToJSONX(lowestAvgRGBDiffStepX);
-        y = convertToJSONY(lowestAvgRGBDiffStepY);
+        
+        // Convert back from Processing co-ordinates into JSON co-ordinates
+        x = streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX);
+        y = streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY);
                
         PImage BWfragmentDiffImage = null;
         PImage BWItemFragImage = null;

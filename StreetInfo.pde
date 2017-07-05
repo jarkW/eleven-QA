@@ -42,6 +42,10 @@ class StreetInfo
     // Data read in from G* which is used elsewhere in class
     int geoHeight;
     int geoWidth;
+    int geoTopEdgeY;
+    int geoBottomEdgeY;
+    int geoLeftSideX;
+    int geoRightSideX;
     
     // Info about special quoin settings e.g. because party space or Ancestral Lands
     String quoinDefaultingInfo; 
@@ -93,6 +97,10 @@ class StreetInfo
          
         geoHeight = 0;
         geoWidth = 0;
+        geoTopEdgeY = 0;
+        geoBottomEdgeY = 0;
+        geoLeftSideX = 0;
+        geoRightSideX = 0;
         
         quoinDefaultingInfo = "";
         quoinDefaultingWarningMsg = "";
@@ -369,6 +377,36 @@ class StreetInfo
             }
         }
         
+        // Extract the values of the top/bottom and left/right limits of the street - which equate to the min/max x,y
+        // values. Turns out that some tall streets have the y value go from -height/2 to height/2 rather than -height to 0. 
+        // These values will either be found in the top level, or inside the dynamic structure. So read
+        // them in now.
+        geoTopEdgeY = Utils.readJSONInt(dynamic, "t", true);
+        if (!Utils.readOkFlag())
+        {
+            printToFile.printDebugLine(this, "Failed to read top (t) of street from geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 3);
+            return false;
+        }
+        geoBottomEdgeY = Utils.readJSONInt(dynamic, "b", true);
+        if (!Utils.readOkFlag())
+        {
+            printToFile.printDebugLine(this, "Failed to read bottom (b) of street from geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 3);
+            return false;
+        }
+        geoLeftSideX = Utils.readJSONInt(dynamic, "l", true);
+        if (!Utils.readOkFlag())
+        {
+            printToFile.printDebugLine(this, "Failed to read left side (l) of street from geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 3);
+            return false;
+        }
+        geoRightSideX = Utils.readJSONInt(dynamic, "r", true);
+        if (!Utils.readOkFlag())
+        {
+            printToFile.printDebugLine(this, "Failed to read right side (r) of street from geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 3);
+            return false;
+        }
+        printToFile.printDebugLine(this, "Geo JSON file " + geoFileName + " gives street top (t) " + geoTopEdgeY + " bottom (b) " + geoBottomEdgeY + " left (l) " + geoLeftSideX + " right (r) " + geoRightSideX, 1);
+        
         // So are either reading layers from the dynamic or higher level json objects, depending on whether dynamic had been found
         JSONObject layers = Utils.readJSONObject(dynamic, "layers", true);
         
@@ -390,6 +428,19 @@ class StreetInfo
                     printToFile.printDebugLine(this, "Failed to read height of street from geo JSON file, err msg ='" + Utils.readErrMsg() + "' " +  geoFileName, 3);
                     return false;
                 }
+                
+                // Just do a sanity check that the width/height is consistent with the values read in just before
+                if (geoHeight != (geoBottomEdgeY - geoTopEdgeY))
+                {
+                    printToFile.printDebugLine(this, "Geo JSON inconsistency in " + geoFileName + " - height of snap (h=" + geoHeight + ") is different to difference between bottom edge (b) and top edge (t) (=" + (geoBottomEdgeY - geoTopEdgeY) + ")", 3);
+                    return false;
+                }
+                if (geoWidth != (geoRightSideX - geoLeftSideX))
+                {
+                    printToFile.printDebugLine(this, "Geo JSON inconsistency in " + geoFileName + " - width of snap (h=" + geoWidth + ") is different to difference between right edge (r) and left edge (l) (=" + (geoRightSideX - geoLeftSideX) + ")", 3);
+                    return false;
+                }
+                
                 printToFile.printDebugLine(this, "Geo JSON file " + geoFileName + " gives street snap height " + geoHeight + " snap width " + geoWidth, 1);
                 
                 // Read in the remaining geo information even if not using a black/white comparison method because might be useful debug info later when dump out images
@@ -1163,13 +1214,14 @@ class StreetInfo
                 }
                 
                 // Need to account for the offset of the item image from item x,y in JSON
-                // The results array list contains the final x,y - whether original x,y (missing) or the new x,y (found)
-                topX = itemResults.get(n).readItemX() + geoWidth/2 + bestItemMatchInfo.readItemImageXOffset();
-                topY = itemResults.get(n).readItemY() + geoHeight + bestItemMatchInfo.readItemImageYOffset();  
+                // The results array list contains the final x,y - whether original x,y (missing) or the new x,y (found)               
+                topX = convertJSONXToProcessingX(itemResults.get(n).readItemX() + bestItemMatchInfo.readItemImageXOffset());
+                topY = convertJSONYToProcessingY(itemResults.get(n).readItemY() + bestItemMatchInfo.readItemImageYOffset());
                 
                 String s = itemResults.get(n).readResultAsText() + " " + itemResults.get(n).readItemInfo().readItemClassTSID() + " " + itemResults.get(n).readItemInfo().readItemTSID() + " at " + itemResults.get(n).readItemX() + "," + itemResults.get(n).readItemY();
                 s = s + " matchXOffset= " + bestItemMatchInfo.readItemImageXOffset() + " matchYOffset= " + bestItemMatchInfo.readItemImageYOffset() + " gives box top LH corner at " + topX + "," + topY;
                 printToFile.printDebugLine(this, s, 1);
+                
                 // Now copy the pixels of the fragment into the correct place - so can see mismatches easily
                 float a;
                 int boxColour;
@@ -1222,24 +1274,30 @@ class StreetInfo
                 int y;
                 if (itemResults.get(n).readResult() == SummaryChanges.MISSING || itemResults.get(n).readResult() == SummaryChanges.MISSING_DUPLICATE)
                 {
-                    x = itemResults.get(n).readItemX() + geoWidth/2 + bestItemMatchInfo.readItemImageXOffset() - bestFragment.width/2;
-                    // Need to work out the best place for the red box
-                    if (bestFragment.height > (topY + 2*lineWidth))
-                    {
-                        // Will go past top of image, so add to mid bottom of red box
-                        
-                        y = bottomY + lineWidth; 
-                        
-                    }
-                    else
-                    {
-                        y = topY - bestFragment.height - lineWidth;
-                    }
-                    // Draw red box for this sample
+                    // Ideally - going to draw a red box on top of the not-found box. But need to check this won't conflict with edge of street
+                    // in which case it will need to be moved
                     boxHeight = bestFragment.height;
                     boxWidth = bestFragment.width;
-                    lineWidth = 1;
-                    drawBox(summaryStreetSnap, x-lineWidth, y-lineWidth, x + boxWidth +lineWidth, y + boxHeight+lineWidth, lineWidth, boxColour);
+                    int fragmentBoxLineWidth = 1;
+                    y = topY - bestFragment.height - fragmentBoxLineWidth;
+                    x = convertJSONXToProcessingX(itemResults.get(n).readItemX() + bestItemMatchInfo.readItemImageXOffset()) - bestFragment.width/2 - fragmentBoxLineWidth;
+                    if (y < 0)
+                    {
+                        // Box won't fit on the top - so move to the bottom - this will always be OK to do safely
+                        y = bottomY + lineWidth + fragmentBoxLineWidth;
+                    }
+                    if (x < 0)
+                    {
+                        // Box is too far off to LHS - move to edge of screen
+                        x = fragmentBoxLineWidth;
+                    }
+                    else if ((x + bestFragment.width/2 + fragmentBoxLineWidth) > geoWidth)
+                    {
+                        // Box will be too far off the RHS when drawn - so move to edge of screen
+                        x = geoWidth - bestFragment.width - (2*fragmentBoxLineWidth);
+                    }
+                    // Draw red box for this sample
+                    drawBox(summaryStreetSnap, x-fragmentBoxLineWidth, y-fragmentBoxLineWidth, x + boxWidth +fragmentBoxLineWidth, y + boxHeight+fragmentBoxLineWidth, fragmentBoxLineWidth, boxColour);
                 }
                 else
                 {
@@ -1294,42 +1352,80 @@ class StreetInfo
     {
         // Draws a box at the specified co-ordinates - of the top LH corner/bottom RH corner. 
         // Box is drawn inside the co-ordinates, so calling function must allow for line width
+        // Skip parts of box that are outside the street - have negative values
         int i;
         int j;
         int loc;
                
         printToFile.printDebugLine(this, "Passing in top x,y " + topX + "," + topY + " bottom x,y " + bottomX + "," + bottomY, 1);
-        
+               
         // Draw top/bottom horizontal lines
-        for (i = 0; i < bottomX - topX + 1; i++)
-        {
-            for (j = 0; j < lineWidth; j++)
-            {
-                // Top pixel
-                loc = topX + i + ((topY + j) * geoWidth);
-                setPixel(street, loc, lineColour);
-            
-                // Bottom pixel
-                //loc = topX + i + ((topY - j + bottomY - topY) * geoWidth);
-                loc = bottomX - i + ((bottomY - j) * geoWidth);
-                setPixel(street, loc, lineColour);
-            }
-        }
         
+        // NB Don't really need to check that the Y co-ord is sensible because if we're too far off top/bottom, then the 
+        // setPixel function will ignore anything outside the range (0 - geoWidth*geoHeight).
+        // However do need to check that x co-ord is sensible as that can't be detected by setPixel().
+
+        // Draw horizontal line
+        for (i = 0; i < bottomX - topX + 1; i++)
+        {         
+            if ((topX + i > 0) && (topX - i < geoWidth))
+            {
+                // OK to start on LHS of top horizontal line
+                for (j = 0; j < lineWidth; j++)
+                {
+                    if (topY + j > 0)
+                    {
+                        loc = topX + i + ((topY + j) * geoWidth);
+                        setPixel(street, loc, lineColour);
+                        //printToFile.printDebugLine(this, "Printing top horizontal line of box at " + (topX + i) + "," + (topY + j), 1);
+                    }
+                }
+            }
+            
+            if ((bottomX - i > 0) && (bottomX - i < geoWidth))
+            {
+                // OK to start on RHS of bottom horizontal line
+                for (j = 0; j < lineWidth; j++)
+                {
+                    if (bottomY - j < geoHeight)
+                    {
+                        loc = bottomX - i + ((bottomY - j) * geoWidth);
+                        setPixel(street, loc, lineColour);
+                        //printToFile.printDebugLine(this, "Printing bottom horizontal line of box at " + (bottomX - i) + "," + (bottomY - j), 1);
+                    }
+                }
+            } 
+        }
+
         // Draw vertical lines
         for (i = 0; i < bottomY - topY + 1; i++)
-        {            
-            for (j = 0; j < lineWidth; j++)
+        {
+            if ((topY + i > 0) && (topY + i < geoHeight))
             {
-                // Top pixel
-                //loc = topX + j + ((topY + i + 1) * geoWidth);
-                loc = topX + j + ((topY + i) * geoWidth);
-                setPixel(street, loc, lineColour);
+                // OK to start at top of LH vertical line
+                for (j = 0; j < lineWidth; j++)
+                {
+                    if (topX + j > 0)
+                    {
+                        loc = topX + j + ((topY + i) * geoWidth);
+                        setPixel(street, loc, lineColour);
+                        //printToFile.printDebugLine(this, "Printing LH vertical line of box at " + (topX + j) + "," + (topY + i), 1);
+                    }
+                }
+            }
             
-                // Bottom pixel
-                //loc = bottomX - j + ((bottomY - i - 1) * geoWidth);
-                loc = bottomX - j + ((bottomY - i) * geoWidth);
-                setPixel(street, loc, lineColour);
+            if ((bottomY - i > 0) && (bottomY - i < geoHeight))
+            {
+                // OK to start on bottom of RH vertical line
+                for (j = 0; j < lineWidth; j++)
+                {
+                    if (bottomX - j < geoWidth)
+                    {
+                        loc = bottomX - j + ((bottomY - i) * geoWidth);
+                        setPixel(street, loc, lineColour);
+                        //printToFile.printDebugLine(this, "Printing RH vertical line of box at " + (bottomX - j) + "," + (bottomY - i), 1);
+                    }
+                }
             }
         }
     }
@@ -1343,8 +1439,7 @@ class StreetInfo
         {
             // Is valid pixel
             image.pixels[loc] = colour;
-            
-            
+                      
             // print out the Processing x,y for this loc
             /*
             int x = loc % geoWidth;
@@ -1628,6 +1723,35 @@ class StreetInfo
     public int readGeoWidth()
     {
         return geoWidth;
+    }
+    
+    // These four functions convert to/from Processing x,y which assumes 0,0 in top LH corner, all positive values
+    // and street co-ords which usually have x from -width/2 to width/2 and y = -height to 0. But as some streets
+    // disobey this rule (tall streets in Ilmenski Deeps) then need to base it off the top/bottom, left/right
+    // values. NB When reading these in, the program aborts if there is a mismatch between the calculated
+    // width/height using the edge values compared to the stated h/w values in the JSON file (should never happen)
+    public int convertProcessingXToJSONX(int x)
+    {
+        float jX = map(x, 0, geoWidth, geoLeftSideX, geoRightSideX);
+        return (int(jX));
+    }
+    
+    public int convertProcessingYToJSONY(int y)
+    {
+        float jY = map(y, 0, geoHeight, geoTopEdgeY, geoBottomEdgeY);
+        return (int(jY));
+    }
+    
+    public int convertJSONXToProcessingX(int x)
+    {
+        float pX = map(x, geoLeftSideX, geoRightSideX, 0, geoWidth);
+        return (int(pX));
+    }
+    
+    public int convertJSONYToProcessingY(int y)
+    {
+        float pY = map(y, geoTopEdgeY, geoBottomEdgeY, 0, geoHeight);
+        return (int(pY));
     }
     
     public int readNumberTimesResultsSortedSoFar()
