@@ -1733,25 +1733,25 @@ class StreetInfo
     public int convertProcessingXToJSONX(int x)
     {
         float jX = map(x, 0, geoWidth, geoLeftSideX, geoRightSideX);
-        return (int(jX));
+        return (round(jX));
     }
     
     public int convertProcessingYToJSONY(int y)
     {
         float jY = map(y, 0, geoHeight, geoTopEdgeY, geoBottomEdgeY);
-        return (int(jY));
+        return (round(jY));
     }
     
     public int convertJSONXToProcessingX(int x)
     {
         float pX = map(x, geoLeftSideX, geoRightSideX, 0, geoWidth);
-        return (int(pX));
+        return (round(pX));
     }
     
     public int convertJSONYToProcessingY(int y)
     {
         float pY = map(y, geoTopEdgeY, geoBottomEdgeY, 0, geoHeight);
-        return (int(pY));
+        return (round(pY));
     }
     
     public int readNumberTimesResultsSortedSoFar()
