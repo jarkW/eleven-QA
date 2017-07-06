@@ -244,8 +244,8 @@ class SpiralSearch
             printToFile.printDebugLine(this, "Good enough match found " +
             " at x,y " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + 
             streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY) +
-            " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
-            " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
+            " lowest avg RGB diff/pixel = " + round(lowestAvgRGBDiffPerPixel) +
+            " avg RGB total diff/pixel = " + round(avgTotalRGBDiffPerPixel) +
             " ratio lowest:total avg RGB diff = " + formattedRatio +
             " % match = " + formattedPercentage, 2); 
    
@@ -263,8 +263,8 @@ class SpiralSearch
         {
             // Consider item not found
             printToFile.printDebugLine(this, "No match found at x,y " + itemJSONX + "," + itemJSONY + " for reference, " +
-            " lowest avg RGB diff/pixel = " + int(lowestAvgRGBDiffPerPixel) +
-            " avg RGB total diff/pixel = " + int (avgTotalRGBDiffPerPixel) +
+            " lowest avg RGB diff/pixel = " + round(lowestAvgRGBDiffPerPixel) +
+            " avg RGB total diff/pixel = " + round(avgTotalRGBDiffPerPixel) +
             " ratio lowest:total avg RGB diff = " + formattedRatio +
             " % match = " + formattedPercentage +
             " for x,y " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + 
@@ -414,7 +414,7 @@ class SpiralSearch
     
         if (debugRGB)
         {
-            s = "totalRGBDiff for stepX,stepY " + str(stepX - startX) + "," +  str(stepY - startY) + ": " + int(totalRGBDiff);
+            s = "totalRGBDiff for stepX,stepY " + str(stepX - startX) + "," +  str(stepY - startY) + ": " + round(totalRGBDiff);
             printToFile.printDebugLine(this, s, 1);
         }
         
@@ -790,8 +790,8 @@ class SpiralSearch
         // which has already been readjusted if dealing with a QQ rather than any other object.
         DecimalFormat df = new DecimalFormat("#.##"); 
         String formattedRatio = df.format(ratioRGBDiff);  
-        String s = " avg lowest RGB diff/pixel/avg RGB total diff/pixel = " + int (lowestAvgRGBDiffPerPixel) +
-                    " /" + int (avgTotalRGBDiffPerPixel) +
+        String s = " avg lowest RGB diff/pixel/avg RGB total diff/pixel = " + round(lowestAvgRGBDiffPerPixel) +
+                    " /" + round(avgTotalRGBDiffPerPixel) +
                     " = " + formattedRatio +
                     " at x,y " + streetInfo.convertProcessingXToJSONX(lowestAvgRGBDiffStepX - fragOffsetX) + "," + streetInfo.convertProcessingYToJSONY(lowestAvgRGBDiffStepY - fragOffsetY);
         return s;
