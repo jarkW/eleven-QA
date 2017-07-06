@@ -56,7 +56,14 @@ class OutputFile
         }
         if (!validationFlag)
         {
-            s = s + " (** indicates changed JSON file)";
+            if (configInfo.readWriteJSONsToPersdata())
+            {
+                s = s + " (** indicates changed JSON file)";
+            }
+            else
+            {
+                s = s + " ((**) indicates identified changes to JSON file)";
+            }
         }
         printLine(s);
             
@@ -224,14 +231,21 @@ class OutputFile
         int nosChangedItems = 0;
     
         MatchInfo bestMatchInfo;
-            
+    
         for (int i = 0; i < itemResults.size(); i++)
         {
             s = "";
             if (!validationSummaryFlag && itemResults.get(i).itemInfo.readSaveChangedJSONfile())
             {
                 // Used to clearly show if JSON has been changed
-                s = "** ";
+                if (configInfo.readWriteJSONsToPersdata())
+                {
+                    s = "** ";
+                }
+                else
+                {
+                    s = "(**) ";
+                }
             }
         
             switch (itemResults.get(i).readResult())
@@ -497,11 +511,23 @@ class OutputFile
         s = s + "\n";
         printLine(s); 
         
-        if (!validationSummaryFlag && (nosChangedItems > 0) && configInfo.readWriteJSONsToPersdata() && !streetInfo.readStreetNotInPersdataQA())
+        if (!validationSummaryFlag && (nosChangedItems > 0))
         {
-            // For streets already in persdata-qa remind user to rerun qasave if items have actually been changed in persdata
-            s = " (NB REMEMEMBER TO REDO /QASAVE [WITHGEO] FOR THIS STREET TO SAVE THESE CHANGES)\n";
-            printLine(s);
+            if (!configInfo.readWriteJSONsToPersdata())
+            {
+                // Remind user to rerun the tool with the option turned off if they want changes written to persdata
+                s = " (NB Rerun the tool with the write_JSONs_to_persdata option set to TRUE if you want these changes saved in persdata)\n";
+                printLine(s);
+            }
+            else
+            {
+                if (!streetInfo.readStreetNotInPersdataQA())
+                {
+                    // For streets already in persdata-qa remind user to rerun qasave if items have actually been changed in persdata
+                    s = " (NB REMEMEMBER TO REDO /QASAVE [WITHGEO] FOR THIS STREET TO SAVE THESE CHANGES)\n";
+                    printLine(s);
+                }
+            }
         }
         return true;
     }
