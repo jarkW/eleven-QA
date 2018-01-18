@@ -1425,21 +1425,15 @@ class ItemInfo
         System.gc();
     }
     
-    public boolean resetAsMissingQuoin()
+    public void resetDuplicateAsMissingItem()
     {
-        // This function is called if it is a quoin found to have the same x,y as another quoin
-        // This quoin will be reset as a 'missing' quoin and the changes saved as a JSON file
-        if (!itemClassTSID.equals("quoin"))
-        {
-            printToFile.printDebugLine(this, "Error - resetAsMissingQuoin should not be called for item " + itemClassTSID, 3);
-            return false;
-        }
+        // This function is called if the item is found to have the same x,y as another item
+        // Item will be marked as 'missing' - for quoins, will also be set to be of type 'mystery'
+        // and the changes saved as a JSON file
         itemFound = false;
         bestMatchInfo.setBestMatchResult(NO_MATCH);  
         newItemX = MISSING_COORDS;
         newItemY = MISSING_COORDS;
-        return true;
-        
     }
     
     // Simple functions to read/set variables

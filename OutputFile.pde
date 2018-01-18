@@ -410,7 +410,7 @@ class OutputFile
                     }
                     else if (itemResults.get(i).readResult() == SummaryChanges.MISSING_DUPLICATE)
                     {
-                        s = s + " for duplicate quoin x,y " + bestMatchInfo.matchXYString() + ")";
+                        s = s + " for duplicate item x,y " + bestMatchInfo.matchXYString() + ")";
                     }
                     else
                     {

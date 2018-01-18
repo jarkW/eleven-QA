@@ -17,11 +17,11 @@ class SummaryChanges implements Comparable
     int itemY;
     int result; 
     
-    // If sort reveals that quoins have been stacked onto the same x,y
-    boolean misplacedQuoin;
+    // If sort reveals that items have been stacked onto the same x,y
+    boolean duplicateItemXY;
 
         
-    public SummaryChanges( ItemInfo item, boolean dupQuoin)
+    public SummaryChanges( ItemInfo item, boolean dupItemXY)
     {
         itemInfo = item;
         
@@ -35,7 +35,7 @@ class SummaryChanges implements Comparable
         }
         
         
-        misplacedQuoin = dupQuoin;
+        duplicateItemXY = dupItemXY;
         int searchResult = itemInfo.readBestMatchInfo().readBestMatchResult();
         String s;
         s = itemInfo.readItemTSID() + " match=";
@@ -120,7 +120,7 @@ class SummaryChanges implements Comparable
             {
                 result = UNCHANGED;
             }
-            else if (itemInfo.readItemClassTSID().equals("quoin") && misplacedQuoin)
+            else if (duplicateItemXY)
             {
                 // Means we can give out a slightly better info message when reporting back to user
                 result = MISSING_DUPLICATE;
@@ -147,97 +147,116 @@ class SummaryChanges implements Comparable
             int Y2 = n.itemY;
             if (Y1 == Y2)
             {
-                // Closely clustered quoins can sometimes be incorrectly deduced - so that two or more can end up with the same x,y values. 
+                // Closely clustered items of the same type can sometimes be incorrectly deduced - so that two or more can end up with the same x,y values. 
+                // Typically this will happen with quoins, but can also happen with e.g. jellisacs.
                 // So look at both items - if it is a quoin/non-quoin combination then set the quoin to be missing (not sure this scenario will happen
                 // but just in case.
-                // But if two quoins have the same x,y, then measure the distance between the original x,y for both quoins and this deduced x,y - and set
-                // the quoin which is furthest away as missing - assume the quoin which was already nearest the deduced x,y is the correct one.
+                // Otherwise, measure the distance between the original x,y for both items and this deduced x,y - and set the item which is furthest away
+                // as missing - assume the item which was already nearest the deduced x,y is the correct one.
                 // However it is possible that e.g. in a large cluster could have 3 or more with the same co-ordinates, so will need to keep repeating this
                 // sorting process until all co-located items have been resolved. E.g. first sort results in  A, B and C having the same co-ordinates which 
                 // could be detected as A-B and B-C being compared. If B is the actual quoin, then A is reset to original x,y. But B-C still have the same
-                // co-ordinates. 
+                // co-ordinates. This multiple case is only likely to happen for tightly clustered quoins. 
                 //
                 // The list of items on a street may include the skipped qurazy quoin - which we need to ignore here as well otherwise a null pointer error happens as there is no bestMatchResult object associated with this quoin
                 if (streetInfo.readNumberTimesResultsSortedSoFar() >= StreetInfo.MAX_SORT_COUNT)
                 {
-                    // We've exceeded the sanity count - to prevent any infinite looping - so set the flag for any quoins which are present
-                    if (itemInfo.readItemClassTSID().equals("quoin") && !itemInfo.readOrigItemVariant().equals("qurazy"))
+                    // We've exceeded the sanity count - to prevent any infinite looping - so set the flag for any items which are present
+                    if (!itemInfo.readOrigItemVariant().equals("qurazy"))
                     {
-                        misplacedQuoin = true;
+                        duplicateItemXY = true;
                         if (configInfo.readDebugRun())
                         {
                             // Only give out this information to me - will confuse users
-                            printToFile.printOutputLine("Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured (exceeded sanity count)");
+                            printToFile.printOutputLine("Warning - " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured (exceeded sanity count)");
                         }
-                        printToFile.printDebugLine(this, "Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured (exceeded sanity count)", 2);
+                        printToFile.printDebugLine(this, "Warning - " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured (exceeded sanity count)", 2);
                     }
-                    if (n.itemInfo.readItemClassTSID().equals("quoin") && !itemInfo.readOrigItemVariant().equals("qurazy"))
+                    if (!n.itemInfo.readOrigItemVariant().equals("qurazy"))
                     {
-                        n.misplacedQuoin = true;
+                        n.duplicateItemXY = true;
                         if (configInfo.readDebugRun())
                         {
                             // Only give out this information to me - will confuse users                      
-                            printToFile.printOutputLine("Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured (exceeded sanity count)");
+                            printToFile.printOutputLine("Warning - " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured (exceeded sanity count)");
                         }
-                        printToFile.printDebugLine(this, "Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured (exceeded sanity count)", 2);
+                        printToFile.printDebugLine(this, "Warning - " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured (exceeded sanity count)", 2);
                     }
                 }
                 else
                 {
-                    // If both items are quoins then reset the one furthest away
-                    if (itemInfo.readItemClassTSID().equals("quoin")  && !itemInfo.readOrigItemVariant().equals("qurazy") && n.itemInfo.readItemClassTSID().equals("quoin") && !n.itemInfo.readOrigItemVariant().equals("qurazy"))
+                    // Deal with the case when one of the matching items is a qurazy quoin - should never happen, but if it does, set the non-QQ item to be missing (never get 2 QQ on a street)
+                    if (itemInfo.readOrigItemVariant().equals("qurazy"))
                     {
-                        float quoin1Distance = Utils.distanceBetweenX1Y1_X2Y2(itemInfo.readOrigItemX(), itemInfo.readOrigItemY(), X1, Y1);
-                        float quoin2Distance = Utils.distanceBetweenX1Y1_X2Y2(n.itemInfo.readOrigItemX(), n.itemInfo.readOrigItemY(), X1, Y1);
-
-                        if (quoin1Distance < quoin2Distance)
+                        n.duplicateItemXY = true;
+                        if (configInfo.readDebugRun())
                         {
-                            // As the first quoin was originally nearer X1,Y1, then mark the second quoin as missing
-                            n.misplacedQuoin = true;
-                            if (configInfo.readDebugRun())
-                            {
-                                // Only give out this information to me - will confuse users
-                                printToFile.printOutputLine("Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured");
-                            }
-                            printToFile.printDebugLine(this, "Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured", 2);
+                            // Only give out this information to me - will confuse users
+                            printToFile.printOutputLine("Warning - " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with qurazy quoin and so will need to be manually configured");
                         }
-                        else
+                        printToFile.printDebugLine(this, "Warning - " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with qurazy quoin and so will need to be manually configured", 2);
+                    }
+                    else if (n.itemInfo.readOrigItemVariant().equals("qurazy"))
+                    {
+                        duplicateItemXY = true;
+                        if (configInfo.readDebugRun())
                         {
-                            // Treat the second quoin as being at X1, Y1 - and mark the first quoin as missing
-                            misplacedQuoin = true;
-                            if (configInfo.readDebugRun())
-                            {
-                                // Only give out this information to me - will confuse users
-                                printToFile.printOutputLine("Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured");
-                            }
-                            printToFile.printDebugLine(this, "Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " and so will need to be manually configured", 2);
+                            // Only give out this information to me - will confuse users
+                            printToFile.printOutputLine("Warning - " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with qurazy quoin and so will need to be manually configured");
                         }
+                        printToFile.printDebugLine(this, "Warning - " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with qurazy quoin and so will need to be manually configured", 2);
                     }
                     else
                     {
-                        // Means we have an overlap between an item/quoin (rare) - so just reset the quoin
-                        if (itemInfo.readItemClassTSID().equals("quoin") && !itemInfo.readOrigItemVariant().equals("qurazy"))
+                        // Have 2 items co-located. If one of them is a quoin, then mark that as missing, otherwise mark the furthest item as missing
+                        if (itemInfo.readItemClassTSID().equals("quoin"))
                         {
-                            misplacedQuoin = true;
+                            duplicateItemXY = true;
                             if (configInfo.readDebugRun())
                             {
                                 // Only give out this information to me - will confuse users
-                                printToFile.printOutputLine("Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with non-quoin and so will need to be manually configured");
+                                printToFile.printOutputLine("Warning - " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with item " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " and so will need to be manually configured");
                             }
-                            printToFile.printDebugLine(this, "Warning - Quoin " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with non-quoin and so will need to be manually configured", 2);
+                            printToFile.printDebugLine(this, "Warning - " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with item " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " and so will need to be manually configured", 2);
                         }
-                    
-                        if (n.itemInfo.readItemClassTSID().equals("quoin") && !n.itemInfo.readOrigItemVariant().equals("qurazy"))
+                        else if (n.itemInfo.readItemClassTSID().equals("quoin"))
                         {
-                            n.misplacedQuoin = true;
+                            n.duplicateItemXY = true;
                             if (configInfo.readDebugRun())
                             {
                                 // Only give out this information to me - will confuse users
-                                printToFile.printOutputLine("Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with non-quoin and so will need to be manually configured");
+                                printToFile.printOutputLine("Warning - " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with item " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " and so will need to be manually configured");
                             }
-                            printToFile.printDebugLine(this, "Warning - Quoin " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with non-quoin and so will need to be manually configured", 2);
+                            printToFile.printDebugLine(this, "Warning - " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with item " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " and so will need to be manually configured", 2);
                         }
-                        
+                        else
+                        {
+                            float item1Distance = Utils.distanceBetweenX1Y1_X2Y2(itemInfo.readOrigItemX(), itemInfo.readOrigItemY(), X1, Y1);
+                            float item2Distance = Utils.distanceBetweenX1Y1_X2Y2(n.itemInfo.readOrigItemX(), n.itemInfo.readOrigItemY(), X1, Y1);
+    
+                            if (item1Distance < item2Distance)
+                            {
+                                // As the first item was originally nearer X1,Y1, then mark the second item as missing
+                                n.duplicateItemXY = true;
+                                if (configInfo.readDebugRun())
+                                {
+                                    // Only give out this information to me - will confuse users
+                                    printToFile.printOutputLine("Warning - " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with item " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " and so will need to be manually configured");
+                                }
+                                printToFile.printDebugLine(this, "Warning - " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with item " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " and so will need to be manually configured", 2);
+                            }
+                            else
+                            {
+                                // Treat the second item as being at X1, Y1 - and mark the first item as missing
+                                duplicateItemXY = true;
+                               if (configInfo.readDebugRun())
+                                {
+                                    // Only give out this information to me - will confuse users
+                                    printToFile.printOutputLine("Warning - " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with item " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " and so will need to be manually configured");
+                                }
+                                printToFile.printDebugLine(this, "Warning - " + itemInfo.readItemClassTSID() + " " + itemInfo.readItemTSID() + " assigned duplicate x,y " + X1 + "," + Y1 + " with item " + n.itemInfo.readItemClassTSID() + " " + n.itemInfo.readItemTSID() + " and so will need to be manually configured", 2);
+                            }
+                        }
                     }
                 }
                 return 0;
@@ -302,9 +321,9 @@ class SummaryChanges implements Comparable
         }
     }
     
-    public boolean readMisplacedQuoin()
+    public boolean readDuplicateItemXY()
     {
-        return misplacedQuoin;
+        return duplicateItemXY;
     }
     
     public ItemInfo readItemInfo()

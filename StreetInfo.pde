@@ -1075,30 +1075,26 @@ class StreetInfo
         boolean noDuplicatesFound = false;
         for (numberTimesResultsSortedSoFar = 1; numberTimesResultsSortedSoFar <= MAX_SORT_COUNT && !noDuplicatesFound; numberTimesResultsSortedSoFar++)
         {
-            // The sort method includes marking some quoins as missing (sets misPlacedQuoin flag) if found to have the same x,y as another
+            // The sort method includes marking some items as missing (sets duplicateItemXY flag) if found to have the same x,y as another
             sortResultsByXY(itemResults);
 
-            // Now go through the results in reverse order - if any indicate that a quoin needs to be reset to missing
+            // Now go through the results in reverse order - if any indicate that an item needs to be reset to missing
             // then delete the entry from the itemResults array, redo the item JSON, save it and then recreate the new 
             // itemResults entry with this mystery quoin.
             // Doing it in reverse order means that entries can be safely deleted as process the array
-            boolean checkForDuplicates = false;          
+            boolean checkForDuplicates = false;  
             
             for (int i = itemResults.size(); i > 0; i--)
             {
-                if (itemResults.get(i-1).readMisplacedQuoin())
+                if (itemResults.get(i-1).readDuplicateItemXY())
                 {
-                    // Mark the quoin as missing before saving the new JSON file
-                    if (!itemResults.get(i-1).readItemInfo().resetAsMissingQuoin())
-                    {
-                        // Should never happen
-                        return false;
-                    }
+                    // Mark the item as missing before saving the new JSON file
+                    itemResults.get(i-1).readItemInfo().resetDuplicateAsMissingItem();
                     
-                    // OK to add the new entry - will not interfere with deleting the 'bad' entry - indicate this this change is because we have a duplicate quoin problem
+                    // OK to add the new entry - will not interfere with deleting the 'bad' entry - indicate this this change is because we have a duplicate item problem
                     itemResults.add(new SummaryChanges(itemResults.get(i-1).readItemInfo(), true));
                        
-                    // Now save the new mystery quoin JSON file - have to do this after add the new entry, otherwise itemResults sets things up as 'VARIANT_CHANGED' instead of 'MISSING'
+                    // Now save the new JSON file - have to do this after add the new entry, otherwise itemResults sets things up as 'VARIANT_CHANGED' instead of 'MISSING'
                     if (!itemResults.get(i-1).readItemInfo().saveItemChanges(true))
                     {
                         return false;
@@ -1159,7 +1155,7 @@ class StreetInfo
     {               
         // Sort array by x co-ord so listing items from L to R
         // This will also flag up a warning if any items end up with the 
-        // same x,y - which can happen for closely packed quoins
+        // same x,y - which can happen for closely packed quoins/items such as jellisacs
         Collections.sort(itemResults);
         
         // Increase this counter - it is only the first sort which is clear of output errors to the user
