@@ -6,6 +6,10 @@ class ItemInfo
     boolean skipThisItem; // Item we are not scanning for
     boolean itemFound;
     
+    // For some items which can be close together such as quoins, barnacles, need to search all images to
+    // ensure that the best match, closest to original x,y is found
+    boolean searchAllImages;
+    
     // Read in from I* file
     JSONObject itemJSON;
     String itemTSID;
@@ -58,6 +62,7 @@ class ItemInfo
                 
         skipThisItem = false;
         itemFound = false;
+        searchAllImages = false;
         saveChangedJSONfile = false;
         
         itemYValues = new IntList();
@@ -362,6 +367,8 @@ class ItemInfo
                     
                     // Now continue with getting the type field from the json file
                     itemVariantKey = "type";
+                    // Need to search all images to avoid getting false positive from nearby item of same type
+                    searchAllImages = true;
                 }
                 else if ((itemClassTSID.equals("wood_tree")) || (itemClassTSID.equals("npc_mailbox")) || (itemClassTSID.equals("dirt_pile")) || (itemClassTSID.equals("wood_tree_enchanted")))
                 {
@@ -370,10 +377,14 @@ class ItemInfo
                 else if ((itemClassTSID.equals("mortar_barnacle")) || (itemClassTSID.equals("jellisac")))
                 {
                     itemVariantKey = "blister";
+                    // Need to search all images to avoid getting false positive from nearby item of same type
+                    searchAllImages = true;
                 }
                 else if (itemClassTSID.equals("ice_knob"))
                 {
                     itemVariantKey = "knob";
+                    // Need to search all images to avoid getting false positive from nearby item of same type
+                    searchAllImages = true;
                 }
                 else if (itemClassTSID.equals("dust_trap"))
                 {
@@ -1534,6 +1545,11 @@ class ItemInfo
     public boolean readSaveChangedJSONfile()
     {
         return saveChangedJSONfile;
+    }
+    
+    public boolean readSearchAllImages()
+    {
+        return searchAllImages;
     }
     
     public boolean differentVariantFound()
