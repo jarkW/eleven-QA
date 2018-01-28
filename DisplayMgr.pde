@@ -250,10 +250,11 @@ class DisplayMgr
         
     public void showStreetFragmentImage(PImage streetImage, int itemBoxWidth, int itemBoxHeight, int centreX, int centreY)
     {
+        //printToFile.printDebugLine(this, "street fragment parms itemBoxWidth=" + itemBoxWidth + " itemBoxHeight=" + itemBoxHeight + " centreX,centreY=" + centreX +"," + centreY, 1);
         //PImage streetFragment = streetImage.get(centreX - STREET_FRAGMENT_WIDTH/2, centreY - STREET_FRAGMENT_HEIGHT/2, STREET_FRAGMENT_WIDTH, STREET_FRAGMENT_HEIGHT);
         // Need to generate a street fragment which means the centre of the box is at the centre of the street fragment - if put the box at the centre, then a long thin
         // item fragment risks going off the edge of the image
-        PImage streetFragment = streetImage.get(centreX - STREET_FRAGMENT_WIDTH/2 - itemBoxWidth/2, centreY - STREET_FRAGMENT_HEIGHT/2 -  - itemBoxHeight/2, STREET_FRAGMENT_WIDTH, STREET_FRAGMENT_HEIGHT);
+        PImage streetFragment = streetImage.get(centreX - STREET_FRAGMENT_WIDTH/2 - itemBoxWidth/2, centreY - STREET_FRAGMENT_HEIGHT/2 - itemBoxHeight/2, STREET_FRAGMENT_WIDTH + itemBoxWidth, STREET_FRAGMENT_HEIGHT + itemBoxHeight);
         
         // clear the previous image from this place
         clearImage(200, 100, streetFragmentWidth, streetFragmentHeight);
@@ -266,10 +267,8 @@ class DisplayMgr
         // Also need to show a red box which matches the item fragment size
         noFill();
         stroke(204, 0, 0);
-        // Need to calculate where to put the rectangle            
-        //rect(200 + int(STREET_FRAGMENT_WIDTH/2), 100 + int(STREET_FRAGMENT_HEIGHT/2), itemBoxWidth, itemBoxHeight);
-        rect(200 + int(STREET_FRAGMENT_WIDTH/2 - itemBoxWidth/2), 100 + int(STREET_FRAGMENT_HEIGHT/2 - itemBoxHeight/2), itemBoxWidth, itemBoxHeight);
-
+        // Need to calculate where to put the rectangle 
+        rect(200 + int(streetFragmentWidth/2), 100 + int(streetFragmentHeight/2), itemBoxWidth, itemBoxHeight);
     }
     
     public void showDebugImages(PImage testStreetFragment, PImage testItemFragment, String infoText)
