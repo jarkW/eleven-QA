@@ -921,13 +921,16 @@ class ItemInfo
             s = s + "with new x,y = " + newItemX + "," + newItemY + "(" + bestMatchInfo.readPercentageMatch() + "%)";
             printToFile.printDebugLine(this, s, 1);
         }
-
+        
         // Need to handle the missing items first
         if (newItemX == MISSING_COORDS)
         {
             if (!itemClassTSID.equals("quoin"))
             {
                 // For all non-quoins, items that are not found will not cause any file changes - so clean up and return here
+                // However there are cases of closely clustered items e.g jellisacs where file changes have been written
+                // before it is deduced that actually these are duplicates. In this case, will need to restore the original
+                // x,y and variant
                 s = "No changes written - ";
                 // Already handled the case where an item is skipped
                 if (!itemFound)
@@ -947,8 +950,34 @@ class ItemInfo
                 //printToFile.printOutputLine(s);
                 printToFile.printDebugLine(this, s, 2);         
 
-                // nothing else to do for these missing/skipped items - do not save
-                return true;
+                if (secondTimeThrough)
+                {
+                    // Need to reset the item x,y and variant back to the original and rewrite the JSON file - it was changed
+                    // earlier before it was realised it was a duplicate
+                    newItemX = origItemX;
+                    newItemY = origItemY;
+                    if (!Utils.setJSONInt(itemJSON, "x", newItemX))
+                    {
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    if (!Utils.setJSONInt(itemJSON, "y", newItemY))
+                    {
+                        printToFile.printDebugLine(this, Utils.readErrMsg(), 3);
+                        return false;
+                    }
+                    
+                    if (origItemVariant.length() > 0)
+                    {
+                        newItemVariant = origItemVariant;
+                    }
+                    saveChangedJSONfile = true;
+                }
+                else
+                {
+                    // nothing else to do for these missing/skipped items - do not save
+                    return true;
+                }
             }
             else
             {

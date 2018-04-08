@@ -235,7 +235,9 @@ class OutputFile
         for (int i = 0; i < itemResults.size(); i++)
         {
             s = "";
-            if (!validationSummaryFlag && itemResults.get(i).itemInfo.readSaveChangedJSONfile())
+            // Need to mark JSON file as changed for non missing duplicates - for these files, they get changed twice - once to the incorrect duplicate values, and 
+            // then back to the original values. So output the correct information which relates to the fact that overall, the file hasn't changed
+            if (!validationSummaryFlag && itemResults.get(i).itemInfo.readSaveChangedJSONfile() && itemResults.get(i).readResult() != SummaryChanges.MISSING_DUPLICATE)
             {
                 // Used to clearly show if JSON has been changed
                 if (configInfo.readWriteJSONsToPersdata())
